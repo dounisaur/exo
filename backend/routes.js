@@ -388,14 +388,22 @@ export function setupRoutes(app) {
   app.post('/api/venues', authenticateToken, (req, res) => {
     const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
 
-    if (!name || !category || latitude === undefined || longitude === undefined) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    // Validate required fields
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Name and category are required' });
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ error: 'Invalid latitude or longitude' });
     }
 
     db.run(
       `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, subcategory_id || null, latitude, longitude, address || '', image_url, website_url || null, phone_number || null, reservation_link],
+      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
@@ -410,13 +418,20 @@ export function setupRoutes(app) {
     const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
 
     if (!name || !category) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: 'Name and category are required' });
+    }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({ error: 'Invalid latitude or longitude' });
     }
 
     db.run(
       `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, subcategory_id || null, latitude, longitude, address || '', image_url, website_url || null, phone_number || null, reservation_link, req.params.id],
+      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, req.params.id],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });

@@ -182,6 +182,19 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     setLoading(true)
     setMessage('')
 
+    // Validate required fields
+    if (!formData.name.trim()) {
+      setMessage('Error: Venue name is required')
+      setLoading(false)
+      return
+    }
+
+    if (!formData.latitude || !formData.longitude) {
+      setMessage('Error: Please search for a restaurant to auto-fill location')
+      setLoading(false)
+      return
+    }
+
     try {
       let finalImageUrl = formData.image_url
 
