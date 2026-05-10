@@ -248,14 +248,22 @@ export function setupRoutes(app) {
 
   // Delete subcategory (admin)
   app.delete('/api/subcategories/:id', authenticateToken, (req, res) => {
-    db.run('DELETE FROM subcategories WHERE id = ?', [req.params.id], function(err) {
+    // First, clear subcategory_id from venues that reference this subcategory
+    db.run('UPDATE venues SET subcategory_id = NULL WHERE subcategory_id = ?', [req.params.id], (err) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
-      if (this.changes === 0) {
-        return res.status(404).json({ error: 'Subcategory not found' });
-      }
-      res.json({ success: true });
+
+      // Then delete the subcategory
+      db.run('DELETE FROM subcategories WHERE id = ?', [req.params.id], function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Subcategory not found' });
+        }
+        res.json({ success: true });
+      });
     });
   });
 
