@@ -267,8 +267,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     }
   }
 
-  const handlePublish = async (id: number, currentStatus: string) => {
-    const newStatus = currentStatus === 'draft' ? 'published' : 'draft'
+  const handlePublish = async (id: number) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${id}/status`, {
         method: 'PATCH',
@@ -276,9 +275,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ status: newStatus })
+        body: JSON.stringify({ status: 'published' })
       })
-      if (!response.ok) throw new Error('Failed to update status')
+      if (!response.ok) throw new Error('Failed to publish venue')
       fetchAdminVenues()
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
@@ -293,23 +292,6 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         headers: { 'Authorization': `Bearer ${authToken}` }
       })
       if (!response.ok) throw new Error('Failed to delete venue')
-      fetchAdminVenues()
-    } catch (error) {
-      alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
-    }
-  }
-
-  const handlePublish = async (id: number) => {
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${id}/status`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({ status: 'published' })
-      })
-      if (!response.ok) throw new Error('Failed to publish venue')
       fetchAdminVenues()
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
