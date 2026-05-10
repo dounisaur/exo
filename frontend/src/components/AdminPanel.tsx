@@ -129,16 +129,48 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     }
   }
 
-  const selectVenueFromResults = (result: any) => {
-    setFormData(prev => ({
-      ...prev,
-      name: result.name || prev.name,
-      address: result.address || prev.address,
-      latitude: result.latitude || prev.latitude,
-      longitude: result.longitude || prev.longitude,
-      website_url: result.website_url || prev.website_url,
-      phone_number: result.phone || prev.phone_number
-    }))
+  const selectVenueFromResults = async (result: any) => {
+    // If result has place_id, fetch full details including website and phone
+    if (result.place_id) {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/lookup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ placeId: result.place_id })
+        })
+
+        const data = await response.json()
+        if (data.results && data.results.length > 0) {
+          const fullResult = data.results[0]
+          setFormData(prev => ({
+            ...prev,
+            name: fullResult.name || prev.name,
+            address: fullResult.address || prev.address,
+            latitude: fullResult.latitude || prev.latitude,
+            longitude: fullResult.longitude || prev.longitude,
+            website_url: fullResult.website_url || prev.website_url,
+            phone_number: fullResult.phone || prev.phone_number
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching place details:', error)
+      }
+    } else {
+      // Fallback if result already has all data
+      setFormData(prev => ({
+        ...prev,
+        name: result.name || prev.name,
+        address: result.address || prev.address,
+        latitude: result.latitude || prev.latitude,
+        longitude: result.longitude || prev.longitude,
+        website_url: result.website_url || prev.website_url,
+        phone_number: result.phone || prev.phone_number
+      }))
+    }
+
     setLookupResults([])
     setLookupQuery('')
     setLookupMessage(`✅ Selected: "${result.name}"`)

@@ -324,10 +324,10 @@ export function setupRoutes(app) {
 
   // Search venue by name (admin)
   app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
-    const { query } = req.body;
+    const { query, placeId } = req.body;
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
-    if (!query) {
+    if (!query && !placeId) {
       return res.status(400).json({ error: 'Query required' });
     }
 
@@ -336,8 +336,31 @@ export function setupRoutes(app) {
     }
 
     try {
+      // If placeId is provided, fetch details for that specific place
+      if (placeId) {
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const detailsResponse = await fetch(detailsUrl);
+        const detailsData = await detailsResponse.json();
+
+        if (!detailsData.result || detailsData.status !== 'OK') {
+          return res.json({ results: [] });
+        }
+
+        const result = detailsData.result;
+        return res.json({
+          results: [{
+            name: result.name || '',
+            address: result.formatted_address || '',
+            latitude: result.geometry?.location?.lat || null,
+            longitude: result.geometry?.location?.lng || null,
+            website_url: result.website || '',
+            phone: result.formatted_phone_number || ''
+          }]
+        });
+      }
+
       // Use Text Search API to find restaurants by name
-      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&fields=place_id,name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&key=${apiKey}`;
       const searchResponse = await fetch(textSearchUrl);
       const searchData = await searchResponse.json();
 
@@ -345,14 +368,13 @@ export function setupRoutes(app) {
         return res.json({ results: [] });
       }
 
-      // Return all results
+      // Return results with place_id for later detail fetching
       const results = searchData.results.map(place => ({
+        place_id: place.place_id,
         name: place.name || '',
         address: place.formatted_address || '',
         latitude: place.geometry?.location?.lat || null,
-        longitude: place.geometry?.location?.lng || null,
-        website_url: place.website || '',
-        phone: place.formatted_phone_number || ''
+        longitude: place.geometry?.location?.lng || null
       }));
 
       res.json({ results });
