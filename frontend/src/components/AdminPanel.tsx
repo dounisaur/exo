@@ -255,11 +255,11 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         reservation_link: ''
       })
 
+      setShowAddVenueForm(false)
       setTimeout(() => {
         fetchAdminVenues()
         onVenueAdded()
-        setShowAddVenueForm(false)
-      }, 1500)
+      }, 500)
     } catch (error) {
       setMessage('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
     } finally {
@@ -278,6 +278,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         body: JSON.stringify({ status: 'published' })
       })
       if (!response.ok) throw new Error('Failed to publish venue')
+      setShowAddVenueForm(false)
       fetchAdminVenues()
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
@@ -292,6 +293,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         headers: { 'Authorization': `Bearer ${authToken}` }
       })
       if (!response.ok) throw new Error('Failed to delete venue')
+      setShowAddVenueForm(false)
       fetchAdminVenues()
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
