@@ -54,7 +54,12 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
+  const [subcategoryPage, setSubcategoryPage] = useState(1)
   const VENUES_PER_PAGE = 10
+  const SUBCATEGORIES_PER_PAGE = 10
+
+  // Subcategory filter state
+  const [subcategoryFilterId, setSubcategoryFilterId] = useState<number | null>(null)
 
   // View venue state
   const [viewingVenueId, setViewingVenueId] = useState<number | null>(null)
@@ -407,6 +412,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
       setCmsMessage('Subcategory added!')
       setNewSubcategoryName('')
+      setSelectedCategoryForSubcat(null)
+      setShowAddSubcategoryForm(false)
+      setActiveTab('subcategories')
       onCategoriesUpdated()
       setTimeout(() => setCmsMessage(''), 2000)
     } catch (error) {
@@ -453,14 +461,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             onClick={() => setActiveTab('categories')}
           >
             <span className="nav-icon">🏷️</span>
-            <span>Category Management</span>
+            <span>Categories</span>
           </button>
           <button
             className={`admin-nav-item ${activeTab === 'subcategories' ? 'active' : ''}`}
             onClick={() => setActiveTab('subcategories')}
           >
             <span className="nav-icon">✨</span>
-            <span>Sub Category Management</span>
+            <span>Sub Categories</span>
           </button>
         </nav>
       </aside>
@@ -1781,50 +1789,186 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 boxSizing: 'border-box',
                 overflow: 'visible'
               }}>
-                <h3 style={{
-                  margin: '0 0 2rem 0',
-                  fontSize: '1.3rem',
-                  color: '#1f2937',
-                  fontWeight: 600,
+                <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.75rem'
+                  gap: '1rem',
+                  marginBottom: '2rem',
+                  justifyContent: 'space-between'
                 }}>
-                  <span>✨</span> All Subcategories
-                </h3>
-
-                {categories.filter(cat => cat.subcategories.length > 0).length === 0 ? (
-                  <p style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem 0' }}>No subcategories yet. Create your first subcategory!</p>
-                ) : (
-                  <div className="venue-list">
-                    {categories.map(cat =>
-                      cat.subcategories.map(subcat => (
-                        <div key={subcat.id} className="venue-item">
-                          <div className="venue-info">
-                            <div>
-                              <h3>{subcat.name}</h3>
-                              <p className="status-badge">In {cat.name}</p>
-                            </div>
-                          </div>
-                          <div className="venue-actions">
-                            <button
-                              className="btn-edit"
-                              style={{ marginLeft: 0 }}
-                            >
-                              ✏️ Edit
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSubcategory(subcat.id)}
-                              className="btn-delete"
-                            >
-                              🗑️ Delete
-                            </button>
-                          </div>
-                        </div>
-                      ))
-                    )}
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '1.3rem',
+                    color: '#1f2937',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem'
+                  }}>
+                    <span>✨</span> All Subcategories
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <label style={{ fontWeight: 700, color: '#374151', fontSize: '0.9rem' }}>Filter:</label>
+                    <select
+                      value={subcategoryFilterId || ''}
+                      onChange={(e) => {
+                        setSubcategoryFilterId(e.target.value ? parseInt(e.target.value) : null)
+                        setSubcategoryPage(1)
+                      }}
+                      style={{
+                        padding: '0.6rem 0.9rem',
+                        border: '1.5px solid #d1d5db',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontWeight: 500,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
                   </div>
-                )}
+                </div>
+
+                {(() => {
+                  const hasAnySubcategories = categories.filter(cat => cat.subcategories.length > 0).length > 0
+                  const filteredSubcats = subcategoryFilterId
+                    ? categories.find(cat => cat.id === subcategoryFilterId)?.subcategories || []
+                    : categories.flatMap(cat => cat.subcategories)
+
+                  if (!hasAnySubcategories) {
+                    return <p style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem 0' }}>No subcategories yet. Create your first subcategory!</p>
+                  }
+
+                  if (filteredSubcats.length === 0 && subcategoryFilterId) {
+                    return <p style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem 0' }}>No subcategories found for this category.</p>
+                  }
+
+                  return (
+                  <>
+                    <div className="venue-list" style={{ paddingTop: '0.5rem' }}>
+                      {(() => {
+                        // Flatten all subcategories with their category info
+                        let allSubcats = categories.flatMap(cat =>
+                          cat.subcategories.map(subcat => ({ ...subcat, categoryName: cat.name, categoryId: cat.id }))
+                        )
+
+                        // Apply filter if selected
+                        if (subcategoryFilterId) {
+                          allSubcats = allSubcats.filter(subcat => subcat.categoryId === subcategoryFilterId)
+                        }
+
+                        return allSubcats
+                          .slice((subcategoryPage - 1) * SUBCATEGORIES_PER_PAGE, subcategoryPage * SUBCATEGORIES_PER_PAGE)
+                          .map(subcat => (
+                            <div key={subcat.id} className="venue-item">
+                              <div className="venue-info">
+                                <div>
+                                  <h3>{subcat.name}</h3>
+                                  <p className="status-badge">In {subcat.categoryName}</p>
+                                </div>
+                              </div>
+                              <div className="venue-actions">
+                                <button
+                                  className="btn-edit"
+                                  style={{ marginLeft: 0 }}
+                                >
+                                  ✏️ Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSubcategory(subcat.id)}
+                                  className="btn-delete"
+                                >
+                                  🗑️ Delete
+                                </button>
+                              </div>
+                            </div>
+                          ))
+                      })()}
+                    </div>
+
+                    {/* Pagination */}
+                    {(() => {
+                      let allSubcats = categories.flatMap(cat =>
+                        cat.subcategories.map(subcat => ({ ...subcat, categoryName: cat.name, categoryId: cat.id }))
+                      )
+
+                      // Apply filter if selected
+                      if (subcategoryFilterId) {
+                        allSubcats = allSubcats.filter(subcat => subcat.categoryId === subcategoryFilterId)
+                      }
+
+                      const totalPages = Math.ceil(allSubcats.length / SUBCATEGORIES_PER_PAGE)
+                      if (allSubcats.length <= SUBCATEGORIES_PER_PAGE) return null
+
+                      return (
+                        <div style={{
+                          marginTop: '2rem',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          alignItems: 'center'
+                        }}>
+                          <button
+                            onClick={() => setSubcategoryPage(prev => Math.max(1, prev - 1))}
+                            disabled={subcategoryPage === 1}
+                            style={{
+                              padding: '0.6rem 1rem',
+                              background: subcategoryPage === 1 ? '#d1d5db' : '#2a5298',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: subcategoryPage === 1 ? 'not-allowed' : 'pointer',
+                              fontWeight: 600
+                            }}
+                          >
+                            ← Previous
+                          </button>
+
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                            <button
+                              key={page}
+                              onClick={() => setSubcategoryPage(page)}
+                              style={{
+                                padding: '0.6rem 0.8rem',
+                                background: subcategoryPage === page ? '#2a5298' : '#e5e7eb',
+                                color: subcategoryPage === page ? 'white' : '#1f2937',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: subcategoryPage === page ? 600 : 400
+                              }}
+                            >
+                              {page}
+                            </button>
+                          ))}
+
+                          <button
+                            onClick={() => setSubcategoryPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={subcategoryPage === totalPages}
+                            style={{
+                              padding: '0.6rem 1rem',
+                              background: subcategoryPage === totalPages ? '#d1d5db' : '#2a5298',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              cursor: subcategoryPage === totalPages ? 'not-allowed' : 'pointer',
+                              fontWeight: 600
+                            }}
+                          >
+                            Next →
+                          </button>
+                        </div>
+                      )
+                    })()}
+                  </>
+                  )
+                })()}
               </div>
             )}
           </>

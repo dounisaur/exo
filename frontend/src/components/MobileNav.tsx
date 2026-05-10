@@ -92,14 +92,14 @@ export default function MobileNav({ activeTab, onTabChange }: MobileNavProps) {
             onClick={() => handleTabClick('categories')}
           >
             <span className="nav-icon">🏷️</span>
-            <span>Category Management</span>
+            <span>Categories</span>
           </button>
           <button
             className={`admin-nav-item ${activeTab === 'subcategories' ? 'active' : ''}`}
             onClick={() => handleTabClick('subcategories')}
           >
             <span className="nav-icon">✨</span>
-            <span>Sub Category Management</span>
+            <span>Sub Categories</span>
           </button>
         </nav>
       </aside>
