@@ -54,7 +54,7 @@ export function initDb() {
           subcategory_id INTEGER REFERENCES subcategories(id),
           latitude REAL NOT NULL,
           longitude REAL NOT NULL,
-          address TEXT NOT NULL,
+          address TEXT,
           image_url TEXT,
           website_url TEXT,
           phone_number TEXT,

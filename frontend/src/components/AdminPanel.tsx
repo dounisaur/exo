@@ -231,6 +231,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       setMessage('Venue added successfully!')
       setImageFile(null)
       setImagePreview('')
+      setLookupQuery('')
       setFormData({
         name: '',
         category: categories.length > 0 ? categories[0].slug : 'food',
@@ -240,6 +241,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         address: '',
         image_url: '',
         website_url: '',
+        phone_number: '',
         reservation_link: ''
       })
 
@@ -810,7 +812,10 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   })
                   setImageFile(null)
                   setImagePreview('')
+                  setLookupQuery('')
+                  setLookupResults([])
                   setMessage('')
+                  setLookupMessage('')
                 }}
                 className="btn-clear"
                 style={{ flex: 1, padding: '0.95rem 1.5rem', fontSize: '1rem', textAlign: 'center', justifyContent: 'center' }}
