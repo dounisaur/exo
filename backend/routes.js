@@ -322,9 +322,9 @@ export function setupRoutes(app) {
     });
   });
 
-  // Lookup venue from Google Maps URL or search by name (admin)
+  // Search venue by name (admin)
   app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
-    const { type, query } = req.body;
+    const { query } = req.body;
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
     if (!query) {
@@ -336,91 +336,26 @@ export function setupRoutes(app) {
     }
 
     try {
-      let placeId = null;
+      // Use Text Search API to find restaurants by name
+      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&fields=place_id,name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+      const searchResponse = await fetch(textSearchUrl);
+      const searchData = await searchResponse.json();
 
-      // If URL type, extract place_id
-      if (type === 'url') {
-        // Try to extract from long URL first
-        let match = query.match(/1s(ChIJ[^!]+)!/);
-        placeId = match?.[1];
-
-        // If no place_id found, try to follow redirect (for short URLs like maps.app.goo.gl)
-        if (!placeId) {
-          try {
-            const response = await fetch(query, {
-              redirect: 'follow',
-              headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-              }
-            });
-            const fullUrl = response.url;
-            match = fullUrl.match(/1s(ChIJ[^!]+)!/);
-            placeId = match?.[1];
-          } catch (err) {
-            console.error('Error following redirect:', err.message);
-          }
-        }
-
-        if (!placeId) {
-          // Fall back to text search if it looks like a valid URL format
-          if (query.includes('maps')) {
-            return res.json({
-              results: [],
-              message: 'Could not extract place details from this URL. Try using "Search By Name" instead with the business name.'
-            });
-          }
-          return res.json({ results: [] });
-        }
+      if (!searchData.results || searchData.results.length === 0) {
+        return res.json({ results: [] });
       }
 
-      // If search type, use Text Search API to find place_id
-      if (type === 'search' && !placeId) {
-        const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&fields=place_id,name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
-        const searchResponse = await fetch(textSearchUrl);
-        const searchData = await searchResponse.json();
+      // Return all results
+      const results = searchData.results.map(place => ({
+        name: place.name || '',
+        address: place.formatted_address || '',
+        latitude: place.geometry?.location?.lat || null,
+        longitude: place.geometry?.location?.lng || null,
+        website_url: place.website || '',
+        phone: place.formatted_phone_number || ''
+      }));
 
-        if (!searchData.results || searchData.results.length === 0) {
-          return res.json({ results: [] });
-        }
-
-        // Return all results for the search type
-        const results = searchData.results.map(place => ({
-          place_id: place.place_id,
-          name: place.name || '',
-          address: place.formatted_address || '',
-          latitude: place.geometry?.location?.lat || null,
-          longitude: place.geometry?.location?.lng || null,
-          website_url: place.website || '',
-          phone: place.formatted_phone_number || ''
-        }));
-
-        return res.json({ results });
-      }
-
-      // For URL type or if we have a place_id, fetch full details
-      if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
-        const response = await fetch(detailsUrl);
-        const data = await response.json();
-
-        if (!data.result || data.status !== 'OK') {
-          return res.json({ results: [] });
-        }
-
-        const result = data.result;
-        return res.json({
-          results: [{
-            name: result.name || '',
-            address: result.formatted_address || '',
-            latitude: result.geometry?.location?.lat || null,
-            longitude: result.geometry?.location?.lng || null,
-            website_url: result.website || '',
-            phone: result.formatted_phone_number || ''
-          }]
-        });
-      }
-
-      res.json({ results: [] });
+      res.json({ results });
     } catch (error) {
       console.error('Places API error:', error);
       res.json({ results: [] });

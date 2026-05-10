@@ -42,7 +42,6 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   const [showAddSubcategoryForm, setShowAddSubcategoryForm] = useState(false)
 
   // Lookup states
-  const [lookupType, setLookupType] = useState<'search' | 'url'>('search')
   const [lookupQuery, setLookupQuery] = useState('')
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupResults, setLookupResults] = useState<any[]>([])
@@ -96,7 +95,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   const handleLookup = async () => {
     if (!lookupQuery.trim()) {
-      setLookupMessage(`Please enter a ${lookupType === 'url' ? 'Google Maps URL' : 'restaurant name'}`)
+      setLookupMessage('Please enter a restaurant name')
       return
     }
 
@@ -111,7 +110,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ type: lookupType, query: lookupQuery })
+        body: JSON.stringify({ type: 'search', query: lookupQuery })
       })
 
       const data = await response.json()
@@ -119,7 +118,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       if (data.results && data.results.length > 0) {
         setLookupResults(data.results)
       } else {
-        setLookupMessage(data.message || 'No results found')
+        setLookupMessage('No results found')
       }
     } catch (error) {
       setLookupMessage('Error looking up location')
@@ -471,48 +470,16 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 </h3>
 
           <form onSubmit={handleSubmit}>
-            {/* Lookup Section with Radio Buttons */}
+            {/* Lookup Section */}
             <div className="form-group" style={{ backgroundColor: '#f3f4f6', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #e5e7eb' }}>
-              <label style={{ marginBottom: '1rem', display: 'block' }}>🔍 Auto-fill Venue Information (optional)</label>
-
-              {/* Radio Buttons */}
-              <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  <input
-                    type="radio"
-                    name="lookupType"
-                    value="search"
-                    checked={lookupType === 'search'}
-                    onChange={(e) => {
-                      setLookupType('search')
-                      setLookupResults([])
-                      setLookupMessage('')
-                    }}
-                  />
-                  Search By Name
-                </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}>
-                  <input
-                    type="radio"
-                    name="lookupType"
-                    value="url"
-                    checked={lookupType === 'url'}
-                    onChange={(e) => {
-                      setLookupType('url')
-                      setLookupResults([])
-                      setLookupMessage('')
-                    }}
-                  />
-                  Google Maps URL
-                </label>
-              </div>
+              <label style={{ marginBottom: '1rem', display: 'block' }}>🔍 Search Restaurant by Name (optional)</label>
 
               {/* Input and Button */}
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
                   <input
                     type="text"
-                    placeholder={lookupType === 'search' ? 'e.g., Noma, Copenhagen' : 'https://maps.app.goo.gl/... or https://www.google.com/maps/place/...'}
+                    placeholder="e.g., Noma, Copenhagen"
                     value={lookupQuery}
                     onChange={(e) => setLookupQuery(e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box' }}
