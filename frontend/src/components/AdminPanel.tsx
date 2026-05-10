@@ -625,29 +625,81 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
               </div>
             )}
 
-            <div className="form-row">
-              <div className="form-group">
-                <label>Latitude *</label>
-                <input
-                  type="number"
-                  name="latitude"
-                  value={formData.latitude}
-                  onChange={handleChange}
-                  step="0.0001"
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Longitude *</label>
-                <input
-                  type="number"
-                  name="longitude"
-                  value={formData.longitude}
-                  onChange={handleChange}
-                  step="0.0001"
-                  required
-                />
-              </div>
+            {/* Hidden inputs for latitude/longitude - still stored and sent to API */}
+            <input
+              type="hidden"
+              name="latitude"
+              value={formData.latitude}
+            />
+            <input
+              type="hidden"
+              name="longitude"
+              value={formData.longitude}
+            />
+
+            {/* Google Maps Link Display */}
+            <div className="form-group">
+              <label>Location *</label>
+              {formData.latitude && formData.longitude ? (
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#f0f4ff',
+                  border: '1px solid #2a5298',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '1rem'
+                }}>
+                  <div style={{
+                    fontSize: '0.95rem',
+                    color: '#1f2937',
+                    fontWeight: 500
+                  }}>
+                    📍 {formData.address || 'Location set'}
+                  </div>
+                  <a
+                    href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      padding: '0.6rem 1.2rem',
+                      background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      textDecoration: 'none',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 6px 16px rgba(42, 82, 152, 0.3)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
+                    }}
+                  >
+                    View on Maps
+                  </a>
+                </div>
+              ) : (
+                <div style={{
+                  padding: '1rem',
+                  backgroundColor: '#f3f4f6',
+                  border: '1px dashed #d1d5db',
+                  borderRadius: '8px',
+                  color: '#6b7280',
+                  fontSize: '0.95rem',
+                  textAlign: 'center'
+                }}>
+                  Search for a restaurant above to auto-fill location
+                </div>
+              )}
             </div>
 
             <div className="form-group">
