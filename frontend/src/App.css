@@ -435,20 +435,16 @@ main {
   align-items: center;
   gap: 1rem;
   background: white;
-  border-top: 3px solid #2a5298;
-  border-right: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
+  border: 1px solid #e5e7eb;
   border-left: 4px solid #2a5298;
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible;
-  position: relative;
 }
 
 .venue-item:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-top: 3px solid #2a5298;
+  border-top: 1px solid #2a5298;
   border-right: 1px solid #2a5298;
   border-bottom: 1px solid #2a5298;
   border-left: 4px solid #2a5298;
