@@ -703,17 +703,6 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             </div>
 
             <div className="form-group">
-              <label>Address *</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
               <label>Image</label>
               <input type="file" accept="image/*" onChange={handleImageChange} />
               {imagePreview && (

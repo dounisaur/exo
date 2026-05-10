@@ -388,7 +388,7 @@ export function setupRoutes(app) {
   app.post('/api/venues', authenticateToken, (req, res) => {
     const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
 
-    if (!name || !category || latitude === undefined || longitude === undefined || !address) {
+    if (!name || !category || latitude === undefined || longitude === undefined) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -408,6 +408,10 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, (req, res) => {
     const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
+
+    if (!name || !category) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     db.run(
       `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
