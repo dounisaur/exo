@@ -48,6 +48,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   const [lookupResults, setLookupResults] = useState<any[]>([])
   const [lookupMessage, setLookupMessage] = useState('')
 
+  // Edit venue states
+  const [editingVenueId, setEditingVenueId] = useState<number | null>(null)
+
   // Fetch admin venues on mount
   useEffect(() => {
     fetchAdminVenues()
@@ -210,8 +213,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         finalImageUrl = url
       }
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues`, {
-        method: 'POST',
+      const endpoint = editingVenueId
+        ? `${import.meta.env.VITE_API_URL}/api/venues/${editingVenueId}`
+        : `${import.meta.env.VITE_API_URL}/api/venues`;
+
+      const method = editingVenueId ? 'PUT' : 'POST';
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
@@ -222,16 +231,17 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
           latitude: parseFloat(formData.latitude),
           longitude: parseFloat(formData.longitude),
           subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : null,
-          status: 'draft'
+          status: editingVenueId ? venues.find(v => v.id === editingVenueId)?.status : 'draft'
         })
       })
 
-      if (!response.ok) throw new Error('Failed to add venue')
+      if (!response.ok) throw new Error(`Failed to ${editingVenueId ? 'update' : 'add'} venue`)
 
-      setMessage('Venue added successfully!')
+      setMessage(`Venue ${editingVenueId ? 'updated' : 'added'} successfully!`)
       setImageFile(null)
       setImagePreview('')
       setLookupQuery('')
+      setEditingVenueId(null)
       setFormData({
         name: '',
         category: categories.length > 0 ? categories[0].slug : 'food',
@@ -248,6 +258,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       setTimeout(() => {
         fetchAdminVenues()
         onVenueAdded()
+        setShowAddVenueForm(false)
       }, 1500)
     } catch (error) {
       setMessage('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
@@ -286,6 +297,41 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
+  }
+
+  const handlePublish = async (id: number) => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ status: 'published' })
+      })
+      if (!response.ok) throw new Error('Failed to publish venue')
+      fetchAdminVenues()
+    } catch (error) {
+      alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+  }
+
+  const handleEditVenue = (venue: Venue) => {
+    setFormData({
+      name: venue.name,
+      category: venue.category,
+      subcategory_id: venue.subcategory_id ? venue.subcategory_id.toString() : '',
+      latitude: venue.latitude.toString(),
+      longitude: venue.longitude.toString(),
+      address: venue.address || '',
+      image_url: venue.image_url || '',
+      website_url: venue.website_url || '',
+      phone_number: venue.phone_number || '',
+      reservation_link: venue.reservation_link || ''
+    })
+    setEditingVenueId(venue.id)
+    setShowAddVenueForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   // CMS Functions
@@ -515,7 +561,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   color: '#1f2937',
                   fontWeight: 600
                 }}>
-                  Create New Venue
+                  {editingVenueId ? 'Edit Venue' : 'Create New Venue'}
                 </h3>
 
           <form onSubmit={handleSubmit}>
@@ -792,7 +838,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 onMouseEnter={(e) => !loading && (e.currentTarget.style.boxShadow = '0 6px 20px rgba(42, 82, 152, 0.35)', e.currentTarget.style.transform = 'translateY(-2px)')}
                 onMouseLeave={(e) => !loading && (e.currentTarget.style.boxShadow = '0 4px 12px rgba(42, 82, 152, 0.25)', e.currentTarget.style.transform = 'translateY(0)')}
               >
-                {loading ? 'Creating...' : 'Create Venue'}
+                {loading ? (editingVenueId ? 'Updating...' : 'Creating...') : (editingVenueId ? 'Update Venue' : 'Create Venue')}
               </button>
 
               <button
@@ -816,6 +862,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   setLookupResults([])
                   setMessage('')
                   setLookupMessage('')
+                  setEditingVenueId(null)
                 }}
                 className="btn-clear"
                 style={{ flex: 1, padding: '0.95rem 1.5rem', fontSize: '1rem', textAlign: 'center', justifyContent: 'center' }}
@@ -876,7 +923,35 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       </div>
                     </div>
                     <div className="venue-actions">
+                      {venue.status === 'draft' && (
+                        <button
+                          onClick={() => handlePublish(venue.id)}
+                          style={{
+                            padding: '0.6rem 1.2rem',
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)'
+                          }}
+                        >
+                          ✓ Publish
+                        </button>
+                      )}
                       <button
+                        onClick={() => handleEditVenue(venue)}
                         className="btn-edit"
                         style={{ marginLeft: 0 }}
                       >

@@ -451,12 +451,19 @@ main {
   bottom: 0;
   width: 4px;
   background: linear-gradient(180deg, #2a5298 0%, #3a6db5 100%);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .venue-item:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border-color: #2a5298;
+  border: 1px solid #2a5298;
+  border-left: 4px solid #2a5298;
   transform: translateY(-2px);
+}
+
+.venue-item:hover::before {
+  width: 4px;
+  background: linear-gradient(180deg, #2a5298 0%, #3a6db5 100%);
 }
 
 .venue-info {
