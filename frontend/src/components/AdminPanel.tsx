@@ -477,7 +477,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
               {/* Radio Buttons */}
               <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.5rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}>
                   <input
                     type="radio"
                     name="lookupType"
@@ -491,7 +491,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   />
                   Search By Name
                 </label>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap' }}>
                   <input
                     type="radio"
                     name="lookupType"

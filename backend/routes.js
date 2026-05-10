@@ -340,8 +340,22 @@ export function setupRoutes(app) {
 
       // If URL type, extract place_id
       if (type === 'url') {
-        const match = query.match(/1s(ChIJ[^!]+)!/);
+        // Try to extract from long URL first
+        let urlToUse = query;
+        let match = query.match(/1s(ChIJ[^!]+)!/);
         placeId = match?.[1];
+
+        // If no place_id found, try to follow redirect (for short URLs like maps.app.goo.gl)
+        if (!placeId) {
+          try {
+            const response = await fetch(query, { redirect: 'follow' });
+            const fullUrl = response.url;
+            match = fullUrl.match(/1s(ChIJ[^!]+)!/);
+            placeId = match?.[1];
+          } catch (err) {
+            // If redirect fails, return no results
+          }
+        }
 
         if (!placeId) {
           return res.json({ results: [] });
