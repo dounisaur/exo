@@ -659,7 +659,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     📍 {formData.address || 'Location set'}
                   </div>
                   <a
-                    href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+                    href={`https://www.google.com/maps/search/${encodeURIComponent(formData.name)}/@${formData.latitude},${formData.longitude},15z`}
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{
