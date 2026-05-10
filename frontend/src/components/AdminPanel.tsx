@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import type { Venue, Category } from '../types'
+import MobileNav from './MobileNav'
 
 interface AdminPanelProps {
   onVenueAdded: () => void
@@ -54,6 +55,12 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const VENUES_PER_PAGE = 10
+
+  // View venue state
+  const [viewingVenueId, setViewingVenueId] = useState<number | null>(null)
+
+  // Mobile action sheet state
+  const [actionSheetVenueId, setActionSheetVenueId] = useState<number | null>(null)
 
   // Fetch admin venues on mount
   useEffect(() => {
@@ -428,8 +435,11 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   return (
     <div className="admin-layout">
-      {/* Sidebar Navigation */}
-      <aside className="admin-sidebar">
+      {/* Mobile Navigation Component */}
+      <MobileNav activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* Desktop Sidebar (hidden on mobile) */}
+      <aside className="admin-sidebar-desktop">
         <nav className="admin-nav">
           <button
             className={`admin-nav-item ${activeTab === 'venues' ? 'active' : ''}`}
@@ -463,7 +473,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             <h2>Venues Management</h2>
 
             {/* Header with Stats and Add Button */}
-            <div style={{
+            <div className="venue-stats-header" style={{
               display: 'flex',
               gap: '2rem',
               marginBottom: '3rem',
@@ -481,7 +491,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 📊 Venues Overview
               </h3>
 
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
+              <div className="venue-stats-button-container" style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                     <div style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, lineHeight: '1' }}>
@@ -912,51 +922,99 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       </div>
                     </div>
                     <div className="venue-actions">
+                      {/* Desktop buttons (hidden on mobile) */}
+                      <div style={{ display: 'contents' }} className="venue-actions-desktop">
+                        <button
+                          onClick={() => handleEditVenue(venue)}
+                          className="btn-edit"
+                          style={{ marginLeft: 0 }}
+                        >
+                          ✏️ Edit
+                        </button>
+                        <button
+                          onClick={() => setViewingVenueId(venue.id)}
+                          style={{
+                            padding: '0.6rem 1.2rem',
+                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                            color: '#1f2937',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(245, 158, 11, 0.2)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)'
+                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(245, 158, 11, 0.2)'
+                          }}
+                        >
+                          👁️ View
+                        </button>
+                        <button
+                          onClick={() => handlePublish(venue.id, venue.status || 'draft')}
+                          style={{
+                            padding: '0.6rem 1.2rem',
+                            background: venue.status === 'published'
+                              ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+                              : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '0.9rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            boxShadow: venue.status === 'published'
+                              ? '0 2px 8px rgba(107, 114, 128, 0.2)'
+                              : '0 2px 8px rgba(16, 185, 129, 0.2)'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'translateY(-2px)'
+                            e.currentTarget.style.boxShadow = venue.status === 'published'
+                              ? '0 4px 12px rgba(107, 114, 128, 0.3)'
+                              : '0 4px 12px rgba(16, 185, 129, 0.3)'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'translateY(0)'
+                            e.currentTarget.style.boxShadow = venue.status === 'published'
+                              ? '0 2px 8px rgba(107, 114, 128, 0.2)'
+                              : '0 2px 8px rgba(16, 185, 129, 0.2)'
+                          }}
+                        >
+                          {venue.status === 'published' ? '✕ Unpublish' : '✓ Publish'}
+                        </button>
+                        <button
+                          onClick={() => handleDelete(venue.id)}
+                          className="btn-delete"
+                        >
+                          🗑️ Delete
+                        </button>
+                      </div>
+
+                      {/* Mobile action button (shown on mobile) */}
                       <button
-                        onClick={() => handlePublish(venue.id, venue.status || 'draft')}
+                        onClick={() => setActionSheetVenueId(actionSheetVenueId === venue.id ? null : venue.id)}
                         style={{
+                          display: 'none',
                           padding: '0.6rem 1.2rem',
-                          background: venue.status === 'published'
-                            ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
-                            : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
                           fontSize: '0.9rem',
                           fontWeight: 600,
                           cursor: 'pointer',
-                          transition: 'all 0.2s',
-                          boxShadow: venue.status === 'published'
-                            ? '0 2px 8px rgba(107, 114, 128, 0.2)'
-                            : '0 2px 8px rgba(16, 185, 129, 0.2)'
+                          transition: 'all 0.2s'
                         }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateY(-2px)'
-                          e.currentTarget.style.boxShadow = venue.status === 'published'
-                            ? '0 4px 12px rgba(107, 114, 128, 0.3)'
-                            : '0 4px 12px rgba(16, 185, 129, 0.3)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateY(0)'
-                          e.currentTarget.style.boxShadow = venue.status === 'published'
-                            ? '0 2px 8px rgba(107, 114, 128, 0.2)'
-                            : '0 2px 8px rgba(16, 185, 129, 0.2)'
-                        }}
+                        className="venue-actions-mobile"
                       >
-                        {venue.status === 'published' ? '✕ Unpublish' : '✓ Publish'}
-                      </button>
-                      <button
-                        onClick={() => handleEditVenue(venue)}
-                        className="btn-edit"
-                        style={{ marginLeft: 0 }}
-                      >
-                        ✏️ Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(venue.id)}
-                        className="btn-delete"
-                      >
-                        🗑️ Delete
+                        Select
                       </button>
                     </div>
                   </div>
@@ -1025,6 +1083,354 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
               )}
               </>
             )}
+              </div>
+            )}
+
+            {/* Mobile Action Sheet */}
+            {actionSheetVenueId && venues.find(v => v.id === actionSheetVenueId) && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '16px 16px 0 0',
+                  padding: '1.5rem',
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.3)',
+                  animation: 'slideUp 0.3s ease-out'
+                }}>
+                  {(() => {
+                    const venue = venues.find(v => v.id === actionSheetVenueId)
+                    if (!venue) return null
+                    return (
+                      <>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                          <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>{venue.name}</h3>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Status: <strong>{venue.status || 'draft'}</strong></p>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <button
+                            onClick={() => {
+                              handleEditVenue(venue)
+                              setActionSheetVenueId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              setViewingVenueId(venue.id)
+                              setActionSheetVenueId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                              color: '#1f2937',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            👁️ View
+                          </button>
+                          <button
+                            onClick={() => {
+                              handlePublish(venue.id, venue.status || 'draft')
+                              setActionSheetVenueId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: venue.status === 'published'
+                                ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+                                : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            {venue.status === 'published' ? '✕ Unpublish' : '✓ Publish'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleDelete(venue.id)
+                              setActionSheetVenueId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            🗑️ Delete
+                          </button>
+                          <button
+                            onClick={() => setActionSheetVenueId(null)}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: '#e5e7eb',
+                              color: '#1f2937',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              marginTop: '0.75rem'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* View Venue Modal */}
+            {viewingVenueId && venues.find(v => v.id === viewingVenueId) && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '16px',
+                  padding: '2.5rem',
+                  maxWidth: '600px',
+                  width: '90%',
+                  maxHeight: '80vh',
+                  overflow: 'auto',
+                  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+                }}>
+                  {(() => {
+                    const venue = venues.find(v => v.id === viewingVenueId)
+                    if (!venue) return null
+                    return (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '2rem' }}>
+                          <div>
+                            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', color: '#1f2937' }}>{venue.name}</h2>
+                            <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>Status: <strong style={{ color: '#2a5298' }}>{venue.status || 'draft'}</strong></p>
+                          </div>
+                          <button
+                            onClick={() => setViewingVenueId(null)}
+                            style={{
+                              background: '#ef4444',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: '32px',
+                              height: '32px',
+                              fontSize: '1.2rem',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        {venue.image_url && (
+                          <img
+                            src={venue.image_url}
+                            alt={venue.name}
+                            style={{
+                              width: '100%',
+                              height: '250px',
+                              objectFit: 'cover',
+                              borderRadius: '10px',
+                              marginBottom: '2rem'
+                            }}
+                          />
+                        )}
+
+                        <div style={{ display: 'grid', gap: '1.5rem' }}>
+                          <div>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Category</p>
+                            <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>{venue.category}</p>
+                          </div>
+
+                          {venue.subcategory_id && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Subcategory</p>
+                              <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>
+                                {categories.find(c => c.subcategories.some(s => s.id === venue.subcategory_id))?.subcategories.find(s => s.id === venue.subcategory_id)?.name || 'N/A'}
+                              </p>
+                            </div>
+                          )}
+
+                          {venue.address && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Address</p>
+                              <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>📍 {venue.address}</p>
+                            </div>
+                          )}
+
+                          {venue.phone_number && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Phone</p>
+                              <a href={`tel:${venue.phone_number}`} style={{ margin: 0, fontSize: '1rem', color: '#2a5298', textDecoration: 'none', fontWeight: 500 }}>
+                                📞 {venue.phone_number}
+                              </a>
+                            </div>
+                          )}
+
+                          {venue.website_url && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Website</p>
+                              <a href={venue.website_url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '1rem', color: '#2a5298', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all' }}>
+                                🔗 {venue.website_url}
+                              </a>
+                            </div>
+                          )}
+
+                          {venue.reservation_link && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Reservation</p>
+                              <a href={venue.reservation_link} target="_blank" rel="noopener noreferrer" style={{
+                                display: 'inline-block',
+                                padding: '0.6rem 1.2rem',
+                                background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                                color: 'white',
+                                textDecoration: 'none',
+                                borderRadius: '8px',
+                                fontSize: '0.9rem',
+                                fontWeight: 600
+                              }}>
+                                Reserve Now
+                              </a>
+                            </div>
+                          )}
+
+                          <div>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Location</p>
+                            <a
+                              href={`https://www.google.com/maps/search/${encodeURIComponent(venue.name)}/@${venue.latitude},${venue.longitude},15z`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                display: 'inline-block',
+                                padding: '0.6rem 1.2rem',
+                                background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                                color: 'white',
+                                textDecoration: 'none',
+                                borderRadius: '8px',
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
+                                boxShadow: '0 2px 8px rgba(42, 82, 152, 0.2)',
+                                transition: 'all 0.2s',
+                                cursor: 'pointer'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = 'translateY(-2px)'
+                                e.currentTarget.style.boxShadow = '0 4px 12px rgba(42, 82, 152, 0.3)'
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = 'translateY(0)'
+                                e.currentTarget.style.boxShadow = '0 2px 8px rgba(42, 82, 152, 0.2)'
+                              }}
+                            >
+                              🗺️ View on Maps
+                            </a>
+                          </div>
+
+                          {venue.created_at && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Created</p>
+                              <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
+                                {new Date(venue.created_at).toLocaleDateString()} {new Date(venue.created_at).toLocaleTimeString()}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
+                          <button
+                            onClick={() => {
+                              setViewingVenueId(null)
+                              handleEditVenue(venue)
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: '0.8rem 1.5rem',
+                              background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => setViewingVenueId(null)}
+                            style={{
+                              flex: 1,
+                              padding: '0.8rem 1.5rem',
+                              background: '#e5e7eb',
+                              color: '#1f2937',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Close
+                          </button>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </div>
               </div>
             )}
           </>

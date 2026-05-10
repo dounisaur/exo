@@ -245,6 +245,7 @@ main {
 }
 
 .admin-sidebar {
+  display: none;
   width: 280px;
   background: white;
   border-right: 1px solid #e5e7eb;
@@ -252,6 +253,28 @@ main {
   padding: 1.5rem 0;
   overflow-y: auto;
   flex-shrink: 0;
+  position: static;
+  transform: none;
+  height: auto;
+  transition: none;
+}
+
+.admin-sidebar-desktop {
+  width: 280px;
+  background: white;
+  border-right: 1px solid #e5e7eb;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.04);
+  padding: 1.5rem 0;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.admin-hamburger {
+  display: none;
+}
+
+.admin-menu-overlay {
+  display: none;
 }
 
 .admin-nav {
@@ -1004,6 +1027,17 @@ main {
   }
 }
 
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 768px) {
   .venue-item {
     flex-wrap: wrap;
@@ -1014,9 +1048,133 @@ main {
     height: 60px;
   }
 
+  /* Hide desktop sidebar on mobile */
+  .admin-sidebar-desktop {
+    display: none !important;
+  }
+
+  /* Show hamburger button on mobile */
+  .admin-hamburger {
+    display: block !important;
+  }
+
+  /* Show menu overlay on mobile */
+  .admin-menu-overlay {
+    display: block !important;
+  }
+
+  /* Show and position sidebar on mobile */
+  .admin-sidebar {
+    display: block !important;
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    height: 100vh !important;
+    width: 280px !important;
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 998 !important;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1) !important;
+    padding: 0 !important;
+    overflow-y: auto !important;
+  }
+
+  /* Show sidebar when open */
+  .admin-sidebar.open {
+    transform: translateX(0) !important;
+  }
+
+  .admin-sidebar .admin-nav {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+    padding: 5rem 1rem 1rem 1rem !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+  }
+
+  .admin-sidebar .admin-nav-item {
+    white-space: normal !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Hide desktop buttons on mobile */
+  .venue-actions-desktop {
+    display: none !important;
+  }
+
+  /* Show mobile action button */
+  .venue-actions-mobile {
+    display: block !important;
+  }
+
   .venue-actions button {
     padding: 0.45rem 0.6rem;
     font-size: 0.7rem;
+  }
+
+  /* Venue stats header responsive */
+  .venue-stats-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 1.5rem 1.25rem !important;
+  }
+
+  .venue-stats-header h3 {
+    margin-bottom: 1rem !important;
+  }
+
+  .venue-stats-button-container {
+    flex-direction: column !important;
+    margin-left: 0 !important;
+    align-items: stretch !important;
+    gap: 1rem !important;
+  }
+
+  .venue-stats-button-container > div {
+    align-self: center !important;
+  }
+
+  .venue-stats-button-container > button {
+    width: 100% !important;
+    margin-left: 0 !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .admin-content {
+    padding: 4.5rem 0 1.5rem 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .admin-content > h2 {
+    margin-top: -4rem !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 2rem !important;
+    display: block !important;
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  .admin-content > div {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .venue-stats-header {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+  }
+
+  .admin-content > div[style*="background: white"] {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
   }
 }
 
@@ -1096,30 +1254,42 @@ main {
   /* Admin Layout Responsive */
   .admin-layout {
     flex-direction: column;
+    position: relative;
   }
 
+  /* Menu overlay on mobile */
+  .admin-menu-overlay {
+    display: block !important;
+  }
+
+  /* Transform sidebar to slide in from left */
   .admin-sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #e5e7eb;
-    padding: 1rem 0;
-    max-height: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    transform: translateX(-100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 998;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
   }
 
   .admin-nav {
-    flex-direction: row;
+    flex-direction: column;
     gap: 0.5rem;
-    padding: 0 1rem;
-    overflow-x: auto;
+    padding: 5rem 1rem 1rem 1rem;
+    max-height: 100vh;
+    overflow-y: auto;
   }
 
   .admin-nav-item {
-    white-space: nowrap;
+    white-space: normal;
     flex-shrink: 0;
   }
 
   .admin-content {
-    padding: 1.5rem;
+    padding: 4.5rem 1.5rem 1.5rem 1.5rem;
   }
 
   .admin-content h2 {
