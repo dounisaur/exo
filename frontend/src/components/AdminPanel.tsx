@@ -67,7 +67,6 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   // Mobile action sheet state
   const [actionSheetVenueId, setActionSheetVenueId] = useState<number | null>(null)
-  const [actionSheetSubcategoryId, setActionSheetSubcategoryId] = useState<number | null>(null)
 
   // Fetch admin venues on mount
   useEffect(() => {
@@ -1896,35 +1895,17 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                                 </div>
                               </div>
                               <div className="venue-actions">
-                                <div className="venue-actions-desktop">
-                                  <button
-                                    className="btn-edit"
-                                    style={{ marginLeft: 0 }}
-                                  >
-                                    ✏️ Edit
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteSubcategory(subcat.id)}
-                                    className="btn-delete"
-                                  >
-                                    🗑️ Delete
-                                  </button>
-                                </div>
                                 <button
-                                  className="venue-actions-mobile"
-                                  onClick={() => setActionSheetSubcategoryId(subcat.id)}
-                                  style={{
-                                    background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '8px',
-                                    padding: '0.6rem 0.8rem',
-                                    cursor: 'pointer',
-                                    fontSize: '1.2rem',
-                                    display: 'none'
-                                  }}
+                                  className="btn-edit"
+                                  style={{ marginLeft: 0 }}
                                 >
-                                  ⋮
+                                  ✏️ Edit
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSubcategory(subcat.id)}
+                                  className="btn-delete"
+                                >
+                                  🗑️ Delete
                                 </button>
                               </div>
                             </div>
@@ -2103,102 +2084,6 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       Cancel
                     </button>
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Subcategory Action Sheet */}
-            {actionSheetSubcategoryId && categories.flatMap(c => c.subcategories).find(s => s.id === actionSheetSubcategoryId) && (
-              <div style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: 'rgba(0, 0, 0, 0.5)',
-                display: 'flex',
-                alignItems: 'flex-end',
-                justifyContent: 'center',
-                zIndex: 1000
-              }}>
-                <div style={{
-                  background: 'white',
-                  borderRadius: '16px 16px 0 0',
-                  padding: '1.5rem',
-                  width: '100%',
-                  maxWidth: '100%',
-                  boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.3)',
-                  animation: 'slideUp 0.3s ease-out'
-                }}>
-                  {(() => {
-                    const subcat = categories.flatMap(c => c.subcategories).find(s => s.id === actionSheetSubcategoryId)
-                    const categoryName = categories.find(c => c.subcategories.some(s => s.id === actionSheetSubcategoryId))?.name
-                    if (!subcat) return null
-                    return (
-                      <>
-                        <div style={{ marginBottom: '1.5rem' }}>
-                          <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>{subcat.name}</h3>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>In {categoryName}</p>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                          <button
-                            onClick={() => {
-                              setActionSheetSubcategoryId(null)
-                            }}
-                            style={{
-                              padding: '0.95rem 1.5rem',
-                              background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '0.95rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => {
-                              handleDeleteSubcategory(subcat.id)
-                              setActionSheetSubcategoryId(null)
-                            }}
-                            style={{
-                              padding: '0.95rem 1.5rem',
-                              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '0.95rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            🗑️ Delete
-                          </button>
-                          <button
-                            onClick={() => setActionSheetSubcategoryId(null)}
-                            style={{
-                              padding: '0.95rem 1.5rem',
-                              background: '#e5e7eb',
-                              color: '#1f2937',
-                              border: 'none',
-                              borderRadius: '10px',
-                              fontSize: '0.95rem',
-                              fontWeight: 600,
-                              cursor: 'pointer',
-                              marginTop: '0.75rem'
-                            }}
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </>
-                    )
-                  })()}
                 </div>
               </div>
             )}
