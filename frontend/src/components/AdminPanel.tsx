@@ -1449,7 +1449,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             <h2>Category Management</h2>
 
             {/* Header with Stats and Add Button */}
-            <div style={{
+            <div className="venue-stats-header" style={{
               display: 'flex',
               gap: '2rem',
               marginBottom: '3rem',
@@ -1467,7 +1467,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 📊 Categories Overview
               </h3>
 
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
+              <div className="venue-stats-button-container" style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                   <div style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, lineHeight: '1' }}>
                     {categories.length}
@@ -1636,7 +1636,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             <h2>Sub Category Management</h2>
 
             {/* Header with Stats and Add Button */}
-            <div style={{
+            <div className="venue-stats-header" style={{
               display: 'flex',
               gap: '2rem',
               marginBottom: '3rem',
@@ -1654,7 +1654,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 📊 Subcategories Overview
               </h3>
 
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
+              <div className="venue-stats-button-container" style={{ display: 'flex', gap: '2rem', alignItems: 'center', marginLeft: 'auto' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
                   <div style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, lineHeight: '1' }}>
                     {categories.reduce((total, cat) => total + cat.subcategories.length, 0)}
