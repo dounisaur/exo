@@ -322,6 +322,53 @@ export function setupRoutes(app) {
     });
   });
 
+  // Lookup venue from Google Maps URL (admin)
+  app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
+    const { url } = req.body;
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL required' });
+    }
+
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
+    try {
+      // Extract place_id from Google Maps URL
+      const match = url.match(/1s(ChIJ[^!]+)!/);
+      let placeId = match?.[1];
+
+      if (!placeId) {
+        return res.json({ found: false });
+      }
+
+      // Call Google Places Details API
+      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+      const response = await fetch(detailsUrl);
+      const data = await response.json();
+
+      if (!data.result || data.status !== 'OK') {
+        return res.json({ found: false });
+      }
+
+      const result = data.result;
+      res.json({
+        found: true,
+        name: result.name || '',
+        address: result.formatted_address || '',
+        latitude: result.geometry?.location?.lat || null,
+        longitude: result.geometry?.location?.lng || null,
+        website_url: result.website || '',
+        phone: result.formatted_phone_number || ''
+      });
+    } catch (error) {
+      console.error('Places API error:', error);
+      res.json({ found: false });
+    }
+  });
+
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, (req, res) => {
     const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;

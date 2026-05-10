@@ -41,6 +41,11 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
   const [showAddSubcategoryForm, setShowAddSubcategoryForm] = useState(false)
 
+  // Lookup states
+  const [mapsUrl, setMapsUrl] = useState('')
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupMessage, setLookupMessage] = useState('')
+
   // Fetch admin venues on mount
   useEffect(() => {
     fetchAdminVenues()
@@ -85,6 +90,48 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     const file = e.target.files?.[0] ?? null
     setImageFile(file)
     setImagePreview(file ? URL.createObjectURL(file) : '')
+  }
+
+  const handleLookup = async () => {
+    if (!mapsUrl.trim()) {
+      setLookupMessage('Please enter a Google Maps URL')
+      return
+    }
+
+    setLookupLoading(true)
+    setLookupMessage('')
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/lookup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ url: mapsUrl })
+      })
+
+      const data = await response.json()
+
+      if (data.found) {
+        setFormData(prev => ({
+          ...prev,
+          name: data.name || prev.name,
+          address: data.address || prev.address,
+          latitude: data.latitude || prev.latitude,
+          longitude: data.longitude || prev.longitude,
+          website_url: data.website_url || prev.website_url
+        }))
+        setLookupMessage(`✅ Found: "${data.name}"`)
+      } else {
+        setLookupMessage('No information set yet')
+      }
+    } catch (error) {
+      setLookupMessage('Error looking up location')
+      console.error('Lookup error:', error)
+    } finally {
+      setLookupLoading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -414,6 +461,54 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 </h3>
 
           <form onSubmit={handleSubmit}>
+            {/* Google Maps Lookup Section */}
+            <div className="form-group" style={{ backgroundColor: '#f3f4f6', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #e5e7eb' }}>
+              <label style={{ marginBottom: '1rem' }}>🔍 Paste Google Maps URL (optional)</label>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1 }}>
+                  <input
+                    type="text"
+                    placeholder="https://maps.app.goo.gl/... or https://www.google.com/maps/place/..."
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    style={{ width: '100%', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleLookup}
+                  disabled={lookupLoading}
+                  style={{
+                    background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                    color: 'white',
+                    padding: '0.9rem 1.75rem',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '0.95rem',
+                    fontWeight: 700,
+                    cursor: lookupLoading ? 'not-allowed' : 'pointer',
+                    opacity: lookupLoading ? 0.6 : 1,
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  {lookupLoading ? 'Looking up...' : 'Lookup'}
+                </button>
+              </div>
+              {lookupMessage && (
+                <p style={{
+                  marginTop: '1rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem',
+                  backgroundColor: lookupMessage.includes('No information') ? '#fef2f2' : '#ecfdf5',
+                  color: lookupMessage.includes('No information') ? '#dc2626' : '#059669',
+                  border: `1px solid ${lookupMessage.includes('No information') ? '#fee2e2' : '#d1fae5'}`
+                }}>
+                  {lookupMessage}
+                </p>
+              )}
+            </div>
+
             <div className="form-group">
               <label>Venue Name *</label>
               <input
