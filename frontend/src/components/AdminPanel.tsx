@@ -17,7 +17,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     subcategory_id: '',
     latitude: '',
     longitude: '',
-    address: '',
+    address: '', // Hidden, auto-filled from search
     image_url: '',
     website_url: '',
     phone_number: '',
@@ -149,8 +149,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             ...prev,
             name: fullResult.name || prev.name,
             address: fullResult.address || prev.address,
-            latitude: fullResult.latitude || prev.latitude,
-            longitude: fullResult.longitude || prev.longitude,
+            latitude: String(fullResult.latitude || prev.latitude),
+            longitude: String(fullResult.longitude || prev.longitude),
             website_url: fullResult.website_url || prev.website_url,
             phone_number: fullResult.phone || prev.phone_number
           }))
@@ -164,8 +164,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         ...prev,
         name: result.name || prev.name,
         address: result.address || prev.address,
-        latitude: result.latitude || prev.latitude,
-        longitude: result.longitude || prev.longitude,
+        latitude: String(result.latitude || prev.latitude),
+        longitude: String(result.longitude || prev.longitude),
         website_url: result.website_url || prev.website_url,
         phone_number: result.phone || prev.phone_number
       }))

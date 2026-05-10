@@ -395,7 +395,7 @@ export function setupRoutes(app) {
     db.run(
       `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, phone_number || null, reservation_link],
+      [name, category, subcategory_id || null, latitude, longitude, address || '', image_url, website_url || null, phone_number || null, reservation_link],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
@@ -416,7 +416,7 @@ export function setupRoutes(app) {
     db.run(
       `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, phone_number || null, reservation_link, req.params.id],
+      [name, category, subcategory_id || null, latitude, longitude, address || '', image_url, website_url || null, phone_number || null, reservation_link, req.params.id],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
