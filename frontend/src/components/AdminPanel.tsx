@@ -51,6 +51,10 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   // Edit venue states
   const [editingVenueId, setEditingVenueId] = useState<number | null>(null)
 
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const VENUES_PER_PAGE = 10
+
   // Fetch admin venues on mount
   useEffect(() => {
     fetchAdminVenues()
@@ -889,8 +893,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
             ) : venues.length === 0 ? (
               <p style={{ textAlign: 'center', color: '#9ca3af', padding: '2rem 0' }}>No venues yet. Create your first venue!</p>
             ) : (
+              <>
               <div className="venue-list">
-                {venues.map(venue => (
+                {venues.slice((currentPage - 1) * VENUES_PER_PAGE, currentPage * VENUES_PER_PAGE).map(venue => (
                   <div key={venue.id} className="venue-item">
                     <div className="venue-info">
                       {venue.image_url && (
@@ -957,6 +962,68 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   </div>
                 ))}
               </div>
+
+              {/* Pagination */}
+              {venues.length > VENUES_PER_PAGE && (
+                <div style={{
+                  marginTop: '2rem',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  alignItems: 'center'
+                }}>
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    style={{
+                      padding: '0.6rem 1rem',
+                      background: currentPage === 1 ? '#d1d5db' : '#2a5298',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    ← Previous
+                  </button>
+
+                  {Array.from({ length: Math.ceil(venues.length / VENUES_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      style={{
+                        padding: '0.6rem 0.8rem',
+                        background: currentPage === page ? '#2a5298' : '#e5e7eb',
+                        color: currentPage === page ? 'white' : '#1f2937',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: currentPage === page ? 600 : 400
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(Math.ceil(venues.length / VENUES_PER_PAGE), prev + 1))}
+                    disabled={currentPage === Math.ceil(venues.length / VENUES_PER_PAGE)}
+                    style={{
+                      padding: '0.6rem 1rem',
+                      background: currentPage === Math.ceil(venues.length / VENUES_PER_PAGE) ? '#d1d5db' : '#2a5298',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: currentPage === Math.ceil(venues.length / VENUES_PER_PAGE) ? 'not-allowed' : 'pointer',
+                      fontWeight: 600
+                    }}
+                  >
+                    Next →
+                  </button>
+                </div>
+              )}
+              </>
             )}
               </div>
             )}
