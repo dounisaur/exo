@@ -267,7 +267,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     }
   }
 
-  const handlePublish = async (id: number) => {
+  const handlePublish = async (id: number, currentStatus: string) => {
+    const newStatus = currentStatus === 'published' ? 'draft' : 'published'
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${id}/status`, {
         method: 'PATCH',
@@ -275,10 +276,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ status: 'published' })
+        body: JSON.stringify({ status: newStatus })
       })
-      if (!response.ok) throw new Error('Failed to publish venue')
-      setShowAddVenueForm(false)
+      if (!response.ok) throw new Error(`Failed to ${newStatus === 'published' ? 'publish' : 'unpublish'} venue`)
       fetchAdminVenues()
     } catch (error) {
       alert('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
@@ -907,33 +907,39 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       </div>
                     </div>
                     <div className="venue-actions">
-                      {venue.status === 'draft' && (
-                        <button
-                          onClick={() => handlePublish(venue.id)}
-                          style={{
-                            padding: '0.6rem 1.2rem',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)'
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'translateY(-2px)'
-                            e.currentTarget.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.3)'
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'translateY(0)'
-                            e.currentTarget.style.boxShadow = '0 2px 8px rgba(16, 185, 129, 0.2)'
-                          }}
-                        >
-                          ✓ Publish
-                        </button>
-                      )}
+                      <button
+                        onClick={() => handlePublish(venue.id, venue.status || 'draft')}
+                        style={{
+                          padding: '0.6rem 1.2rem',
+                          background: venue.status === 'published'
+                            ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+                            : 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          boxShadow: venue.status === 'published'
+                            ? '0 2px 8px rgba(107, 114, 128, 0.2)'
+                            : '0 2px 8px rgba(16, 185, 129, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)'
+                          e.currentTarget.style.boxShadow = venue.status === 'published'
+                            ? '0 4px 12px rgba(107, 114, 128, 0.3)'
+                            : '0 4px 12px rgba(16, 185, 129, 0.3)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)'
+                          e.currentTarget.style.boxShadow = venue.status === 'published'
+                            ? '0 2px 8px rgba(107, 114, 128, 0.2)'
+                            : '0 2px 8px rgba(16, 185, 129, 0.2)'
+                        }}
+                      >
+                        {venue.status === 'published' ? '✕ Unpublish' : '✓ Publish'}
+                      </button>
                       <button
                         onClick={() => handleEditVenue(venue)}
                         className="btn-edit"
