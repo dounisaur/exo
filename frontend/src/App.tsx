@@ -3,7 +3,7 @@ import './App.css'
 import Map from './components/Map'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
-import type { Venue } from './types'
+import type { Venue, Category, User } from './types'
 
 function App() {
   const [page, setPage] = useState<'home' | 'admin'>('home')
@@ -12,6 +12,16 @@ function App() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
   const [loading, setLoading] = useState(false)
+
+  // Auth states
+  const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
+  const [loginUsername, setLoginUsername] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [loginError, setLoginError] = useState('')
+
+  // Categories
+  const [categories, setCategories] = useState<Category[]>([])
 
   // Get user location on mount
   useEffect(() => {
@@ -23,11 +33,85 @@ function App() {
         })
       }, (error) => {
         console.log('Location access denied:', error)
-        // Default to a location if denied
         setUserLocation({ lat: 40.7128, lng: -74.0060 }) // NYC
       })
     }
   }, [])
+
+  // Fetch categories on mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
+        const data = await response.json()
+        setCategories(data)
+      } catch (error) {
+        console.error('Error fetching categories:', error)
+      }
+    }
+    fetchCategories()
+  }, [])
+
+  // Verify auth token on mount
+  useEffect(() => {
+    if (authToken) {
+      verifyAuth()
+    }
+  }, [authToken])
+
+  const verifyAuth = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (response.ok) {
+        const user = await response.json()
+        setCurrentUser(user)
+      } else {
+        setAuthToken(null)
+        localStorage.removeItem('authToken')
+      }
+    } catch (error) {
+      console.error('Error verifying auth:', error)
+      setAuthToken(null)
+      localStorage.removeItem('authToken')
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginError('')
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: loginUsername, password: loginPassword })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        setLoginError(error.error || 'Login failed')
+        return
+      }
+
+      const { token, user } = await response.json()
+      setAuthToken(token)
+      setCurrentUser(user)
+      localStorage.setItem('authToken', token)
+      setLoginUsername('')
+      setLoginPassword('')
+    } catch (error) {
+      setLoginError('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
+    }
+  }
+
+  const handleLogout = () => {
+    setAuthToken(null)
+    setCurrentUser(null)
+    localStorage.removeItem('authToken')
+    setPage('home')
+  }
 
   // Fetch venues
   const fetchVenues = async () => {
@@ -68,20 +152,57 @@ function App() {
         <h1>🌍 EXO</h1>
         <nav>
           <button onClick={() => setPage('home')} className={page === 'home' ? 'active' : ''}>Home</button>
-          <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Admin</button>
+          {authToken && (
+            <>
+              <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Admin</button>
+              <span style={{ marginLeft: 'auto', color: '#666' }}>
+                {currentUser?.username} &nbsp;
+                <button onClick={handleLogout} style={{ padding: '0.25rem 0.75rem', marginLeft: '0.5rem' }}>Logout</button>
+              </span>
+            </>
+          )}
         </nav>
       </header>
 
       <main>
-        {page === 'home' ? (
+        {!authToken ? (
+          // Login form
+          <div className="login-container">
+            <form onSubmit={handleLogin} className="login-form">
+              <h2>Admin Login</h2>
+              {loginError && <p className="error">{loginError}</p>}
+              <div className="form-group">
+                <label>Username</label>
+                <input
+                  type="text"
+                  value={loginUsername}
+                  onChange={(e) => setLoginUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Password</label>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <button type="submit">Login</button>
+              <p style={{ textAlign: 'center', marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
+                Demo: username=<strong>admin</strong>, password=<strong>admin123</strong>
+              </p>
+            </form>
+          </div>
+        ) : page === 'home' ? (
           <div className="home">
             <div className="filters">
               <select value={category} onChange={(e) => setCategory(e.target.value)}>
                 <option value="">All Categories</option>
-                <option value="food">Food</option>
-                <option value="bar">Bar</option>
-                <option value="concert">Concert</option>
-                <option value="cafe">Cafe</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                ))}
               </select>
               {loading && <p>Loading...</p>}
             </div>
@@ -92,7 +213,23 @@ function App() {
             </div>
           </div>
         ) : (
-          <AdminPanel onVenueAdded={handleVenueAdded} />
+          <AdminPanel
+            onVenueAdded={handleVenueAdded}
+            authToken={authToken}
+            categories={categories}
+            onCategoriesUpdated={() => {
+              const fetchUpdatedCategories = async () => {
+                try {
+                  const response = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
+                  const data = await response.json()
+                  setCategories(data)
+                } catch (error) {
+                  console.error('Error fetching categories:', error)
+                }
+              }
+              fetchUpdatedCategories()
+            }}
+          />
         )}
       </main>
     </div>

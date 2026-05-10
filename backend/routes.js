@@ -1,12 +1,289 @@
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
+import { authenticateToken, JWT_SECRET } from './server.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Multer storage configuration
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, 'uploads'),
+  filename: (_req, file, cb) => {
+    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
+    cb(null, `${unique}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  fileFilter: (_req, file, cb) => {
+    cb(null, file.mimetype.startsWith('image/'));
+  }
+});
 
 export function setupRoutes(app) {
   const db = getDb();
 
-  // Get all venues with optional filters
+  // ===== AUTH ENDPOINTS =====
+
+  // Login endpoint
+  app.post('/api/auth/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+      res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
+    });
+  });
+
+  // Register endpoint (admin only)
+  app.post('/api/auth/register', authenticateToken, (req, res) => {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Only admins can register users' });
+    }
+
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password required' });
+    }
+
+    const passwordHash = bcrypt.hashSync(password, 10);
+    db.run(
+      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+      [username, passwordHash, 'admin'],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'Username already exists' });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, username });
+      }
+    );
+  });
+
+  // Get current user
+  app.get('/api/auth/me', authenticateToken, (req, res) => {
+    db.get('SELECT id, username, role FROM users WHERE id = ?', [req.user.id], (err, user) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(user);
+    });
+  });
+
+  // ===== CATEGORY ENDPOINTS =====
+
+  // Get all categories with subcategories (public)
+  app.get('/api/categories', (req, res) => {
+    db.all('SELECT * FROM categories ORDER BY name', [], (err, categories) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (!categories.length) {
+        return res.json([]);
+      }
+
+      // Fetch subcategories for each category
+      let processed = 0;
+      const result = categories.map(cat => ({ ...cat, subcategories: [] }));
+
+      categories.forEach((cat, idx) => {
+        db.all(
+          'SELECT * FROM subcategories WHERE category_id = ? ORDER BY name',
+          [cat.id],
+          (err, subcats) => {
+            if (!err && subcats) {
+              result[idx].subcategories = subcats;
+            }
+            processed++;
+            if (processed === categories.length) {
+              res.json(result);
+            }
+          }
+        );
+      });
+    });
+  });
+
+  // Create category (admin)
+  app.post('/api/categories', authenticateToken, (req, res) => {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name required' });
+    }
+
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+
+    db.run(
+      'INSERT INTO categories (name, slug) VALUES (?, ?)',
+      [name, slug],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'Category already exists' });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, name, slug, subcategories: [] });
+      }
+    );
+  });
+
+  // Update category (admin)
+  app.put('/api/categories/:id', authenticateToken, (req, res) => {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name required' });
+    }
+
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+
+    db.run(
+      'UPDATE categories SET name = ?, slug = ? WHERE id = ?',
+      [name, slug, req.params.id],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'Category name already exists' });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Category not found' });
+        }
+        res.json({ id: req.params.id, name, slug });
+      }
+    );
+  });
+
+  // Delete category (admin)
+  app.delete('/api/categories/:id', authenticateToken, (req, res) => {
+    db.run('DELETE FROM categories WHERE id = ?', [req.params.id], function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Category not found' });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // ===== SUBCATEGORY ENDPOINTS =====
+
+  // Create subcategory (admin)
+  app.post('/api/categories/:id/subcategories', authenticateToken, (req, res) => {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name required' });
+    }
+
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+
+    db.run(
+      'INSERT INTO subcategories (category_id, name, slug) VALUES (?, ?, ?)',
+      [req.params.id, name, slug],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'Subcategory already exists for this category' });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        res.status(201).json({ id: this.lastID, category_id: parseInt(req.params.id), name, slug });
+      }
+    );
+  });
+
+  // Update subcategory (admin)
+  app.put('/api/subcategories/:id', authenticateToken, (req, res) => {
+    const { name } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Name required' });
+    }
+
+    const slug = name.toLowerCase().replace(/\s+/g, '-');
+
+    db.run(
+      'UPDATE subcategories SET name = ?, slug = ? WHERE id = ?',
+      [name, slug, req.params.id],
+      function(err) {
+        if (err) {
+          if (err.message.includes('UNIQUE')) {
+            return res.status(400).json({ error: 'Subcategory name already exists for this category' });
+          }
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Subcategory not found' });
+        }
+        res.json({ id: req.params.id, name, slug });
+      }
+    );
+  });
+
+  // Delete subcategory (admin)
+  app.delete('/api/subcategories/:id', authenticateToken, (req, res) => {
+    db.run('DELETE FROM subcategories WHERE id = ?', [req.params.id], function(err) {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Subcategory not found' });
+      }
+      res.json({ success: true });
+    });
+  });
+
+  // ===== VENUE ENDPOINTS =====
+
+  // Upload image endpoint
+  app.post('/api/upload', upload.single('image'), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const url = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    res.json({ url });
+  });
+
+  // Get all venues for admin (all statuses)
+  app.get('/api/admin/venues', authenticateToken, (req, res) => {
+    db.all('SELECT * FROM venues ORDER BY created_at DESC', [], (err, rows) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(rows);
+    });
+  });
+
+  // Get published venues with optional filters (public API)
   app.get('/api/venues', (req, res) => {
     const { category, lat, lng, radius = 50 } = req.query;
-    let query = 'SELECT * FROM venues WHERE 1=1';
+    let query = "SELECT * FROM venues WHERE status = 'published'";
     const params = [];
 
     if (category) {
@@ -18,7 +295,7 @@ export function setupRoutes(app) {
       // Simple distance calculation (in km)
       const radiusKm = radius / 1000;
       query += ` AND (
-        (latitude - ?) * (latitude - ?) + 
+        (latitude - ?) * (latitude - ?) +
         (longitude - ?) * (longitude - ?)
       ) < (? * ?)`;
       params.push(lat, lat, lng, lng, radiusKm, radiusKm);
@@ -26,8 +303,7 @@ export function setupRoutes(app) {
 
     db.all(query, params, (err, rows) => {
       if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+        return res.status(500).json({ error: err.message });
       }
       res.json(rows);
     });
@@ -37,34 +313,30 @@ export function setupRoutes(app) {
   app.get('/api/venues/:id', (req, res) => {
     db.get('SELECT * FROM venues WHERE id = ?', [req.params.id], (err, row) => {
       if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+        return res.status(500).json({ error: err.message });
       }
       if (!row) {
-        res.status(404).json({ error: 'Venue not found' });
-        return;
+        return res.status(404).json({ error: 'Venue not found' });
       }
       res.json(row);
     });
   });
 
   // Create venue (admin)
-  app.post('/api/venues', (req, res) => {
-    const { name, category, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
+  app.post('/api/venues', authenticateToken, (req, res) => {
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
 
     if (!name || !category || latitude === undefined || longitude === undefined || !address) {
-      res.status(400).json({ error: 'Missing required fields' });
-      return;
+      return res.status(400).json({ error: 'Missing required fields' });
     }
 
     db.run(
-      `INSERT INTO venues (name, category, latitude, longitude, address, image_url, website_url, reservation_link)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, latitude, longitude, address, image_url, website_url, reservation_link],
+      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, reservation_link],
       function(err) {
         if (err) {
-          res.status(500).json({ error: err.message });
-          return;
+          return res.status(500).json({ error: err.message });
         }
         res.status(201).json({ id: this.lastID });
       }
@@ -72,21 +344,19 @@ export function setupRoutes(app) {
   });
 
   // Update venue (admin)
-  app.put('/api/venues/:id', (req, res) => {
-    const { name, category, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
+  app.put('/api/venues/:id', authenticateToken, (req, res) => {
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
 
     db.run(
-      `UPDATE venues SET name=?, category=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
+      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, latitude, longitude, address, image_url, website_url, reservation_link, req.params.id],
+      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, reservation_link, req.params.id],
       function(err) {
         if (err) {
-          res.status(500).json({ error: err.message });
-          return;
+          return res.status(500).json({ error: err.message });
         }
         if (this.changes === 0) {
-          res.status(404).json({ error: 'Venue not found' });
-          return;
+          return res.status(404).json({ error: 'Venue not found' });
         }
         res.json({ id: req.params.id });
       }
@@ -94,17 +364,36 @@ export function setupRoutes(app) {
   });
 
   // Delete venue (admin)
-  app.delete('/api/venues/:id', (req, res) => {
+  app.delete('/api/venues/:id', authenticateToken, (req, res) => {
     db.run('DELETE FROM venues WHERE id = ?', [req.params.id], function(err) {
       if (err) {
-        res.status(500).json({ error: err.message });
-        return;
+        return res.status(500).json({ error: err.message });
       }
       if (this.changes === 0) {
-        res.status(404).json({ error: 'Venue not found' });
-        return;
+        return res.status(404).json({ error: 'Venue not found' });
       }
       res.json({ success: true });
     });
+  });
+
+  // Update venue status (admin)
+  app.patch('/api/venues/:id/status', authenticateToken, (req, res) => {
+    const { status } = req.body;
+    if (!['published', 'draft'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+    db.run(
+      'UPDATE venues SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
+      [status, req.params.id],
+      function(err) {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        if (this.changes === 0) {
+          return res.status(404).json({ error: 'Venue not found' });
+        }
+        res.json({ id: req.params.id, status });
+      }
+    );
   });
 }
