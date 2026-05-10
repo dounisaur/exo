@@ -42,8 +42,10 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   const [showAddSubcategoryForm, setShowAddSubcategoryForm] = useState(false)
 
   // Lookup states
-  const [mapsUrl, setMapsUrl] = useState('')
+  const [lookupType, setLookupType] = useState<'search' | 'url'>('search')
+  const [lookupQuery, setLookupQuery] = useState('')
   const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupResults, setLookupResults] = useState<any[]>([])
   const [lookupMessage, setLookupMessage] = useState('')
 
   // Fetch admin venues on mount
@@ -93,13 +95,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   }
 
   const handleLookup = async () => {
-    if (!mapsUrl.trim()) {
-      setLookupMessage('Please enter a Google Maps URL')
+    if (!lookupQuery.trim()) {
+      setLookupMessage(`Please enter a ${lookupType === 'url' ? 'Google Maps URL' : 'restaurant name'}`)
       return
     }
 
     setLookupLoading(true)
     setLookupMessage('')
+    setLookupResults([])
 
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/lookup`, {
@@ -108,23 +111,15 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ url: mapsUrl })
+        body: JSON.stringify({ type: lookupType, query: lookupQuery })
       })
 
       const data = await response.json()
 
-      if (data.found) {
-        setFormData(prev => ({
-          ...prev,
-          name: data.name || prev.name,
-          address: data.address || prev.address,
-          latitude: data.latitude || prev.latitude,
-          longitude: data.longitude || prev.longitude,
-          website_url: data.website_url || prev.website_url
-        }))
-        setLookupMessage(`✅ Found: "${data.name}"`)
+      if (data.results && data.results.length > 0) {
+        setLookupResults(data.results)
       } else {
-        setLookupMessage('No information set yet')
+        setLookupMessage('No results found')
       }
     } catch (error) {
       setLookupMessage('Error looking up location')
@@ -132,6 +127,21 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     } finally {
       setLookupLoading(false)
     }
+  }
+
+  const selectVenueFromResults = (result: any) => {
+    setFormData(prev => ({
+      ...prev,
+      name: result.name || prev.name,
+      address: result.address || prev.address,
+      latitude: result.latitude || prev.latitude,
+      longitude: result.longitude || prev.longitude,
+      website_url: result.website_url || prev.website_url
+    }))
+    setLookupResults([])
+    setLookupQuery('')
+    setLookupMessage(`✅ Selected: "${result.name}"`)
+    setTimeout(() => setLookupMessage(''), 2000)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -461,16 +471,50 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                 </h3>
 
           <form onSubmit={handleSubmit}>
-            {/* Google Maps Lookup Section */}
+            {/* Lookup Section with Radio Buttons */}
             <div className="form-group" style={{ backgroundColor: '#f3f4f6', padding: '1.5rem', borderRadius: '12px', marginBottom: '2rem', border: '1px solid #e5e7eb' }}>
-              <label style={{ marginBottom: '1rem' }}>🔍 Paste Google Maps URL (optional)</label>
+              <label style={{ marginBottom: '1rem', display: 'block' }}>🔍 Auto-fill Venue Information (optional)</label>
+
+              {/* Radio Buttons */}
+              <div style={{ display: 'flex', gap: '2rem', marginBottom: '1.5rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input
+                    type="radio"
+                    name="lookupType"
+                    value="search"
+                    checked={lookupType === 'search'}
+                    onChange={(e) => {
+                      setLookupType('search')
+                      setLookupResults([])
+                      setLookupMessage('')
+                    }}
+                  />
+                  Search By Name
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 500 }}>
+                  <input
+                    type="radio"
+                    name="lookupType"
+                    value="url"
+                    checked={lookupType === 'url'}
+                    onChange={(e) => {
+                      setLookupType('url')
+                      setLookupResults([])
+                      setLookupMessage('')
+                    }}
+                  />
+                  Google Maps URL
+                </label>
+              </div>
+
+              {/* Input and Button */}
               <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1 }}>
                   <input
                     type="text"
-                    placeholder="https://maps.app.goo.gl/... or https://www.google.com/maps/place/..."
-                    value={mapsUrl}
-                    onChange={(e) => setMapsUrl(e.target.value)}
+                    placeholder={lookupType === 'search' ? 'e.g., Noma, Copenhagen' : 'https://maps.app.goo.gl/... or https://www.google.com/maps/place/...'}
+                    value={lookupQuery}
+                    onChange={(e) => setLookupQuery(e.target.value)}
                     style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                 </div>
@@ -491,18 +535,57 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     whiteSpace: 'nowrap'
                   }}
                 >
-                  {lookupLoading ? 'Looking up...' : 'Lookup'}
+                  {lookupLoading ? 'Searching...' : 'Search'}
                 </button>
               </div>
+
+              {/* Results List */}
+              {lookupResults.length > 0 && (
+                <div style={{ marginTop: '1.5rem', backgroundColor: 'white', borderRadius: '8px', padding: '1rem', border: '1px solid #d1d5db' }}>
+                  <p style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#374151' }}>Found {lookupResults.length} result{lookupResults.length > 1 ? 's' : ''}:</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {lookupResults.map((result, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => selectVenueFromResults(result)}
+                        style={{
+                          textAlign: 'left',
+                          padding: '1rem',
+                          backgroundColor: '#f9fafb',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          fontSize: '0.95rem'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f3f4f6'
+                          e.currentTarget.style.borderColor = '#2a5298'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = '#f9fafb'
+                          e.currentTarget.style.borderColor = '#e5e7eb'
+                        }}
+                      >
+                        <div style={{ fontWeight: 600, color: '#1f2937', marginBottom: '0.25rem' }}>{result.name}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#6b7280' }}>{result.address}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Message */}
               {lookupMessage && (
                 <p style={{
                   marginTop: '1rem',
                   padding: '0.75rem 1rem',
                   borderRadius: '8px',
                   fontSize: '0.9rem',
-                  backgroundColor: lookupMessage.includes('No information') ? '#fef2f2' : '#ecfdf5',
-                  color: lookupMessage.includes('No information') ? '#dc2626' : '#059669',
-                  border: `1px solid ${lookupMessage.includes('No information') ? '#fee2e2' : '#d1fae5'}`
+                  backgroundColor: lookupMessage.includes('No results') ? '#fef2f2' : '#ecfdf5',
+                  color: lookupMessage.includes('No results') ? '#dc2626' : '#059669',
+                  border: `1px solid ${lookupMessage.includes('No results') ? '#fee2e2' : '#d1fae5'}`
                 }}>
                   {lookupMessage}
                 </p>

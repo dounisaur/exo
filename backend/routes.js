@@ -322,13 +322,13 @@ export function setupRoutes(app) {
     });
   });
 
-  // Lookup venue from Google Maps URL (admin)
+  // Lookup venue from Google Maps URL or search by name (admin)
   app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
-    const { url } = req.body;
+    const { type, query } = req.body;
     const apiKey = process.env.GOOGLE_PLACES_API_KEY;
 
-    if (!url) {
-      return res.status(400).json({ error: 'URL required' });
+    if (!query) {
+      return res.status(400).json({ error: 'Query required' });
     }
 
     if (!apiKey) {
@@ -336,36 +336,69 @@ export function setupRoutes(app) {
     }
 
     try {
-      // Extract place_id from Google Maps URL
-      const match = url.match(/1s(ChIJ[^!]+)!/);
-      let placeId = match?.[1];
+      let placeId = null;
 
-      if (!placeId) {
-        return res.json({ found: false });
+      // If URL type, extract place_id
+      if (type === 'url') {
+        const match = query.match(/1s(ChIJ[^!]+)!/);
+        placeId = match?.[1];
+
+        if (!placeId) {
+          return res.json({ results: [] });
+        }
       }
 
-      // Call Google Places Details API
-      const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
-      const response = await fetch(detailsUrl);
-      const data = await response.json();
+      // If search type, use Text Search API to find place_id
+      if (type === 'search' && !placeId) {
+        const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&fields=place_id,name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const searchResponse = await fetch(textSearchUrl);
+        const searchData = await searchResponse.json();
 
-      if (!data.result || data.status !== 'OK') {
-        return res.json({ found: false });
+        if (!searchData.results || searchData.results.length === 0) {
+          return res.json({ results: [] });
+        }
+
+        // Return all results for the search type
+        const results = searchData.results.map(place => ({
+          place_id: place.place_id,
+          name: place.name || '',
+          address: place.formatted_address || '',
+          latitude: place.geometry?.location?.lat || null,
+          longitude: place.geometry?.location?.lng || null,
+          website_url: place.website || '',
+          phone: place.formatted_phone_number || ''
+        }));
+
+        return res.json({ results });
       }
 
-      const result = data.result;
-      res.json({
-        found: true,
-        name: result.name || '',
-        address: result.formatted_address || '',
-        latitude: result.geometry?.location?.lat || null,
-        longitude: result.geometry?.location?.lng || null,
-        website_url: result.website || '',
-        phone: result.formatted_phone_number || ''
-      });
+      // For URL type or if we have a place_id, fetch full details
+      if (placeId) {
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const response = await fetch(detailsUrl);
+        const data = await response.json();
+
+        if (!data.result || data.status !== 'OK') {
+          return res.json({ results: [] });
+        }
+
+        const result = data.result;
+        return res.json({
+          results: [{
+            name: result.name || '',
+            address: result.formatted_address || '',
+            latitude: result.geometry?.location?.lat || null,
+            longitude: result.geometry?.location?.lng || null,
+            website_url: result.website || '',
+            phone: result.formatted_phone_number || ''
+          }]
+        });
+      }
+
+      res.json({ results: [] });
     } catch (error) {
       console.error('Places API error:', error);
-      res.json({ found: false });
+      res.json({ results: [] });
     }
   });
 
