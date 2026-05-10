@@ -435,7 +435,10 @@ main {
   align-items: center;
   gap: 1rem;
   background: white;
-  border: 1px solid #e5e7eb;
+  border-top: 1px solid #e5e7eb;
+  border-right: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  border-left: 4px solid #2a5298;
   border-radius: 12px;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -451,12 +454,13 @@ main {
   bottom: 0;
   width: 4px;
   background: linear-gradient(180deg, #2a5298 0%, #3a6db5 100%);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .venue-item:hover {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  border: 1px solid #2a5298;
+  border-top: 1px solid #2a5298;
+  border-right: 1px solid #2a5298;
+  border-bottom: 1px solid #2a5298;
   border-left: 4px solid #2a5298;
   transform: translateY(-2px);
 }

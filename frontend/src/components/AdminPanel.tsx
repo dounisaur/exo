@@ -256,9 +256,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       })
 
       setShowAddVenueForm(false)
+      setActiveTab('venues')
       setTimeout(() => {
         fetchAdminVenues()
-        onVenueAdded()
       }, 500)
     } catch (error) {
       setMessage('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
