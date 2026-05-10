@@ -60,6 +60,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   // Subcategory filter state
   const [subcategoryFilterId, setSubcategoryFilterId] = useState<number | null>(null)
+  const [filterSheetOpen, setFilterSheetOpen] = useState(false)
 
   // View venue state
   const [viewingVenueId, setViewingVenueId] = useState<number | null>(null)
@@ -1807,7 +1808,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   }}>
                     <span>✨</span> All Subcategories
                   </h3>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {/* Desktop Filter Dropdown */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="desktop-filter">
                     <label style={{ fontWeight: 700, color: '#374151', fontSize: '0.9rem' }}>Filter:</label>
                     <select
                       value={subcategoryFilterId || ''}
@@ -1833,6 +1835,25 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       ))}
                     </select>
                   </div>
+                  {/* Mobile Filter Icon Button */}
+                  <button
+                    onClick={() => setFilterSheetOpen(true)}
+                    className="mobile-filter-button"
+                    style={{
+                      display: 'none',
+                      background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '0.6rem 0.8rem',
+                      fontSize: '1.2rem',
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 8px rgba(42, 82, 152, 0.2)',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    🔽
+                  </button>
                 </div>
 
                 {(() => {
@@ -1969,6 +1990,101 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   </>
                   )
                 })()}
+              </div>
+            )}
+
+            {/* Filter Action Sheet */}
+            {filterSheetOpen && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '16px 16px 0 0',
+                  padding: '1.5rem',
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.3)',
+                  animation: 'slideUp 0.3s ease-out'
+                }}>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>Filter Subcategories</h3>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Select a category to filter by</p>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <button
+                      onClick={() => {
+                        setSubcategoryFilterId(null)
+                        setSubcategoryPage(1)
+                        setFilterSheetOpen(false)
+                      }}
+                      style={{
+                        padding: '0.95rem 1.5rem',
+                        background: !subcategoryFilterId ? 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)' : '#e5e7eb',
+                        color: !subcategoryFilterId ? 'white' : '#1f2937',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      📋 All Categories
+                    </button>
+
+                    {categories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSubcategoryFilterId(cat.id)
+                          setSubcategoryPage(1)
+                          setFilterSheetOpen(false)
+                        }}
+                        style={{
+                          padding: '0.95rem 1.5rem',
+                          background: subcategoryFilterId === cat.id ? 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)' : '#e5e7eb',
+                          color: subcategoryFilterId === cat.id ? 'white' : '#1f2937',
+                          border: 'none',
+                          borderRadius: '10px',
+                          fontSize: '0.95rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => setFilterSheetOpen(false)}
+                      style={{
+                        padding: '0.95rem 1.5rem',
+                        background: '#e5e7eb',
+                        color: '#1f2937',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        marginTop: '0.75rem'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </>

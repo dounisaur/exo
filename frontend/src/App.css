@@ -1038,6 +1038,15 @@ main {
   }
 }
 
+/* Desktop filter styles */
+.desktop-filter {
+  display: flex !important;
+}
+
+.mobile-filter-button {
+  display: none !important;
+}
+
 @media (max-width: 768px) {
   .venue-item {
     flex-wrap: wrap;
@@ -1175,6 +1184,16 @@ main {
     margin-left: 0 !important;
     margin-right: 0 !important;
     width: 100% !important;
+  }
+
+  /* Mobile filter button */
+  .mobile-filter-button {
+    display: block !important;
+  }
+
+  /* Hide desktop filter on mobile */
+  .desktop-filter {
+    display: none !important;
   }
 }
 
