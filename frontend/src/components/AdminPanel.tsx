@@ -119,7 +119,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       if (data.results && data.results.length > 0) {
         setLookupResults(data.results)
       } else {
-        setLookupMessage('No results found')
+        setLookupMessage(data.message || 'No results found')
       }
     } catch (error) {
       setLookupMessage('Error looking up location')

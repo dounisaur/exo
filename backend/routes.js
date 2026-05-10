@@ -341,23 +341,34 @@ export function setupRoutes(app) {
       // If URL type, extract place_id
       if (type === 'url') {
         // Try to extract from long URL first
-        let urlToUse = query;
         let match = query.match(/1s(ChIJ[^!]+)!/);
         placeId = match?.[1];
 
         // If no place_id found, try to follow redirect (for short URLs like maps.app.goo.gl)
         if (!placeId) {
           try {
-            const response = await fetch(query, { redirect: 'follow' });
+            const response = await fetch(query, {
+              redirect: 'follow',
+              headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+              }
+            });
             const fullUrl = response.url;
             match = fullUrl.match(/1s(ChIJ[^!]+)!/);
             placeId = match?.[1];
           } catch (err) {
-            // If redirect fails, return no results
+            console.error('Error following redirect:', err.message);
           }
         }
 
         if (!placeId) {
+          // Fall back to text search if it looks like a valid URL format
+          if (query.includes('maps')) {
+            return res.json({
+              results: [],
+              message: 'Could not extract place details from this URL. Try using "Search By Name" instead with the business name.'
+            });
+          }
           return res.json({ results: [] });
         }
       }
