@@ -274,9 +274,11 @@ export function setupRoutes(app) {
   app.get('/api/admin/venues', authenticateToken, (req, res) => {
     db.all('SELECT * FROM venues ORDER BY created_at DESC', [], (err, rows) => {
       if (err) {
+        console.error('Error fetching venues:', err);
         return res.status(500).json({ error: err.message });
       }
-      res.json(rows);
+      console.log('Fetched venues:', rows ? rows.length : 0, 'venues');
+      res.json(rows || []);
     });
   });
 
@@ -400,14 +402,17 @@ export function setupRoutes(app) {
       return res.status(400).json({ error: 'Invalid latitude or longitude' });
     }
 
+    console.log('Creating venue:', name);
     db.run(
       `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null],
       function(err) {
         if (err) {
+          console.error('Error inserting venue:', err);
           return res.status(500).json({ error: err.message });
         }
+        console.log('Venue created with ID:', this.lastID);
         res.status(201).json({ id: this.lastID });
       }
     );
