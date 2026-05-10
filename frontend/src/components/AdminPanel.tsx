@@ -529,6 +529,12 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     placeholder="e.g., Noma, Copenhagen"
                     value={lookupQuery}
                     onChange={(e) => setLookupQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleLookup()
+                      }
+                    }}
                     style={{ width: '100%', boxSizing: 'border-box' }}
                   />
                 </div>
