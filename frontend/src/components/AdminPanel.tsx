@@ -396,24 +396,30 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`, {
-        method: 'POST',
+      const method = editingSubcategory ? 'PUT' : 'POST'
+      const endpoint = editingSubcategory
+        ? `${import.meta.env.VITE_API_URL}/api/subcategories/${editingSubcategory}`
+        : `${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
         },
-        body: JSON.stringify({ name: newSubcategoryName })
+        body: JSON.stringify(editingSubcategory ? { name: newSubcategoryName } : { name: newSubcategoryName })
       })
 
       if (!response.ok) {
         const error = await response.json()
-        setCmsMessage(error.error || 'Failed to add subcategory')
+        setCmsMessage(error.error || `Failed to ${editingSubcategory ? 'update' : 'add'} subcategory`)
         return
       }
 
-      setCmsMessage('Subcategory added!')
+      setCmsMessage(`Subcategory ${editingSubcategory ? 'updated' : 'added'}!`)
       setNewSubcategoryName('')
       setSelectedCategoryForSubcat(null)
+      setEditingSubcategory(null)
       setShowAddSubcategoryForm(false)
       setActiveTab('subcategories')
       onCategoriesUpdated()
@@ -421,6 +427,13 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     } catch (error) {
       setCmsMessage('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
+  }
+
+  const handleEditSubcategory = (subcat: any) => {
+    setEditingSubcategory(subcat.id)
+    setSelectedCategoryForSubcat(subcat.categoryId)
+    setNewSubcategoryName(subcat.name)
+    setShowAddSubcategoryForm(true)
   }
 
   const handleDeleteSubcategory = async (id: number) => {
@@ -1713,23 +1726,25 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   color: '#1f2937',
                   fontWeight: 600
                 }}>
-                  Create New Subcategory
+                  {editingSubcategory ? 'Edit Subcategory' : 'Create New Subcategory'}
                 </h3>
 
                 <form onSubmit={handleAddSubcategory} style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem', alignItems: 'flex-end' }}>
-                  <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                    <label>Select Category</label>
-                    <select
-                      value={selectedCategoryForSubcat || ''}
-                      onChange={(e) => setSelectedCategoryForSubcat(e.target.value ? parseInt(e.target.value) : null)}
-                      required
-                    >
-                      <option value="">Choose a category...</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  {!editingSubcategory && (
+                    <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
+                      <label>Select Category</label>
+                      <select
+                        value={selectedCategoryForSubcat || ''}
+                        onChange={(e) => setSelectedCategoryForSubcat(e.target.value ? parseInt(e.target.value) : null)}
+                        required
+                      >
+                        <option value="">Choose a category...</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
                     <label>Subcategory Name</label>
                     <input
@@ -1758,7 +1773,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 6px 20px rgba(42, 82, 152, 0.35)', e.currentTarget.style.transform = 'translateY(-2px)')}
                     onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(42, 82, 152, 0.25)', e.currentTarget.style.transform = 'translateY(0)')}
                   >
-                    Create Subcategory
+                    {editingSubcategory ? 'Update Subcategory' : 'Create Subcategory'}
                   </button>
 
                   <button
@@ -1766,6 +1781,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     onClick={() => {
                       setNewSubcategoryName('')
                       setSelectedCategoryForSubcat(null)
+                      setEditingSubcategory(null)
                     }}
                     className="btn-clear"
                     style={{ padding: '0.9rem 1.75rem', fontSize: '0.95rem' }}
@@ -1896,6 +1912,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                               </div>
                               <div className="venue-actions">
                                 <button
+                                  onClick={() => handleEditSubcategory(subcat)}
                                   className="btn-edit"
                                   style={{ marginLeft: 0 }}
                                 >
