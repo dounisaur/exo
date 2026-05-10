@@ -1633,7 +1633,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
         {activeTab === 'subcategories' && (
           <>
-            <h2>Sub Category Management</h2>
+            <h2>Sub Categories</h2>
 
             {/* Header with Stats and Add Button */}
             <div className="venue-stats-header" style={{
