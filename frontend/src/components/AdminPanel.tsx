@@ -20,6 +20,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     address: '',
     image_url: '',
     website_url: '',
+    phone_number: '',
     reservation_link: ''
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -135,7 +136,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       address: result.address || prev.address,
       latitude: result.latitude || prev.latitude,
       longitude: result.longitude || prev.longitude,
-      website_url: result.website_url || prev.website_url
+      website_url: result.website_url || prev.website_url,
+      phone_number: result.phone || prev.phone_number
     }))
     setLookupResults([])
     setLookupQuery('')
@@ -645,14 +647,25 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
               )}
             </div>
 
-            <div className="form-group">
-              <label>Website URL</label>
-              <input
-                type="url"
-                name="website_url"
-                value={formData.website_url}
-                onChange={handleChange}
-              />
+            <div className="form-row">
+              <div className="form-group">
+                <label>Website URL</label>
+                <input
+                  type="url"
+                  name="website_url"
+                  value={formData.website_url}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Phone Number</label>
+                <input
+                  type="tel"
+                  name="phone_number"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                />
+              </div>
             </div>
 
             <div className="form-group">
@@ -700,6 +713,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     address: '',
                     image_url: '',
                     website_url: '',
+                    phone_number: '',
                     reservation_link: ''
                   })
                   setImageFile(null)

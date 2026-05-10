@@ -364,16 +364,16 @@ export function setupRoutes(app) {
 
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
 
     if (!name || !category || latitude === undefined || longitude === undefined || !address) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     db.run(
-      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, reservation_link],
+      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, phone_number || null, reservation_link],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });
@@ -385,12 +385,12 @@ export function setupRoutes(app) {
 
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, reservation_link } = req.body;
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
 
     db.run(
-      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
+      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, reservation_link, req.params.id],
+      [name, category, subcategory_id || null, latitude, longitude, address, image_url, website_url, phone_number || null, reservation_link, req.params.id],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });

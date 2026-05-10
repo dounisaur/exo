@@ -57,6 +57,7 @@ export function initDb() {
           address TEXT NOT NULL,
           image_url TEXT,
           website_url TEXT,
+          phone_number TEXT,
           reservation_link TEXT,
           status TEXT NOT NULL DEFAULT 'draft',
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,

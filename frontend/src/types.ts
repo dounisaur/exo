@@ -8,6 +8,7 @@ export interface Venue {
   address: string
   image_url?: string
   website_url?: string
+  phone_number?: string
   reservation_link?: string
   status?: 'draft' | 'published'
   created_at?: string
