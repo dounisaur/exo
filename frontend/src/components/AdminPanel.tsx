@@ -52,6 +52,9 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   // Edit venue states
   const [editingVenueId, setEditingVenueId] = useState<number | null>(null)
 
+  // Edit category state
+  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null)
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const [subcategoryPage, setSubcategoryPage] = useState(1)
@@ -67,6 +70,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
   // Mobile action sheet state
   const [actionSheetVenueId, setActionSheetVenueId] = useState<number | null>(null)
+  const [actionSheetCategoryId, setActionSheetCategoryId] = useState<number | null>(null)
 
   // Fetch admin venues on mount
   useEffect(() => {
@@ -346,8 +350,13 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     }
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`, {
-        method: 'POST',
+      const method = editingCategoryId ? 'PUT' : 'POST'
+      const endpoint = editingCategoryId
+        ? `${import.meta.env.VITE_API_URL}/api/categories/${editingCategoryId}`
+        : `${import.meta.env.VITE_API_URL}/api/categories`
+
+      const response = await fetch(endpoint, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${authToken}`
@@ -357,17 +366,25 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
       if (!response.ok) {
         const error = await response.json()
-        setCmsMessage(error.error || 'Failed to add category')
+        setCmsMessage(error.error || `Failed to ${editingCategoryId ? 'update' : 'add'} category`)
         return
       }
 
-      setCmsMessage('Category added!')
+      setCmsMessage(`Category ${editingCategoryId ? 'updated' : 'added'}!`)
       setNewCategoryName('')
+      setEditingCategoryId(null)
+      setShowAddCategoryForm(false)
       onCategoriesUpdated()
       setTimeout(() => setCmsMessage(''), 2000)
     } catch (error) {
       setCmsMessage('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
+  }
+
+  const handleEditCategory = (category: Category) => {
+    setNewCategoryName(category.name)
+    setEditingCategoryId(category.id)
+    setShowAddCategoryForm(true)
   }
 
   const handleDeleteCategory = async (id: number) => {
@@ -492,7 +509,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
         {activeTab === 'venues' && (
           <>
-            <h2>Venues Management</h2>
+            <h2>Venues</h2>
 
             {/* Header with Stats and Add Button */}
             <div className="venue-stats-header" style={{
@@ -1460,7 +1477,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
         {activeTab === 'categories' && (
           <>
-            <h2>Category Management</h2>
+            <h2>Categories</h2>
 
             {/* Header with Stats and Add Button */}
             <div className="venue-stats-header" style={{
@@ -1539,7 +1556,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                   color: '#1f2937',
                   fontWeight: 600
                 }}>
-                  Create New Category
+                  {editingCategoryId ? 'Edit Category' : 'Create New Category'}
                 </h3>
 
                 <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '0.75rem', marginBottom: '2rem' }}>
@@ -1569,12 +1586,15 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 6px 20px rgba(42, 82, 152, 0.35)', e.currentTarget.style.transform = 'translateY(-2px)')}
                     onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 12px rgba(42, 82, 152, 0.25)', e.currentTarget.style.transform = 'translateY(0)')}
                   >
-                    Create Category
+                    {editingCategoryId ? 'Update Category' : 'Create Category'}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setNewCategoryName('')}
+                    onClick={() => {
+                      setNewCategoryName('')
+                      setEditingCategoryId(null)
+                    }}
                     className="btn-clear"
                     style={{ padding: '0.9rem 1.75rem', fontSize: '0.95rem' }}
                   >
@@ -1623,23 +1643,143 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                           </div>
                         </div>
                         <div className="venue-actions">
+                          {/* Desktop buttons (hidden on mobile) */}
+                          <div style={{ display: 'contents' }} className="venue-actions-desktop">
+                            <button
+                              onClick={() => handleEditCategory(cat)}
+                              className="btn-edit"
+                              style={{ marginLeft: 0 }}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(cat.id)}
+                              className="btn-delete"
+                            >
+                              🗑️ Delete
+                            </button>
+                          </div>
+
+                          {/* Mobile action button (shown on mobile) */}
                           <button
-                            className="btn-edit"
-                            style={{ marginLeft: 0 }}
+                            onClick={() => setActionSheetCategoryId(actionSheetCategoryId === cat.id ? null : cat.id)}
+                            style={{
+                              display: 'none',
+                              padding: '0.6rem 1.2rem',
+                              background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '0.9rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                            className="venue-actions-mobile"
                           >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(cat.id)}
-                            className="btn-delete"
-                          >
-                            🗑️ Delete
+                            Select
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Mobile Action Sheet for Categories */}
+            {actionSheetCategoryId && categories.find(c => c.id === actionSheetCategoryId) && (
+              <div style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'flex-end',
+                justifyContent: 'center',
+                zIndex: 1000
+              }}>
+                <div style={{
+                  background: 'white',
+                  borderRadius: '16px 16px 0 0',
+                  padding: '1.5rem',
+                  width: '100%',
+                  maxWidth: '100%',
+                  boxShadow: '0 -20px 60px rgba(0, 0, 0, 0.3)',
+                  animation: 'slideUp 0.3s ease-out'
+                }}>
+                  {(() => {
+                    const category = categories.find(c => c.id === actionSheetCategoryId)
+                    if (!category) return null
+                    return (
+                      <>
+                        <div style={{ marginBottom: '1.5rem' }}>
+                          <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>{category.name}</h3>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>{category.subcategories.length} subcategories</p>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <button
+                            onClick={() => {
+                              handleEditCategory(category)
+                              setActionSheetCategoryId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            onClick={() => {
+                              handleDeleteCategory(category.id)
+                              setActionSheetCategoryId(null)
+                            }}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            🗑️ Delete
+                          </button>
+                          <button
+                            onClick={() => setActionSheetCategoryId(null)}
+                            style={{
+                              padding: '0.95rem 1.5rem',
+                              background: '#e5e7eb',
+                              color: '#1f2937',
+                              border: 'none',
+                              borderRadius: '10px',
+                              fontSize: '0.95rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              marginTop: '0.75rem'
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </>
+                    )
+                  })()}
+                </div>
               </div>
             )}
           </>

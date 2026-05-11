@@ -155,10 +155,7 @@ function App() {
           {authToken && (
             <>
               <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Admin</button>
-              <span style={{ marginLeft: 'auto', color: '#666' }}>
-                {currentUser?.username} &nbsp;
-                <button onClick={handleLogout} style={{ padding: '0.25rem 0.75rem', marginLeft: '0.5rem' }}>Logout</button>
-              </span>
+              <button onClick={handleLogout} style={{ marginLeft: 'auto', padding: '0.8rem 1.5rem', background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(147, 51, 234, 0.3)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(147, 51, 234, 0.4)' }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)' }}>Logout</button>
             </>
           )}
         </nav>
