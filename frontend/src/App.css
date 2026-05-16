@@ -98,16 +98,18 @@ main {
 }
 
 .filters select {
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
   border: 1.5px solid #e5e7eb;
   border-radius: 8px;
   font-size: 0.95rem;
   cursor: pointer;
-  background: white;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231f2937' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat;
+  background-position: right 1rem center;
   color: #1f2937;
   font-weight: 500;
   transition: all 0.2s;
   min-width: 180px;
+  appearance: none;
 }
 
 .filters select:hover {
@@ -367,14 +369,16 @@ main {
 .form-group input,
 .form-group select {
   width: 100%;
-  padding: 0.9rem 1rem;
+  padding: 0.9rem 2.5rem 0.9rem 1rem;
   border: 1.5px solid #d1d5db;
   border-radius: 10px;
   font-size: 0.95rem;
   box-sizing: border-box;
-  background: white;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231f2937' d='M6 9L1 4h10z'/%3E%3C/svg%3E") no-repeat;
+  background-position: right 1rem center;
   color: #1f2937;
   transition: all 0.2s;
+  appearance: none;
 }
 
 .form-group input::placeholder,
@@ -1351,4 +1355,21 @@ main {
     padding: 0.5rem 0.75rem;
     font-size: 0.75rem;
   }
+}
+
+/* Map tooltips */
+.leaflet-tooltip.venue-tooltip {
+  background: linear-gradient(135deg, #2a5298 0%, #3a6db5 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 12px rgba(42, 82, 152, 0.3);
+  white-space: nowrap;
+}
+
+.leaflet-tooltip.venue-tooltip::before {
+  border-top-color: #2a5298;
 }

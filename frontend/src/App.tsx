@@ -206,7 +206,7 @@ function App() {
 
             <div className="content">
               {userLocation && <Map venues={venues} userLocation={userLocation} selectedVenue={selectedVenue} />}
-              <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} />
+              <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} categories={categories} />
             </div>
           </div>
         ) : (

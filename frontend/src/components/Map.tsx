@@ -35,7 +35,15 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
       weight: 2,
       opacity: 1,
       fillOpacity: 0.8
-    }).addTo(mapInstance.current).bindPopup('Your location')
+    })
+      .addTo(mapInstance.current)
+      .bindPopup('Your location')
+      .bindTooltip('You are here', {
+        permanent: true,
+        direction: 'top',
+        offset: [0, -20],
+        className: 'venue-tooltip'
+      })
   }, [])
 
   // Update venue markers
@@ -53,17 +61,25 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
 
     // Add venue markers
     venues.forEach((venue) => {
-      const color = selectedVenue?.id === venue.id ? '#ef4444' : '#8b5cf6'
+      const isSelected = selectedVenue?.id === venue.id
+      const fillColor = isSelected ? '#ff3333' : '#a78bfa'
+      const borderColor = isSelected ? '#991b1b' : '#6d28d9'
       L.circleMarker([venue.latitude, venue.longitude], {
-        radius: 6,
-        fillColor: color,
-        color: color,
-        weight: 1,
+        radius: isSelected ? 10 : 8,
+        fillColor: fillColor,
+        color: borderColor,
+        weight: isSelected ? 3 : 2,
         opacity: 1,
-        fillOpacity: 0.7
+        fillOpacity: 0.95
       })
         .addTo(mapInstance.current!)
         .bindPopup(`<strong>${venue.name}</strong><br/>${venue.category}`)
+        .bindTooltip(venue.name, {
+          permanent: isSelected,
+          direction: 'top',
+          offset: [0, -15],
+          className: 'venue-tooltip'
+        })
     })
   }, [venues, selectedVenue])
 

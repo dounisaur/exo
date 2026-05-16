@@ -1,0 +1,6 @@
+{
+  "watch": ["*.js"],
+  "ignore": ["venues.db", "uploads", "node_modules"],
+  "ext": "js",
+  "delay": 500
+}

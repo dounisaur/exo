@@ -1,12 +1,23 @@
-import type { Venue } from '../types'
+import type { Venue, Category } from '../types'
 
 interface VenueListProps {
   venues: Venue[]
   onSelectVenue: (venue: Venue) => void
   selectedVenue: Venue | null
+  categories?: Category[]
 }
 
-export default function VenueList({ venues, onSelectVenue, selectedVenue }: VenueListProps) {
+export default function VenueList({ venues, onSelectVenue, selectedVenue, categories = [] }: VenueListProps) {
+  const getSubcategoryName = (subcategoryId?: number) => {
+    if (!subcategoryId || categories.length === 0) return null;
+
+    for (const category of categories) {
+      const subcategory = category.subcategories.find(s => s.id === subcategoryId);
+      if (subcategory) return subcategory.name;
+    }
+    return null;
+  };
+
   if (venues.length === 0) {
     return <div className="venue-list"><p>No venues found</p></div>
   }
@@ -24,7 +35,9 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue }: Venu
           )}
           <div className="venue-content">
             <h3>{venue.name}</h3>
-            <p className="category">{venue.category}</p>
+            <p className="category">
+              {getSubcategoryName(venue.subcategory_id) || venue.category}
+            </p>
             <p className="address">{venue.address}</p>
 
             {venue.rating && (
@@ -58,11 +71,11 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue }: Venu
                 </a>
               )}
               <a
-                href={`https://maps.google.com/?q=${venue.latitude},${venue.longitude}`}
+                href={`https://maps.google.com/?q=${encodeURIComponent(venue.name)}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Maps
+                Get Directions
               </a>
             </div>
           </div>
