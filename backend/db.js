@@ -1,4 +1,4 @@
-import sqlite3 from 'sqlite3';
+import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
@@ -8,20 +8,20 @@ const DB_PATH = path.join(__dirname, 'venues.db');
 
 let db;
 
-// Open database immediately without waiting
-db = new sqlite3.Database(DB_PATH, (err) => {
-  if (err) {
-    console.error('[DB] Error:', err.message);
-  } else {
-    console.log('[DB] Connected');
-    initializeTables();
-  }
-});
+// Open database immediately
+try {
+  db = new Database(DB_PATH);
+  db.pragma('journal_mode = WAL');
+  console.log('[DB] Connected');
+  initializeTables();
+} catch (err) {
+  console.error('[DB] Error:', err.message);
+}
 
 function initializeTables() {
-  db.run('PRAGMA foreign_keys = ON');
+  db.exec('PRAGMA foreign_keys = ON');
 
-  db.run(`CREATE TABLE IF NOT EXISTS users (
+  db.exec(`CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
@@ -29,13 +29,13 @@ function initializeTables() {
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS categories (
+  db.exec(`CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,
     slug TEXT NOT NULL UNIQUE
   )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS subcategories (
+  db.exec(`CREATE TABLE IF NOT EXISTS subcategories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -43,7 +43,7 @@ function initializeTables() {
     UNIQUE(category_id, slug)
   )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS venues (
+  db.exec(`CREATE TABLE IF NOT EXISTS venues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     category TEXT NOT NULL,
@@ -61,7 +61,7 @@ function initializeTables() {
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 
-  db.run(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`);
 
   seedData();
 }
@@ -69,17 +69,22 @@ function initializeTables() {
 function seedData() {
   const adminPassword = bcrypt.hashSync('admin123', 10);
 
-  db.run(`INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`, ['admin', adminPassword, 'admin']);
-  db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Food', 'food']);
-  db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Bar', 'bar']);
-  db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Concert', 'concert']);
-  db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Cafe', 'cafe']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Street Food', 'street-food']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Michelin', 'michelin']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Taverna', 'taverna']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Gastro Taverna', 'gastro-taverna']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Asian', 'asian']);
-  db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Indian', 'indian']);
+  const insertUser = db.prepare(`INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`);
+  insertUser.run('admin', adminPassword, 'admin');
+
+  const insertCategory = db.prepare(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`);
+  insertCategory.run('Food', 'food');
+  insertCategory.run('Bar', 'bar');
+  insertCategory.run('Concert', 'concert');
+  insertCategory.run('Cafe', 'cafe');
+
+  const insertSubcategory = db.prepare(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`);
+  insertSubcategory.run('food', 'Street Food', 'street-food');
+  insertSubcategory.run('food', 'Michelin', 'michelin');
+  insertSubcategory.run('food', 'Taverna', 'taverna');
+  insertSubcategory.run('food', 'Gastro Taverna', 'gastro-taverna');
+  insertSubcategory.run('food', 'Asian', 'asian');
+  insertSubcategory.run('food', 'Indian', 'indian');
 }
 
 export function initDb() {
