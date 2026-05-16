@@ -9,41 +9,35 @@ const DB_PATH = path.join(__dirname, 'venues.db');
 let db;
 
 export function initDb() {
-  console.log('initDb called');
-
   return new Promise((resolve, reject) => {
-    console.log('Creating database connection...');
+    console.log('[DB] Opening connection');
 
     db = new sqlite3.Database(DB_PATH, (err) => {
-      console.log('Database callback fired');
-
       if (err) {
-        console.error('Database error:', err);
+        console.error('[DB] Connection error:', err);
         reject(err);
         return;
       }
 
-      console.log('Database connected');
+      console.log('[DB] Connected');
 
+      // Enable foreign keys
+      db.run('PRAGMA foreign_keys = ON');
+
+      // Create tables if they don't exist
       db.run(`CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL UNIQUE,
         password_hash TEXT NOT NULL,
         role TEXT NOT NULL DEFAULT 'admin',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
-        if (err) console.error('Users table error:', err);
-        console.log('Users table created');
-      });
+      )`);
 
       db.run(`CREATE TABLE IF NOT EXISTS categories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL UNIQUE,
         slug TEXT NOT NULL UNIQUE
-      )`, (err) => {
-        if (err) console.error('Categories table error:', err);
-        console.log('Categories table created');
-      });
+      )`);
 
       db.run(`CREATE TABLE IF NOT EXISTS subcategories (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -51,10 +45,7 @@ export function initDb() {
         name TEXT NOT NULL,
         slug TEXT NOT NULL,
         UNIQUE(category_id, slug)
-      )`, (err) => {
-        if (err) console.error('Subcategories table error:', err);
-        console.log('Subcategories table created');
-      });
+      )`);
 
       db.run(`CREATE TABLE IF NOT EXISTS venues (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,17 +63,16 @@ export function initDb() {
         status TEXT NOT NULL DEFAULT 'draft',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
-        if (err) console.error('Venues table error:', err);
-        console.log('Venues table created');
+      )`);
+
+      db.run(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`);
+
+      // Add rating column if it doesn't exist (for existing databases)
+      db.run(`ALTER TABLE venues ADD COLUMN rating REAL`, () => {
+        // Column might already exist - ignore error
       });
 
-      db.run(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`, (err) => {
-        if (err) console.error('Index error:', err);
-        console.log('Index created');
-      });
-
-      // Seed data
+      // Seed only if needed
       const adminPassword = bcrypt.hashSync('admin123', 10);
       db.run(`INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`, ['admin', adminPassword, 'admin']);
       db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Food', 'food']);
@@ -96,14 +86,18 @@ export function initDb() {
       db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Asian', 'asian']);
       db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Indian', 'indian']);
 
-      console.log('Database initialized - resolving now');
-      resolve();
+      // Resolve after 500ms to give operations time to queue
+      setTimeout(() => {
+        console.log('[DB] Ready');
+        resolve();
+      }, 500);
     });
-
-    console.log('Database connection initiated');
   });
 }
 
 export function getDb() {
+  if (!db) {
+    throw new Error('Database not initialized');
+  }
   return db;
 }

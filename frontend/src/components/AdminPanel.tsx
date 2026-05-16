@@ -978,7 +978,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       )}
                       <div>
                         <h3>{venue.name}</h3>
-                        <p className="status-badge">Status: <strong>{venue.status || 'draft'}</strong></p>
+                        <p className="status-badge">
+                          Status: <strong style={{
+                            color: (venue.status === 'published') ? '#10b981' : '#ef4444',
+                            textTransform: 'capitalize'
+                          }}>
+                            {(venue.status === 'published' ? 'Published' : 'Unpublished')}
+                          </strong>
+                        </p>
                       </div>
                     </div>
                     <div className="venue-actions">
@@ -1176,7 +1183,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       <>
                         <div style={{ marginBottom: '1.5rem' }}>
                           <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.1rem', color: '#1f2937' }}>{venue.name}</h3>
-                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>Status: <strong>{venue.status || 'draft'}</strong></p>
+                          <p style={{ margin: 0, fontSize: '0.85rem', color: '#6b7280' }}>
+                            Status: <strong style={{
+                              color: (venue.status === 'published') ? '#10b981' : '#ef4444',
+                              textTransform: 'capitalize'
+                            }}>
+                              {(venue.status === 'published' ? 'Published' : 'Unpublished')}
+                            </strong>
+                          </p>
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -1313,8 +1327,16 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '2rem' }}>
                           <div>
-                            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', color: '#1f2937' }}>{venue.name}</h2>
-                            <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>Status: <strong style={{ color: '#2a5298' }}>{venue.status || 'draft'}</strong></p>
+                            <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: 700, color: '#1f2937' }}>{venue.name}</h2>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>
+                              Status: <strong style={{
+                                color: (venue.status === 'published') ? '#10b981' : '#ef4444',
+                                textTransform: 'capitalize',
+                                fontWeight: 700
+                              }}>
+                                {(venue.status === 'published' ? 'Published' : 'Unpublished')}
+                              </strong>
+                            </p>
                           </div>
                           <button
                             onClick={() => setViewingVenueId(null)}
@@ -1352,13 +1374,13 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
                         <div style={{ display: 'grid', gap: '1.5rem' }}>
                           <div>
-                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Category</p>
+                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Category</p>
                             <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>{venue.category}</p>
                           </div>
 
                           {venue.subcategory_id && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Subcategory</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Subcategory</p>
                               <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>
                                 {categories.find(c => c.subcategories.some(s => s.id === venue.subcategory_id))?.subcategories.find(s => s.id === venue.subcategory_id)?.name || 'N/A'}
                               </p>
@@ -1367,7 +1389,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
                           {venue.rating && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Rating</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Rating</p>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '1.2rem' }}>
                                   {[...Array(5)].map((_, i) => {
@@ -1389,14 +1411,14 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
                           {venue.address && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Address</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Address</p>
                               <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>📍 {venue.address}</p>
                             </div>
                           )}
 
                           {venue.phone_number && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Phone</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Phone</p>
                               <a href={`tel:${venue.phone_number}`} style={{ margin: 0, fontSize: '1rem', color: '#2a5298', textDecoration: 'none', fontWeight: 500 }}>
                                 📞 {venue.phone_number}
                               </a>
@@ -1405,16 +1427,25 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
                           {venue.website_url && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Website</p>
-                              <a href={venue.website_url} target="_blank" rel="noopener noreferrer" style={{ margin: 0, fontSize: '1rem', color: '#2a5298', textDecoration: 'none', fontWeight: 500, wordBreak: 'break-all' }}>
-                                🔗 {venue.website_url}
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Website</p>
+                              <a href={venue.website_url} target="_blank" rel="noopener noreferrer" style={{
+                                display: 'inline-block',
+                                padding: '0.6rem 1.2rem',
+                                background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                                color: 'white',
+                                textDecoration: 'none',
+                                borderRadius: '8px',
+                                fontSize: '0.9rem',
+                                fontWeight: 600
+                              }}>
+                                🔗 View Website
                               </a>
                             </div>
                           )}
 
                           {venue.reservation_link && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Reservation</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Reservation</p>
                               <a href={venue.reservation_link} target="_blank" rel="noopener noreferrer" style={{
                                 display: 'inline-block',
                                 padding: '0.6rem 1.2rem',
@@ -1464,7 +1495,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
 
                           {venue.created_at && (
                             <div>
-                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Created</p>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 700, color: '#1f2937', textTransform: 'uppercase' }}>Created</p>
                               <p style={{ margin: 0, fontSize: '0.95rem', color: '#6b7280' }}>
                                 {new Date(venue.created_at).toLocaleDateString()} {new Date(venue.created_at).toLocaleTimeString()}
                               </p>

@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 import { initDb } from './db.js';
 import { setupRoutes } from './routes.js';
 
-console.log('server.js loading...');
+console.log('[SERVER] Starting...');
 
 dotenv.config();
 
@@ -49,24 +49,29 @@ export function authenticateToken(req, res, next) {
 
 export { JWT_SECRET };
 
-// Initialize database
-console.log('Calling initDb...');
-try {
-  await initDb();
-  console.log('initDb completed');
-} catch (err) {
-  console.error('initDb failed:', err);
-}
-
-// Setup routes
-console.log('Setting up routes...');
-setupRoutes(app);
-
-// Health check
+// Health check (before db init)
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Initialize database and start server
+console.log('[SERVER] Initializing database...');
+initDb()
+  .then(() => {
+    console.log('[SERVER] Database initialized');
+    setupRoutes(app);
+
+    const server = app.listen(PORT, () => {
+      console.log(`[SERVER] Running on http://localhost:${PORT}`);
+    });
+
+    // Graceful shutdown
+    process.on('SIGTERM', () => {
+      console.log('[SERVER] SIGTERM received, shutting down...');
+      server.close();
+    });
+  })
+  .catch((err) => {
+    console.error('[SERVER] Failed to initialize:', err);
+    process.exit(1);
+  });
