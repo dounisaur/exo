@@ -27,6 +27,25 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue }: Venu
             <p className="category">{venue.category}</p>
             <p className="address">{venue.address}</p>
 
+            {venue.rating && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', fontSize: '0.9rem' }}>
+                <span style={{ display: 'inline-block' }}>
+                  {[...Array(5)].map((_, i) => {
+                    const fillPercentage = Math.min(Math.max(venue.rating - i, 0), 1);
+                    return (
+                      <span key={i} style={{ display: 'inline-block', position: 'relative', width: '1em', color: '#FFB800' }}>
+                        <span style={{ position: 'absolute', overflow: 'hidden', width: `${fillPercentage * 100}%`, color: '#FFB800' }}>★</span>
+                        <span style={{ color: '#D1D5DB' }}>★</span>
+                      </span>
+                    );
+                  })}
+                </span>
+                <span style={{ color: '#666', marginLeft: '0.25rem' }}>
+                  {venue.rating.toFixed(1)}
+                </span>
+              </div>
+            )}
+
             <div className="venue-links">
               {venue.website_url && (
                 <a href={venue.website_url} target="_blank" rel="noopener noreferrer">

@@ -8,6 +8,8 @@ import jwt from 'jsonwebtoken';
 import { initDb } from './db.js';
 import { setupRoutes } from './routes.js';
 
+console.log('server.js loading...');
+
 dotenv.config();
 
 const app = express();
@@ -48,9 +50,16 @@ export function authenticateToken(req, res, next) {
 export { JWT_SECRET };
 
 // Initialize database
-await initDb();
+console.log('Calling initDb...');
+try {
+  await initDb();
+  console.log('initDb completed');
+} catch (err) {
+  console.error('initDb failed:', err);
+}
 
 // Setup routes
+console.log('Setting up routes...');
 setupRoutes(app);
 
 // Health check
@@ -58,6 +67,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

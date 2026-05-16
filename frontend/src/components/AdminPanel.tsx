@@ -22,7 +22,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
     image_url: '',
     website_url: '',
     phone_number: '',
-    reservation_link: ''
+    reservation_link: '',
+    rating: ''
   })
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
@@ -273,7 +274,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
         image_url: '',
         website_url: '',
         phone_number: '',
-        reservation_link: ''
+        reservation_link: '',
+        rating: ''
       })
 
       setShowAddVenueForm(false)
@@ -332,7 +334,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
       image_url: venue.image_url || '',
       website_url: venue.website_url || '',
       phone_number: venue.phone_number || '',
-      reservation_link: venue.reservation_link || ''
+      reservation_link: venue.reservation_link || '',
+      rating: venue.rating ? venue.rating.toString() : ''
     })
     setEditingVenueId(venue.id)
     setShowAddVenueForm(true)
@@ -855,6 +858,23 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
               />
             </div>
 
+            <div className="form-group">
+              <label>Star Rating (0-5)</label>
+              <input
+                type="text"
+                name="rating"
+                value={formData.rating}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // Allow empty, numbers, and decimal point
+                  if (val === '' || /^\d+\.?\d*$/.test(val)) {
+                    handleChange(e);
+                  }
+                }}
+                placeholder="e.g., 4, 4.5, 4.8, 5"
+              />
+            </div>
+
             <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
               <button
                 type="submit"
@@ -891,7 +911,8 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                     image_url: '',
                     website_url: '',
                     phone_number: '',
-                    reservation_link: ''
+                    reservation_link: '',
+                    rating: ''
                   })
                   setImageFile(null)
                   setImagePreview('')
@@ -1341,6 +1362,28 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                               <p style={{ margin: 0, fontSize: '1rem', color: '#1f2937' }}>
                                 {categories.find(c => c.subcategories.some(s => s.id === venue.subcategory_id))?.subcategories.find(s => s.id === venue.subcategory_id)?.name || 'N/A'}
                               </p>
+                            </div>
+                          )}
+
+                          {venue.rating && (
+                            <div>
+                              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', fontWeight: 600, color: '#6b7280', textTransform: 'uppercase' }}>Rating</p>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontSize: '1.2rem' }}>
+                                  {[...Array(5)].map((_, i) => {
+                                    const fillPercentage = Math.min(Math.max(venue.rating - i, 0), 1);
+                                    return (
+                                      <span key={i} style={{ display: 'inline-block', position: 'relative', width: '1.2em', color: '#FFB800' }}>
+                                        <span style={{ position: 'absolute', overflow: 'hidden', width: `${fillPercentage * 100}%`, color: '#FFB800' }}>★</span>
+                                        <span style={{ color: '#D1D5DB' }}>★</span>
+                                      </span>
+                                    );
+                                  })}
+                                </span>
+                                <span style={{ fontSize: '0.95rem', color: '#6b7280', marginLeft: '0.5rem' }}>
+                                  {venue.rating.toFixed(1)}
+                                </span>
+                              </div>
                             </div>
                           )}
 

@@ -10,6 +10,7 @@ export interface Venue {
   website_url?: string
   phone_number?: string
   reservation_link?: string
+  rating?: number
   status?: 'draft' | 'published'
   created_at?: string
   updated_at?: string

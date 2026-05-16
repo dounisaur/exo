@@ -396,7 +396,7 @@ export function setupRoutes(app) {
 
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
 
     // Validate required fields
     if (!name || !category) {
@@ -410,11 +410,20 @@ export function setupRoutes(app) {
       return res.status(400).json({ error: 'Invalid latitude or longitude' });
     }
 
+    // Validate rating if provided
+    let parsedRating = null;
+    if (rating !== undefined && rating !== null && rating !== '') {
+      parsedRating = parseFloat(rating);
+      if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+        return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+      }
+    }
+
     console.log('Creating venue:', name);
     db.run(
-      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null],
+      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating],
       function(err) {
         if (err) {
           console.error('Error inserting venue:', err);
@@ -428,7 +437,7 @@ export function setupRoutes(app) {
 
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link } = req.body;
+    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
 
     if (!name || !category) {
       return res.status(400).json({ error: 'Name and category are required' });
@@ -441,10 +450,19 @@ export function setupRoutes(app) {
       return res.status(400).json({ error: 'Invalid latitude or longitude' });
     }
 
+    // Validate rating if provided
+    let parsedRating = null;
+    if (rating !== undefined && rating !== null && rating !== '') {
+      parsedRating = parseFloat(rating);
+      if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+        return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+      }
+    }
+
     db.run(
-      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, updated_at=CURRENT_TIMESTAMP
+      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, updated_at=CURRENT_TIMESTAMP
        WHERE id = ?`,
-      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, req.params.id],
+      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, req.params.id],
       function(err) {
         if (err) {
           return res.status(500).json({ error: err.message });

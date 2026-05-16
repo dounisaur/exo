@@ -9,150 +9,98 @@ const DB_PATH = path.join(__dirname, 'venues.db');
 let db;
 
 export function initDb() {
+  console.log('initDb called');
+
   return new Promise((resolve, reject) => {
+    console.log('Creating database connection...');
+
     db = new sqlite3.Database(DB_PATH, (err) => {
+      console.log('Database callback fired');
+
       if (err) {
-        console.error('Database connection error:', err);
+        console.error('Database error:', err);
         reject(err);
         return;
       }
 
       console.log('Database connected');
 
-      // Create all tables
-      db.serialize(() => {
-        // Users table
-        db.run(`CREATE TABLE IF NOT EXISTS users (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          username TEXT NOT NULL UNIQUE,
-          password_hash TEXT NOT NULL,
-          role TEXT NOT NULL DEFAULT 'admin',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-        // Categories table
-        db.run(`CREATE TABLE IF NOT EXISTS categories (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL UNIQUE,
-          slug TEXT NOT NULL UNIQUE
-        )`);
-
-        // Subcategories table
-        db.run(`CREATE TABLE IF NOT EXISTS subcategories (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
-          name TEXT NOT NULL,
-          slug TEXT NOT NULL,
-          UNIQUE(category_id, slug)
-        )`);
-
-        // Venues table
-        db.run(`CREATE TABLE IF NOT EXISTS venues (
-          id INTEGER PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL,
-          category TEXT NOT NULL,
-          subcategory_id INTEGER REFERENCES subcategories(id),
-          latitude REAL NOT NULL,
-          longitude REAL NOT NULL,
-          address TEXT,
-          image_url TEXT,
-          website_url TEXT,
-          phone_number TEXT,
-          reservation_link TEXT,
-          status TEXT NOT NULL DEFAULT 'draft',
-          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`);
-
-        // Create index
-        db.run(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`);
-
-        // Migrations and seeding
-        setTimeout(() => {
-          seedDatabase().then(() => {
-            console.log('Database initialized and seeded');
-            resolve();
-          }).catch((err) => {
-            console.error('Seeding error:', err);
-            resolve(); // Still resolve to allow app to start
-          });
-        }, 500);
+      db.run(`CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'admin',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`, (err) => {
+        if (err) console.error('Users table error:', err);
+        console.log('Users table created');
       });
-    });
-  });
-}
 
-function seedDatabase() {
-  return new Promise((resolve, reject) => {
-    // Seed admin user
-    const adminPassword = bcrypt.hashSync('admin123', 10);
-    db.run(
-      `INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`,
-      ['admin', adminPassword, 'admin'],
-      (err) => {
-        if (err) {
-          console.error('Error seeding admin user:', err);
-        }
-
-        // Seed categories
-        const categories = [
-          { name: 'Food', slug: 'food' },
-          { name: 'Bar', slug: 'bar' },
-          { name: 'Concert', slug: 'concert' },
-          { name: 'Cafe', slug: 'cafe' }
-        ];
-
-        let catCount = 0;
-        categories.forEach((cat) => {
-          db.run(
-            `INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`,
-            [cat.name, cat.slug],
-            () => {
-              catCount++;
-              if (catCount === categories.length) {
-                seedSubcategories().then(resolve).catch(reject);
-              }
-            }
-          );
-        });
-      }
-    );
-  });
-}
-
-function seedSubcategories() {
-  return new Promise((resolve) => {
-    // Get food category ID
-    db.get(`SELECT id FROM categories WHERE slug = 'food'`, (err, row) => {
-      if (!row) {
-        resolve();
-        return;
-      }
-
-      const foodId = row.id;
-      const subcats = [
-        { name: 'Street Food', slug: 'street-food' },
-        { name: 'Michelin', slug: 'michelin' },
-        { name: 'Taverna', slug: 'taverna' },
-        { name: 'Gastro Taverna', slug: 'gastro-taverna' },
-        { name: 'Asian', slug: 'asian' },
-        { name: 'Indian', slug: 'indian' }
-      ];
-
-      let subCount = 0;
-      subcats.forEach((sub) => {
-        db.run(
-          `INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES (?, ?, ?)`,
-          [foodId, sub.name, sub.slug],
-          () => {
-            subCount++;
-            if (subCount === subcats.length) {
-              resolve();
-            }
-          }
-        );
+      db.run(`CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL UNIQUE,
+        slug TEXT NOT NULL UNIQUE
+      )`, (err) => {
+        if (err) console.error('Categories table error:', err);
+        console.log('Categories table created');
       });
+
+      db.run(`CREATE TABLE IF NOT EXISTS subcategories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        slug TEXT NOT NULL,
+        UNIQUE(category_id, slug)
+      )`, (err) => {
+        if (err) console.error('Subcategories table error:', err);
+        console.log('Subcategories table created');
+      });
+
+      db.run(`CREATE TABLE IF NOT EXISTS venues (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL,
+        subcategory_id INTEGER REFERENCES subcategories(id),
+        latitude REAL NOT NULL,
+        longitude REAL NOT NULL,
+        address TEXT,
+        image_url TEXT,
+        website_url TEXT,
+        phone_number TEXT,
+        reservation_link TEXT,
+        rating REAL,
+        status TEXT NOT NULL DEFAULT 'draft',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )`, (err) => {
+        if (err) console.error('Venues table error:', err);
+        console.log('Venues table created');
+      });
+
+      db.run(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`, (err) => {
+        if (err) console.error('Index error:', err);
+        console.log('Index created');
+      });
+
+      // Seed data
+      const adminPassword = bcrypt.hashSync('admin123', 10);
+      db.run(`INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`, ['admin', adminPassword, 'admin']);
+      db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Food', 'food']);
+      db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Bar', 'bar']);
+      db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Concert', 'concert']);
+      db.run(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`, ['Cafe', 'cafe']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Street Food', 'street-food']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Michelin', 'michelin']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Taverna', 'taverna']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Gastro Taverna', 'gastro-taverna']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Asian', 'asian']);
+      db.run(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`, ['food', 'Indian', 'indian']);
+
+      console.log('Database initialized - resolving now');
+      resolve();
     });
+
+    console.log('Database connection initiated');
   });
 }
 
