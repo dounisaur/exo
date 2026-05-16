@@ -38,10 +38,8 @@ export function setupRoutes(app) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    db.get('SELECT * FROM users WHERE username = ?', [username], (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
       if (!user || !bcrypt.compareSync(password, user.password_hash)) {
         return res.status(401).json({ error: 'Invalid credentials' });
@@ -49,7 +47,9 @@ export function setupRoutes(app) {
 
       const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
       res.json({ token, user: { id: user.id, username: user.username, role: user.role } });
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Register endpoint (admin only)
@@ -64,65 +64,44 @@ export function setupRoutes(app) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
-    const passwordHash = bcrypt.hashSync(password, 10);
-    db.run(
-      'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
-      [username, passwordHash, 'admin'],
-      function(err) {
-        if (err) {
-          if (err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'Username already exists' });
-          }
-          return res.status(500).json({ error: err.message });
-        }
-        res.status(201).json({ id: this.lastID, username });
+    try {
+      const passwordHash = bcrypt.hashSync(password, 10);
+      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(username, passwordHash, 'admin');
+      res.status(201).json({ id: result.lastInsertRowid, username });
+    } catch (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(400).json({ error: 'Username already exists' });
       }
-    );
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Get current user
   app.get('/api/auth/me', authenticateToken, (req, res) => {
-    db.get('SELECT id, username, role FROM users WHERE id = ?', [req.user.id], (err, user) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      const user = db.prepare('SELECT id, username, role FROM users WHERE id = ?').get(req.user.id);
       res.json(user);
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ===== CATEGORY ENDPOINTS =====
 
   // Get all categories with subcategories (public)
   app.get('/api/categories', (req, res) => {
-    db.all('SELECT * FROM categories ORDER BY name', [], (err, categories) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      const categories = db.prepare('SELECT * FROM categories ORDER BY name').all();
 
-      if (!categories.length) {
-        return res.json([]);
-      }
-
-      // Fetch subcategories for each category
-      let processed = 0;
-      const result = categories.map(cat => ({ ...cat, subcategories: [] }));
-
-      categories.forEach((cat, idx) => {
-        db.all(
-          'SELECT * FROM subcategories WHERE category_id = ? ORDER BY name',
-          [cat.id],
-          (err, subcats) => {
-            if (!err && subcats) {
-              result[idx].subcategories = subcats;
-            }
-            processed++;
-            if (processed === categories.length) {
-              res.json(result);
-            }
-          }
-        );
+      const result = categories.map(cat => {
+        const subcategories = db.prepare('SELECT * FROM subcategories WHERE category_id = ? ORDER BY name').all(cat.id);
+        return { ...cat, subcategories };
       });
-    });
+
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Create category (admin)
@@ -135,19 +114,15 @@ export function setupRoutes(app) {
 
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-    db.run(
-      'INSERT INTO categories (name, slug) VALUES (?, ?)',
-      [name, slug],
-      function(err) {
-        if (err) {
-          if (err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'Category already exists' });
-          }
-          return res.status(500).json({ error: err.message });
-        }
-        res.status(201).json({ id: this.lastID, name, slug, subcategories: [] });
+    try {
+      const result = db.prepare('INSERT INTO categories (name, slug) VALUES (?, ?)').run(name, slug);
+      res.status(201).json({ id: result.lastInsertRowid, name, slug, subcategories: [] });
+    } catch (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(400).json({ error: 'Category already exists' });
       }
-    );
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Update category (admin)
@@ -160,35 +135,31 @@ export function setupRoutes(app) {
 
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-    db.run(
-      'UPDATE categories SET name = ?, slug = ? WHERE id = ?',
-      [name, slug, req.params.id],
-      function(err) {
-        if (err) {
-          if (err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'Category name already exists' });
-          }
-          return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Category not found' });
-        }
-        res.json({ id: req.params.id, name, slug });
+    try {
+      const result = db.prepare('UPDATE categories SET name = ?, slug = ? WHERE id = ?').run(name, slug, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Category not found' });
       }
-    );
+      res.json({ id: req.params.id, name, slug });
+    } catch (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(400).json({ error: 'Category name already exists' });
+      }
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Delete category (admin)
   app.delete('/api/categories/:id', authenticateToken, (req, res) => {
-    db.run('DELETE FROM categories WHERE id = ?', [req.params.id], function(err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (this.changes === 0) {
+    try {
+      const result = db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
+      if (result.changes === 0) {
         return res.status(404).json({ error: 'Category not found' });
       }
       res.json({ success: true });
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ===== SUBCATEGORY ENDPOINTS =====
@@ -203,19 +174,15 @@ export function setupRoutes(app) {
 
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-    db.run(
-      'INSERT INTO subcategories (category_id, name, slug) VALUES (?, ?, ?)',
-      [req.params.id, name, slug],
-      function(err) {
-        if (err) {
-          if (err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'Subcategory already exists for this category' });
-          }
-          return res.status(500).json({ error: err.message });
-        }
-        res.status(201).json({ id: this.lastID, category_id: parseInt(req.params.id), name, slug });
+    try {
+      const result = db.prepare('INSERT INTO subcategories (category_id, name, slug) VALUES (?, ?, ?)').run(req.params.id, name, slug);
+      res.status(201).json({ id: result.lastInsertRowid, category_id: parseInt(req.params.id), name, slug });
+    } catch (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(400).json({ error: 'Subcategory already exists for this category' });
       }
-    );
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Update subcategory (admin)
@@ -228,43 +195,35 @@ export function setupRoutes(app) {
 
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
-    db.run(
-      'UPDATE subcategories SET name = ?, slug = ? WHERE id = ?',
-      [name, slug, req.params.id],
-      function(err) {
-        if (err) {
-          if (err.message.includes('UNIQUE')) {
-            return res.status(400).json({ error: 'Subcategory name already exists for this category' });
-          }
-          return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Subcategory not found' });
-        }
-        res.json({ id: req.params.id, name, slug });
+    try {
+      const result = db.prepare('UPDATE subcategories SET name = ?, slug = ? WHERE id = ?').run(name, slug, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Subcategory not found' });
       }
-    );
+      res.json({ id: req.params.id, name, slug });
+    } catch (err) {
+      if (err.message.includes('UNIQUE')) {
+        return res.status(400).json({ error: 'Subcategory name already exists for this category' });
+      }
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Delete subcategory (admin)
   app.delete('/api/subcategories/:id', authenticateToken, (req, res) => {
-    // First, clear subcategory_id from venues that reference this subcategory
-    db.run('UPDATE venues SET subcategory_id = NULL WHERE subcategory_id = ?', [req.params.id], (err) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      // First, clear subcategory_id from venues that reference this subcategory
+      db.prepare('UPDATE venues SET subcategory_id = NULL WHERE subcategory_id = ?').run(req.params.id);
 
       // Then delete the subcategory
-      db.run('DELETE FROM subcategories WHERE id = ?', [req.params.id], function(err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Subcategory not found' });
-        }
-        res.json({ success: true });
-      });
-    });
+      const result = db.prepare('DELETE FROM subcategories WHERE id = ?').run(req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Subcategory not found' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // ===== VENUE ENDPOINTS =====
@@ -280,56 +239,56 @@ export function setupRoutes(app) {
 
   // Get all venues for admin (all statuses)
   app.get('/api/admin/venues', authenticateToken, (req, res) => {
-    db.all('SELECT * FROM venues ORDER BY created_at DESC', [], (err, rows) => {
-      if (err) {
-        console.error('Error fetching venues:', err);
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      const rows = db.prepare('SELECT * FROM venues ORDER BY created_at DESC').all();
       console.log('Fetched venues:', rows ? rows.length : 0, 'venues');
       res.json(rows || []);
-    });
+    } catch (err) {
+      console.error('Error fetching venues:', err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Get published venues with optional filters (public API)
   app.get('/api/venues', (req, res) => {
-    const { category, lat, lng, radius = 50 } = req.query;
-    let query = "SELECT * FROM venues WHERE status = 'published'";
-    const params = [];
+    try {
+      const { category, lat, lng, radius = 50 } = req.query;
+      let query = "SELECT * FROM venues WHERE status = 'published'";
+      const params = [];
 
-    if (category) {
-      query += ' AND category = ?';
-      params.push(category);
-    }
-
-    if (lat && lng) {
-      // Simple distance calculation (in km)
-      const radiusKm = radius / 1000;
-      query += ` AND (
-        (latitude - ?) * (latitude - ?) +
-        (longitude - ?) * (longitude - ?)
-      ) < (? * ?)`;
-      params.push(lat, lat, lng, lng, radiusKm, radiusKm);
-    }
-
-    db.all(query, params, (err, rows) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
+      if (category) {
+        query += ' AND category = ?';
+        params.push(category);
       }
+
+      if (lat && lng) {
+        // Simple distance calculation (in km)
+        const radiusKm = radius / 1000;
+        query += ` AND (
+          (latitude - ?) * (latitude - ?) +
+          (longitude - ?) * (longitude - ?)
+        ) < (? * ?)`;
+        params.push(lat, lat, lng, lng, radiusKm, radiusKm);
+      }
+
+      const rows = db.prepare(query).all(...params);
       res.json(rows);
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Get single venue
   app.get('/api/venues/:id', (req, res) => {
-    db.get('SELECT * FROM venues WHERE id = ?', [req.params.id], (err, row) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
+    try {
+      const row = db.prepare('SELECT * FROM venues WHERE id = ?').get(req.params.id);
       if (!row) {
         return res.status(404).json({ error: 'Venue not found' });
       }
       res.json(row);
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Search venue by name (admin)
@@ -396,116 +355,108 @@ export function setupRoutes(app) {
 
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
+    try {
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
 
-    // Validate required fields
-    if (!name || !category) {
-      return res.status(400).json({ error: 'Name and category are required' });
-    }
-
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({ error: 'Invalid latitude or longitude' });
-    }
-
-    // Validate rating if provided
-    let parsedRating = null;
-    if (rating !== undefined && rating !== null && rating !== '') {
-      parsedRating = parseFloat(rating);
-      if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
-        return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+      // Validate required fields
+      if (!name || !category) {
+        return res.status(400).json({ error: 'Name and category are required' });
       }
-    }
 
-    console.log('Creating venue:', name);
-    db.run(
-      `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating],
-      function(err) {
-        if (err) {
-          console.error('Error inserting venue:', err);
-          return res.status(500).json({ error: err.message });
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ error: 'Invalid latitude or longitude' });
+      }
+
+      // Validate rating if provided
+      let parsedRating = null;
+      if (rating !== undefined && rating !== null && rating !== '') {
+        parsedRating = parseFloat(rating);
+        if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+          return res.status(400).json({ error: 'Rating must be between 0 and 5' });
         }
-        console.log('Venue created with ID:', this.lastID);
-        res.status(201).json({ id: this.lastID });
       }
-    );
+
+      console.log('Creating venue:', name);
+      const result = db.prepare(
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating);
+      console.log('Venue created with ID:', result.lastInsertRowid);
+      res.status(201).json({ id: result.lastInsertRowid });
+    } catch (err) {
+      console.error('Error inserting venue:', err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, (req, res) => {
-    const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
+    try {
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
 
-    if (!name || !category) {
-      return res.status(400).json({ error: 'Name and category are required' });
-    }
-
-    const lat = parseFloat(latitude);
-    const lng = parseFloat(longitude);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({ error: 'Invalid latitude or longitude' });
-    }
-
-    // Validate rating if provided
-    let parsedRating = null;
-    if (rating !== undefined && rating !== null && rating !== '') {
-      parsedRating = parseFloat(rating);
-      if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
-        return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+      if (!name || !category) {
+        return res.status(400).json({ error: 'Name and category are required' });
       }
-    }
 
-    db.run(
-      `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, updated_at=CURRENT_TIMESTAMP
-       WHERE id = ?`,
-      [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, req.params.id],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Venue not found' });
-        }
-        res.json({ id: req.params.id });
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ error: 'Invalid latitude or longitude' });
       }
-    );
+
+      // Validate rating if provided
+      let parsedRating = null;
+      if (rating !== undefined && rating !== null && rating !== '') {
+        parsedRating = parseFloat(rating);
+        if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+          return res.status(400).json({ error: 'Rating must be between 0 and 5' });
+        }
+      }
+
+      const result = db.prepare(
+        `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, updated_at=CURRENT_TIMESTAMP
+         WHERE id = ?`
+      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Venue not found' });
+      }
+      res.json({ id: req.params.id });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Delete venue (admin)
   app.delete('/api/venues/:id', authenticateToken, (req, res) => {
-    db.run('DELETE FROM venues WHERE id = ?', [req.params.id], function(err) {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      if (this.changes === 0) {
+    try {
+      const result = db.prepare('DELETE FROM venues WHERE id = ?').run(req.params.id);
+      if (result.changes === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
       res.json({ success: true });
-    });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Update venue status (admin)
   app.patch('/api/venues/:id/status', authenticateToken, (req, res) => {
-    const { status } = req.body;
-    if (!['published', 'draft'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
-    db.run(
-      'UPDATE venues SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?',
-      [status, req.params.id],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: err.message });
-        }
-        if (this.changes === 0) {
-          return res.status(404).json({ error: 'Venue not found' });
-        }
-        res.json({ id: req.params.id, status });
+    try {
+      const { status } = req.body;
+      if (!['published', 'draft'].includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
       }
-    );
+      const result = db.prepare('UPDATE venues SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(status, req.params.id);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'Venue not found' });
+      }
+      res.json({ id: req.params.id, status });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
   });
 }
