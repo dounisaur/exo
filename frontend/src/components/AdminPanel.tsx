@@ -48,6 +48,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupResults, setLookupResults] = useState<any[]>([])
   const [lookupMessage, setLookupMessage] = useState('')
+  const [manualAddressEnabled, setManualAddressEnabled] = useState(false)
 
   // Edit venue states
   const [editingVenueId, setEditingVenueId] = useState<number | null>(null)
@@ -148,6 +149,40 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
     } catch (error) {
       setLookupMessage('Error looking up location')
       console.error('Lookup error:', error)
+    } finally {
+      setLookupLoading(false)
+    }
+  }
+
+  const geocodeAddress = async (address: string) => {
+    if (!address.trim()) {
+      setLookupMessage('Please enter an address')
+      return
+    }
+
+    setLookupLoading(true)
+    setLookupMessage('')
+
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+      const results = await response.json()
+
+      if (results && results.length > 0) {
+        const { lat, lon } = results[0]
+        setFormData(prev => ({
+          ...prev,
+          latitude: lat,
+          longitude: lon
+        }))
+        setLookupMessage(`✅ Address found: ${results[0].display_name.split(',').slice(0, 3).join(',')}`)
+        setManualAddressEnabled(false)
+        setTimeout(() => setLookupMessage(''), 3000)
+      } else {
+        setLookupMessage('Address not found. Please try a different address.')
+      }
+    } catch (error) {
+      console.error('Geocoding error:', error)
+      setLookupMessage('Error geocoding address')
     } finally {
       setLookupLoading(false)
     }
@@ -263,6 +298,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
       setImagePreview('')
       setLookupQuery('')
       setEditingVenueId(null)
+      setManualAddressEnabled(false)
       setFormData({
         name: '',
         category: categories.length > 0 ? categories[0].slug : 'food',
@@ -685,17 +721,94 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
 
               {/* Message */}
               {lookupMessage && (
-                <p style={{
+                <div style={{
                   marginTop: '1rem',
                   padding: '0.75rem 1rem',
                   borderRadius: '8px',
                   fontSize: '0.9rem',
                   backgroundColor: lookupMessage.includes('No results') ? '#fef2f2' : '#ecfdf5',
                   color: lookupMessage.includes('No results') ? '#dc2626' : '#059669',
-                  border: `1px solid ${lookupMessage.includes('No results') ? '#fee2e2' : '#d1fae5'}`
+                  border: `1px solid ${lookupMessage.includes('No results') ? '#fee2e2' : '#d1fae5'}`,
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
                 }}>
-                  {lookupMessage}
-                </p>
+                  <p style={{ margin: 0 }}>
+                    {lookupMessage}
+                  </p>
+                  {lookupMessage.includes('No results') && (
+                    <button
+                      type="button"
+                      onClick={() => setManualAddressEnabled(!manualAddressEnabled)}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        marginLeft: '1rem'
+                      }}
+                    >
+                      {manualAddressEnabled ? 'Cancel' : 'Add Address'}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Manual Address Input */}
+              {manualAddressEnabled && (
+                <div style={{
+                  marginTop: '1.5rem',
+                  padding: '1.5rem',
+                  backgroundColor: '#f9fafb',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px'
+                }}>
+                  <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.95rem', fontWeight: 600, color: '#1f2937' }}>Add Address Manually</h4>
+
+                  <div style={{ display: 'flex', gap: '0.75rem' }}>
+                    <div className="form-group" style={{ flex: 1 }}>
+                      <label>Address *</label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                        placeholder="e.g., 123 Main St, City, Country"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            geocodeAddress(formData.address)
+                          }
+                        }}
+                        style={{ width: '100%', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => geocodeAddress(formData.address)}
+                      disabled={lookupLoading}
+                      style={{
+                        alignSelf: 'flex-end',
+                        padding: '0.9rem 1.5rem',
+                        background: 'linear-gradient(135deg, #2a5298 0%, #3a6db5 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        cursor: lookupLoading ? 'not-allowed' : 'pointer',
+                        opacity: lookupLoading ? 0.6 : 1,
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {lookupLoading ? 'Locating...' : 'Find'}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
