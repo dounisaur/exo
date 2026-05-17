@@ -6,7 +6,7 @@ import AdminPanel from './components/AdminPanel'
 import type { Venue, Category } from './types'
 
 function App() {
-  const [page, setPage] = useState<'home' | 'admin'>('home')
+  const [page, setPage] = useState<'home' | 'login' | 'admin'>('home')
   const [venues, setVenues] = useState<Venue[]>([])
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null)
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
@@ -98,6 +98,7 @@ function App() {
       localStorage.setItem('authToken', token)
       setLoginUsername('')
       setLoginPassword('')
+      setPage('admin')
     } catch (error) {
       setLoginError('Error: ' + (error instanceof Error ? error.message : 'Unknown error'))
     }
@@ -106,7 +107,7 @@ function App() {
   const handleLogout = () => {
     setAuthToken(null)
     localStorage.removeItem('authToken')
-    setPage('home')
+    setPage('login')
   }
 
   // Fetch venues
@@ -143,9 +144,12 @@ function App() {
         <h1>🌍 EXO</h1>
         <nav>
           <button onClick={() => setPage('home')} className={page === 'home' ? 'active' : ''}>Home</button>
+          {!authToken && (
+            <button onClick={() => setPage('login')} className={page === 'login' ? 'active' : ''}>Login</button>
+          )}
           {authToken && (
             <>
-              <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Admin</button>
+              <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Dashboard</button>
               <button onClick={handleLogout} style={{ marginLeft: 'auto', padding: '0.8rem 1.5rem', background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(147, 51, 234, 0.3)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(147, 51, 234, 0.4)' }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)' }}>Logout</button>
             </>
           )}
@@ -153,11 +157,11 @@ function App() {
       </header>
 
       <main>
-        {!authToken ? (
+        {page === 'login' ? (
           // Login form
           <div className="login-container">
             <form onSubmit={handleLogin} className="login-form">
-              <h2>Admin Login</h2>
+              <h2>Login</h2>
               {loginError && <p className="error">{loginError}</p>}
               <div className="form-group">
                 <label>Username</label>
@@ -200,7 +204,7 @@ function App() {
               <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} categories={categories} />
             </div>
           </div>
-        ) : (
+        ) : authToken ? (
           <AdminPanel
             authToken={authToken}
             categories={categories}
@@ -217,6 +221,23 @@ function App() {
               fetchUpdatedCategories()
             }}
           />
+        ) : (
+          <div className="home">
+            <div className="filters">
+              <select value={category} onChange={(e) => setCategory(e.target.value)}>
+                <option value="">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                ))}
+              </select>
+              {loading && <p>Loading...</p>}
+            </div>
+
+            <div className="content">
+              {userLocation && <Map venues={venues} userLocation={userLocation} selectedVenue={selectedVenue} />}
+              <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} categories={categories} />
+            </div>
+          </div>
         )}
       </main>
     </div>
