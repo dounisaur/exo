@@ -3,7 +3,6 @@ import type { Venue, Category } from '../types'
 import MobileNav from './MobileNav'
 
 interface AdminPanelProps {
-  onVenueAdded: () => void
   authToken: string
   categories: Category[]
   onCategoriesUpdated: () => void
@@ -11,7 +10,7 @@ interface AdminPanelProps {
 
 type AdminTab = 'venues' | 'categories' | 'subcategories'
 
-export default function AdminPanel({ onVenueAdded, authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
+export default function AdminPanel({ authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
   const [formData, setFormData] = useState({
     name: '',
     category: categories.length > 0 ? categories[0].slug : 'food',

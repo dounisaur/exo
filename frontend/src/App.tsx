@@ -15,7 +15,7 @@ function App() {
 
   // Auth states
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
-  const [_currentUser, setCurrentUser] = useState<User | null>(null)
+  const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loginUsername, setLoginUsername] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -141,11 +141,6 @@ function App() {
     }
   }, [category, userLocation])
 
-  const handleVenueAdded = () => {
-    fetchVenues()
-    setPage('home')
-  }
-
   return (
     <div className="app">
       <header className="header">
@@ -211,7 +206,6 @@ function App() {
           </div>
         ) : (
           <AdminPanel
-            onVenueAdded={handleVenueAdded}
             authToken={authToken}
             categories={categories}
             onCategoriesUpdated={() => {
