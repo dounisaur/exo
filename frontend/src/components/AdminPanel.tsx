@@ -11,7 +11,7 @@ interface AdminPanelProps {
 
 type AdminTab = 'venues' | 'categories' | 'subcategories'
 
-export default function AdminPanel({ onVenueAdded, authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
+export default function AdminPanel({ _onVenueAdded, authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
   const [formData, setFormData] = useState({
     name: '',
     category: categories.length > 0 ? categories[0].slug : 'food',
@@ -38,7 +38,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newSubcategoryName, setNewSubcategoryName] = useState('')
   const [selectedCategoryForSubcat, setSelectedCategoryForSubcat] = useState<number | null>(null)
-  const [editingCategory, setEditingCategory] = useState<number | null>(null)
+  const [_editingCategory, _setEditingCategory] = useState<number | null>(null)
   const [editingSubcategory, setEditingSubcategory] = useState<number | null>(null)
   const [cmsMessage, setCmsMessage] = useState('')
   const [showAddCategoryForm, setShowAddCategoryForm] = useState(false)
@@ -1393,7 +1393,7 @@ export default function AdminPanel({ onVenueAdded, authToken, categories, onCate
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <span style={{ fontSize: '1.2rem' }}>
                                   {[...Array(5)].map((_, i) => {
-                                    const fillPercentage = Math.min(Math.max(venue.rating - i, 0), 1);
+                                    const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1);
                                     return (
                                       <span key={i} style={{ display: 'inline-block', position: 'relative', width: '1.2em', color: '#FFB800' }}>
                                         <span style={{ position: 'absolute', overflow: 'hidden', width: `${fillPercentage * 100}%`, color: '#FFB800' }}>★</span>

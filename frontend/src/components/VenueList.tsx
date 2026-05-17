@@ -44,7 +44,7 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: '0.5rem 0', fontSize: '0.9rem' }}>
                 <span style={{ display: 'inline-block' }}>
                   {[...Array(5)].map((_, i) => {
-                    const fillPercentage = Math.min(Math.max(venue.rating - i, 0), 1);
+                    const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1);
                     return (
                       <span key={i} style={{ display: 'inline-block', position: 'relative', width: '1em', color: '#FFB800' }}>
                         <span style={{ position: 'absolute', overflow: 'hidden', width: `${fillPercentage * 100}%`, color: '#FFB800' }}>★</span>

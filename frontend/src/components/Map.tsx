@@ -51,7 +51,7 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
     if (!mapInstance.current) return
 
     // Remove old markers
-    mapInstance.current.eachLayer((layer) => {
+    mapInstance.current.eachLayer((layer: L.Layer) => {
       if (layer instanceof L.Marker || layer instanceof L.CircleMarker) {
         if (layer.getPopup()?.getContent() !== 'Your location') {
           mapInstance.current!.removeLayer(layer)
