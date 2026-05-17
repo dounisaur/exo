@@ -3,7 +3,7 @@ import './App.css'
 import Map from './components/Map'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
-import type { Venue, Category, User } from './types'
+import type { Venue, Category } from './types'
 
 function App() {
   const [page, setPage] = useState<'home' | 'admin'>('home')
