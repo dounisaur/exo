@@ -1,11 +1,17 @@
+console.log('[SERVER] Importing modules...');
+
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bodyParser from 'body-parser';
 import { fileURLToPath } from 'url';
 import path from 'path';
-import jwt from 'jsonwebtoken';
+
+console.log('[SERVER] Importing auth...');
+import { JWT_SECRET } from './auth.js';
+console.log('[SERVER] Importing db...');
 import { initDb } from './db.js';
+console.log('[SERVER] Importing routes...');
 import { setupRoutes } from './routes.js';
 
 console.log('[SERVER] Starting...');
@@ -14,7 +20,6 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 
 // __dirname setup for ESM
@@ -29,24 +34,6 @@ app.use(bodyParser.json());
 
 // Serve uploaded files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// JWT Authentication middleware
-export function authenticateToken(req, res, next) {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ error: 'Invalid token' });
-    }
-    req.user = user;
-    next();
-  });
-}
 
 export { JWT_SECRET };
 

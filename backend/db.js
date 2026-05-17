@@ -67,18 +67,22 @@ function initializeTables() {
 }
 
 function seedData() {
+  // Only seed if no users exist (skip on subsequent startups)
+  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
+  if (userCount.count > 0) return;
+
   const adminPassword = bcrypt.hashSync('admin123', 10);
 
-  const insertUser = db.prepare(`INSERT OR IGNORE INTO users (username, password_hash, role) VALUES (?, ?, ?)`);
+  const insertUser = db.prepare(`INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)`);
   insertUser.run('admin', adminPassword, 'admin');
 
-  const insertCategory = db.prepare(`INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)`);
+  const insertCategory = db.prepare(`INSERT INTO categories (name, slug) VALUES (?, ?)`);
   insertCategory.run('Food', 'food');
   insertCategory.run('Bar', 'bar');
   insertCategory.run('Concert', 'concert');
   insertCategory.run('Cafe', 'cafe');
 
-  const insertSubcategory = db.prepare(`INSERT OR IGNORE INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`);
+  const insertSubcategory = db.prepare(`INSERT INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`);
   insertSubcategory.run('food', 'Street Food', 'street-food');
   insertSubcategory.run('food', 'Michelin', 'michelin');
   insertSubcategory.run('food', 'Taverna', 'taverna');

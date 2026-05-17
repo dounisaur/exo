@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
-import { authenticateToken, JWT_SECRET } from './server.js';
+import { authenticateToken, JWT_SECRET } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
