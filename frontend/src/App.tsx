@@ -15,7 +15,6 @@ function App() {
 
   // Auth states
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [loginUsername, setLoginUsername] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -65,8 +64,7 @@ function App() {
         headers: { 'Authorization': `Bearer ${authToken}` }
       })
       if (response.ok) {
-        const user = await response.json()
-        setCurrentUser(user)
+        await response.json()
       } else {
         setAuthToken(null)
         localStorage.removeItem('authToken')
@@ -95,9 +93,8 @@ function App() {
         return
       }
 
-      const { token, user } = await response.json()
+      const { token } = await response.json()
       setAuthToken(token)
-      setCurrentUser(user)
       localStorage.setItem('authToken', token)
       setLoginUsername('')
       setLoginPassword('')
@@ -108,7 +105,6 @@ function App() {
 
   const handleLogout = () => {
     setAuthToken(null)
-    setCurrentUser(null)
     localStorage.removeItem('authToken')
     setPage('home')
   }
