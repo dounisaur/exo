@@ -11,7 +11,7 @@ interface AdminPanelProps {
 
 type AdminTab = 'venues' | 'categories' | 'subcategories'
 
-export default function AdminPanel({ _onVenueAdded, authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
+export default function AdminPanel({ onVenueAdded, authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
   const [formData, setFormData] = useState({
     name: '',
     category: categories.length > 0 ? categories[0].slug : 'food',
