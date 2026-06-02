@@ -25,9 +25,23 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || 'http://localhost:5173';
 // __dirname setup for ESM
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Allow multiple CORS origins for local and live
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'https://exo-1ade.onrender.com'
+];
+
 // Middleware
 app.use(cors({
-  origin: CORS_ORIGIN,
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(bodyParser.json());
