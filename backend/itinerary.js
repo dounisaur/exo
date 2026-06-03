@@ -1,4 +1,4 @@
-import { getDatabase } from './db.js'
+import { getDb } from './db.js'
 
 // Haversine formula for distance in meters
 function haversine(lat1, lng1, lat2, lng2) {
@@ -41,7 +41,7 @@ export async function generateItinerary(req, res) {
       return res.status(400).json({ error: 'lat and lng required' })
     }
 
-    const db = getDatabase()
+    const db = getDb()
 
     // Fetch all published venues with subcategory slug
     const venues = db.prepare(`
