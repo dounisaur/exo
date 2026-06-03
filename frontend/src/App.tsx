@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Settings, LogOut, Search } from 'lucide-react'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
-import type { Venue, Category } from './types'
+import type { Venue, Category, User } from './types'
 
 function App() {
   const [page, setPage] = useState<'home' | 'login' | 'admin'>('home')
@@ -13,6 +13,10 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('')
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    const stored = localStorage.getItem('currentUser')
+    return stored ? JSON.parse(stored) : null
+  })
   const [loginUsername, setLoginUsername] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
@@ -58,12 +62,20 @@ function App() {
       })
       if (!response.ok) {
         setAuthToken(null)
+        setCurrentUser(null)
         localStorage.removeItem('authToken')
+        localStorage.removeItem('currentUser')
+      } else {
+        const userData = await response.json()
+        setCurrentUser(userData)
+        localStorage.setItem('currentUser', JSON.stringify(userData))
       }
     } catch (error) {
       console.error('Error verifying auth:', error)
       setAuthToken(null)
+      setCurrentUser(null)
       localStorage.removeItem('authToken')
+      localStorage.removeItem('currentUser')
     }
   }
 
@@ -84,9 +96,11 @@ function App() {
         return
       }
 
-      const { token } = await response.json()
+      const { token, user } = await response.json()
       setAuthToken(token)
+      setCurrentUser(user)
       localStorage.setItem('authToken', token)
+      localStorage.setItem('currentUser', JSON.stringify(user))
       setLoginUsername('')
       setLoginPassword('')
       setPage('admin')
@@ -97,7 +111,9 @@ function App() {
 
   const handleLogout = () => {
     setAuthToken(null)
+    setCurrentUser(null)
     localStorage.removeItem('authToken')
+    localStorage.removeItem('currentUser')
     setPage('home')
   }
 
@@ -155,7 +171,7 @@ function App() {
                   value={loginUsername}
                   onChange={(e) => setLoginUsername(e.target.value)}
                   className="input-field"
-                  placeholder="admin"
+                  placeholder="Username"
                   required
                 />
               </div>
@@ -176,14 +192,6 @@ function App() {
             <button type="submit" className="w-full btn-primary">
               Sign in
             </button>
-
-            <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
-              <p className="text-sm text-gray-600">
-                <strong>Demo credentials:</strong> <br />
-                Username: <code className="bg-blue-100 px-2 py-1 rounded text-blue-900 font-mono text-xs">admin</code> <br />
-                Password: <code className="bg-blue-100 px-2 py-1 rounded text-blue-900 font-mono text-xs">admin123</code>
-              </p>
-            </div>
 
             {authToken && (
               <button
@@ -299,9 +307,10 @@ function App() {
       )}
 
       {/* Admin */}
-      {page === 'admin' && authToken && (
+      {page === 'admin' && authToken && currentUser && (
         <AdminPanel
           authToken={authToken}
+          userRole={currentUser.role}
           categories={categories}
           onCategoriesUpdated={() => {
             const fetchUpdatedCategories = async () => {

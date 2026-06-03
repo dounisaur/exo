@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
-import { authenticateToken, JWT_SECRET } from './auth.js';
+import { authenticateToken, requireAdmin, JWT_SECRET } from './auth.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -53,21 +53,21 @@ export function setupRoutes(app) {
   });
 
   // Register endpoint (admin only)
-  app.post('/api/auth/register', authenticateToken, (req, res) => {
-    if (req.user.role !== 'admin') {
-      return res.status(403).json({ error: 'Only admins can register users' });
-    }
-
-    const { username, password } = req.body;
+  app.post('/api/auth/register', authenticateToken, requireAdmin, (req, res) => {
+    const { username, password, role } = req.body;
 
     if (!username || !password) {
       return res.status(400).json({ error: 'Username and password required' });
     }
 
+    if (!role || !['admin', 'creator'].includes(role)) {
+      return res.status(400).json({ error: 'Role must be admin or creator' });
+    }
+
     try {
       const passwordHash = bcrypt.hashSync(password, 10);
-      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(username, passwordHash, 'admin');
-      res.status(201).json({ id: result.lastInsertRowid, username });
+      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(username, passwordHash, role);
+      res.status(201).json({ id: result.lastInsertRowid, username, role });
     } catch (err) {
       if (err.message.includes('UNIQUE')) {
         return res.status(400).json({ error: 'Username already exists' });
@@ -81,6 +81,37 @@ export function setupRoutes(app) {
     try {
       const user = db.prepare('SELECT id, username, role FROM users WHERE id = ?').get(req.user.id);
       res.json(user);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ===== USER MANAGEMENT ENDPOINTS (admin only) =====
+
+  // List all users
+  app.get('/api/users', authenticateToken, requireAdmin, (req, res) => {
+    try {
+      const users = db.prepare(
+        'SELECT id, username, role, created_at FROM users ORDER BY created_at DESC'
+      ).all();
+      res.json(users);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Delete a user (cannot delete yourself)
+  app.delete('/api/users/:id', authenticateToken, requireAdmin, (req, res) => {
+    const targetId = parseInt(req.params.id);
+    if (targetId === req.user.id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
+    try {
+      const result = db.prepare('DELETE FROM users WHERE id = ?').run(targetId);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json({ success: true });
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

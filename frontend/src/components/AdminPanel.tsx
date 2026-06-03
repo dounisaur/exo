@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Eye as EyeIcon } from 'lucide-react'
 import BottomSheet from './BottomSheet'
-import type { Venue, Category } from '../types'
+import type { Venue, Category, User } from '../types'
 
 interface AdminPanelProps {
   authToken: string
+  userRole: string
   categories: Category[]
   onCategoriesUpdated: () => void
   onViewHome: () => void
 }
 
-type AdminTab = 'venues' | 'categories' | 'subcategories'
+type AdminTab = 'venues' | 'categories' | 'subcategories' | 'users'
 
-export default function AdminPanel({ authToken, categories, onCategoriesUpdated, onViewHome }: AdminPanelProps) {
+export default function AdminPanel({ authToken, userRole, categories, onCategoriesUpdated, onViewHome }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('venues')
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
@@ -52,9 +53,18 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
   const [newSubcategoryName, setNewSubcategoryName] = useState('')
   const [selectedCategoryForSubcat, setSelectedCategoryForSubcat] = useState<number | null>(null)
 
+  // User management state (admin only)
+  const [users, setUsers] = useState<User[]>([])
+  const [showUserSheet, setShowUserSheet] = useState(false)
+  const [newUserUsername, setNewUserUsername] = useState('')
+  const [newUserPassword, setNewUserPassword] = useState('')
+  const [newUserRole, setNewUserRole] = useState<'admin' | 'creator'>('creator')
+
   useEffect(() => {
     if (activeTab === 'venues') {
       fetchAdminVenues()
+    } else if (activeTab === 'users') {
+      fetchUsers()
     }
   }, [activeTab])
 
@@ -392,6 +402,70 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
     }
   }
 
+  // User management handlers
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (!response.ok) throw new Error('Failed to fetch users')
+      const data = await response.json()
+      setUsers(data)
+    } catch (error) {
+      setMessage('Error loading users')
+    }
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newUserUsername.trim() || !newUserPassword.trim()) return
+    setLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ username: newUserUsername, password: newUserPassword, role: newUserRole })
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        setMessage(err.error || 'Error creating user')
+        return
+      }
+      setMessage('User created')
+      setNewUserUsername('')
+      setNewUserPassword('')
+      setNewUserRole('creator')
+      setShowUserSheet(false)
+      fetchUsers()
+    } catch (error) {
+      setMessage('Error creating user')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDeleteUser = async (id: number) => {
+    if (!confirm('Delete this user? This cannot be undone.')) return
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        setMessage(err.error || 'Error deleting user')
+        return
+      }
+      setMessage('User deleted')
+      fetchUsers()
+    } catch (error) {
+      setMessage('Error deleting user')
+    }
+  }
+
   const getSubcategoryName = (subcategoryId?: number) => {
     for (const category of categories) {
       const subcategory = category.subcategories.find(s => s.id === subcategoryId)
@@ -424,7 +498,8 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
           {[
             { id: 'venues', label: 'Venues' },
             { id: 'categories', label: 'Categories' },
-            { id: 'subcategories', label: 'Subcategories' }
+            { id: 'subcategories', label: 'Subcategories' },
+            ...(userRole === 'admin' ? [{ id: 'users', label: 'Users' }] : [])
           ].map(tab => (
             <button
               key={tab.id}
@@ -601,6 +676,52 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
                       <button
                         onClick={() => handleDeleteSubcategory(sub.id)}
                         className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Users Tab */}
+          {activeTab === 'users' && userRole === 'admin' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Users</h2>
+                <button
+                  onClick={() => setShowUserSheet(true)}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  <span>Add User</span>
+                </button>
+              </div>
+              <div className="grid gap-4">
+                {users.length === 0 ? (
+                  <div className="p-8 text-center text-gray-600">No users found</div>
+                ) : (
+                  users.map(user => (
+                    <div key={user.id} className="card p-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-gray-900">{user.username}</h3>
+                        <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === 'admin'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteUser(user.id)}
+                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                        title="Delete user"
                       >
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6"></polyline>
@@ -953,6 +1074,59 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
             <button
               type="button"
               onClick={() => setShowSubcategorySheet(false)}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* User Sheet */}
+      <BottomSheet
+        isOpen={showUserSheet}
+        onClose={() => setShowUserSheet(false)}
+        title="Add User"
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+            <input
+              type="text"
+              value={newUserUsername}
+              onChange={(e) => setNewUserUsername(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+            <input
+              type="password"
+              value={newUserPassword}
+              onChange={(e) => setNewUserPassword(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+            <select
+              value={newUserRole}
+              onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'creator')}
+              className="input-field"
+            >
+              <option value="creator">Creator</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="submit" disabled={loading} className="btn-primary flex-1">
+              {loading ? 'Creating...' : 'Create User'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowUserSheet(false)}
               className="btn-secondary flex-1"
             >
               Cancel
