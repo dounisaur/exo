@@ -201,7 +201,23 @@ export async function generateItinerary(req, res) {
       }
     }
 
-    res.json({ stops })
+    // Calculate travel from starting location to first stop
+    if (stops.length > 0) {
+      const firstStop = stops[0]
+      const travelToFirst = haversine(anchorLat, anchorLng, firstStop.venue.latitude, firstStop.venue.longitude)
+
+      // Add travel info before first stop (will be displayed as starting point → first venue)
+      res.json({
+        stops,
+        travelToFirst: {
+          distanceMeters: Math.round(travelToFirst),
+          walkable: travelToFirst <= 800,
+          minutes: Math.ceil(travelToFirst / (travelToFirst <= 800 ? 83 : 333))
+        }
+      })
+    } else {
+      res.json({ stops })
+    }
   } catch (error) {
     console.error('Error generating itinerary:', error)
     res.status(500).json({ error: 'Failed to generate itinerary' })

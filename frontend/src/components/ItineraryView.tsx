@@ -1,8 +1,8 @@
-import { ArrowLeft, MapPin, Clock, MapIcon, AlertCircle } from 'lucide-react'
+import { ArrowLeft, Clock, MapIcon, AlertCircle } from 'lucide-react'
 import type { Itinerary } from '../types'
 
 interface ItineraryViewProps {
-  itinerary: Itinerary | null
+  itinerary: (Itinerary & { travelToFirst?: { distanceMeters: number; walkable: boolean; minutes: number } }) | null
   loading: boolean
   error: string | null
   onBack: () => void
@@ -139,11 +139,44 @@ export default function ItineraryView({
 
         {/* Timeline */}
         <div className="px-4 pb-8">
+          {/* Starting Point */}
+          <div className="flex gap-4 mb-6">
+            <div className="flex flex-col items-center">
+              <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
+                📍
+              </div>
+              {itinerary.stops.length > 0 && (
+                <div className="w-0.5 h-20 bg-green-200 my-2"></div>
+              )}
+            </div>
+
+            <div className="flex-1 pb-4">
+              <div className="flex items-baseline justify-between mb-2">
+                <h3 className="text-lg font-bold text-gray-900">Your Location</h3>
+                <span className="text-sm font-semibold text-green-600">{formatTime(startTime)}</span>
+              </div>
+              <p className="text-sm text-gray-600">Starting point for your itinerary</p>
+            </div>
+          </div>
+
+          {/* Travel to First Stop */}
+          {itinerary.travelToFirst && (
+            <div className="flex gap-4 mb-6">
+              <div className="w-8 flex justify-center">
+                <span className="text-2xl">{itinerary.travelToFirst.walkable ? '🚶' : '🚕'}</span>
+              </div>
+              <div className="flex-1 flex items-center gap-2 text-sm text-gray-600 pb-4 border-b border-gray-200">
+                {itinerary.travelToFirst.walkable ? (
+                  <span>{itinerary.travelToFirst.minutes} min walk · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
+                ) : (
+                  <span>Taxi needed (~{itinerary.travelToFirst.minutes} min) · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
+                )}
+              </div>
+            </div>
+          )}
+
           {itinerary.stops.map((stop, index) => {
             const arrivalTime = calculateArrivalTime(index)
-            const nextArrivalTime = index < itinerary.stops.length - 1
-              ? calculateArrivalTime(index + 1)
-              : null
 
             return (
               <div key={stop.venue.id}>
