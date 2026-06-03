@@ -16,12 +16,6 @@ export default function ItineraryView({
   onBack,
   startVenueName
 }: ItineraryViewProps) {
-  const totalDuration = itinerary?.stops.reduce((total, stop) => {
-    const duration = stop.duration
-    const travel = stop.travelToNext?.minutes || 0
-    return total + duration + travel
-  }, 0) || 0
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -99,13 +93,6 @@ export default function ItineraryView({
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Info Box */}
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 m-4 rounded">
-          <p className="text-sm text-blue-900">
-            Total estimated duration: <strong>{Math.round(totalDuration / 60)} hours {totalDuration % 60} minutes</strong> (including travel)
-          </p>
-        </div>
-
         {/* Timeline */}
         <div className="px-4 pb-8">
           {/* Starting Point */}
