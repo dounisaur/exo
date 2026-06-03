@@ -226,8 +226,32 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
   const handleSaveVenue = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.name || !formData.category || !formData.latitude || !formData.longitude) {
-      setMessage('Please fill in all required fields')
+
+    // Validate required fields
+    if (!formData.name || !formData.category) {
+      setMessage('Name and category are required')
+      return
+    }
+
+    // Check if we have coordinates (either manually entered or via Google Maps link)
+    let lat = parseFloat(formData.latitude)
+    let lng = parseFloat(formData.longitude)
+
+    // If coordinates are missing but Google Maps link is provided, try to parse it
+    if ((isNaN(lat) || isNaN(lng)) && googleMapsLink) {
+      const coords = parseGoogleMapsLink(googleMapsLink)
+      if (coords) {
+        lat = coords.lat
+        lng = coords.lng
+      } else {
+        setMessage('Could not extract coordinates from Google Maps link')
+        return
+      }
+    }
+
+    // Check if we have valid coordinates
+    if (isNaN(lat) || isNaN(lng)) {
+      setMessage('Latitude and longitude are required (provide coordinates or Google Maps link)')
       return
     }
 
@@ -250,8 +274,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         ...formData,
         image_url: imageUrl,
         subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : null,
-        latitude: parseFloat(formData.latitude),
-        longitude: parseFloat(formData.longitude),
+        latitude: lat,
+        longitude: lng,
         rating: formData.rating ? parseFloat(formData.rating) : null
       }
 
@@ -1001,7 +1025,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     {/* Manual Coordinates */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
                         <input
                           type="number"
                           name="latitude"
@@ -1009,12 +1033,12 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           value={formData.latitude}
                           onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
                           className="input-field"
-                          required
+                          placeholder="e.g., 37.7749"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
                         <input
                           type="number"
                           name="longitude"
@@ -1022,7 +1046,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           value={formData.longitude}
                           onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
                           className="input-field"
-                          required
+                          placeholder="e.g., -122.4194"
                         />
                       </div>
                     </div>
