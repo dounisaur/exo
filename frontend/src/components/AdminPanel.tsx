@@ -1,23 +1,25 @@
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Eye, MapPin, Search, X } from 'lucide-react'
+import { Plus, Edit2, Eye as EyeIcon } from 'lucide-react'
+import BottomSheet from './BottomSheet'
 import type { Venue, Category } from '../types'
 
 interface AdminPanelProps {
   authToken: string
   categories: Category[]
   onCategoriesUpdated: () => void
+  onViewHome: () => void
 }
 
 type AdminTab = 'venues' | 'categories' | 'subcategories'
 
-export default function AdminPanel({ authToken, categories, onCategoriesUpdated }: AdminPanelProps) {
+export default function AdminPanel({ authToken, categories, onCategoriesUpdated, onViewHome }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('venues')
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  // Venue form states
-  const [showVenueForm, setShowVenueForm] = useState(false)
+  // Venue sheet state
+  const [showVenueSheet, setShowVenueSheet] = useState(false)
   const [editingVenueId, setEditingVenueId] = useState<number | null>(null)
   const [lookupQuery, setLookupQuery] = useState('')
   const [lookupResults, setLookupResults] = useState<any[]>([])
@@ -40,19 +42,15 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
     rating: ''
   })
 
-  // Category form states
-  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  // Category sheet state
+  const [showCategorySheet, setShowCategorySheet] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [editingCategoryId, setEditingCategoryId] = useState<number | null>(null)
 
-  // Subcategory form states
-  const [showSubcategoryForm, setShowSubcategoryForm] = useState(false)
+  // Subcategory sheet state
+  const [showSubcategorySheet, setShowSubcategorySheet] = useState(false)
   const [newSubcategoryName, setNewSubcategoryName] = useState('')
   const [selectedCategoryForSubcat, setSelectedCategoryForSubcat] = useState<number | null>(null)
-
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1)
-  const ITEMS_PER_PAGE = 10
 
   useEffect(() => {
     if (activeTab === 'venues') {
@@ -198,8 +196,29 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
     setImagePreview('')
     setLookupQuery('')
     setLookupResults([])
-    setShowVenueForm(false)
+    setShowVenueSheet(false)
     setEditingVenueId(null)
+    setManualAddressEnabled(false)
+  }
+
+  const editVenue = (venue: Venue) => {
+    setFormData({
+      name: venue.name,
+      category: venue.category,
+      subcategory_id: venue.subcategory_id?.toString() || '',
+      latitude: venue.latitude.toString(),
+      longitude: venue.longitude.toString(),
+      address: venue.address || '',
+      image_url: venue.image_url || '',
+      website_url: venue.website_url || '',
+      phone_number: venue.phone_number || '',
+      reservation_link: venue.reservation_link || '',
+      rating: venue.rating?.toString() || ''
+    })
+    setImagePreview(venue.image_url || '')
+    setEditingVenueId(venue.id)
+    setShowVenueSheet(true)
+    setManualAddressEnabled(true)
   }
 
   const handleDeleteVenue = async (id: number) => {
@@ -256,9 +275,10 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
       })
 
       if (!response.ok) throw new Error('Failed to save category')
+      setMessage(editingCategoryId ? 'Category updated' : 'Category created')
       setNewCategoryName('')
       setEditingCategoryId(null)
-      setShowCategoryForm(false)
+      setShowCategorySheet(false)
       onCategoriesUpdated()
     } catch (error) {
       setMessage('Error saving category')
@@ -301,9 +321,10 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
       )
 
       if (!response.ok) throw new Error('Failed to save subcategory')
+      setMessage('Subcategory created')
       setNewSubcategoryName('')
       setSelectedCategoryForSubcat(null)
-      setShowSubcategoryForm(false)
+      setShowSubcategorySheet(false)
       onCategoriesUpdated()
     } catch (error) {
       setMessage('Error saving subcategory')
@@ -336,149 +357,298 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
 
   const getCategoryById = (slug: string) => categories.find(c => c.slug === slug)
 
-  // Pagination
-  const getTotalPagesForCurrentTab = () => {
-    let total = 0
-    if (activeTab === 'venues') {
-      total = venues.length
-    } else if (activeTab === 'categories') {
-      total = categories.length
-    } else {
-      total = categories.reduce((sum, c) => sum + c.subcategories.length, 0)
-    }
-    return Math.ceil(total / ITEMS_PER_PAGE)
-  }
-
   return (
-    <div className="flex flex-col lg:flex-row h-full gap-4 p-4 md:p-6 bg-gray-50">
-      {/* Sidebar */}
-      <div className="hidden lg:block w-64 bg-white rounded-lg border border-gray-200 p-4 h-fit sticky top-24">
-        <nav className="space-y-2">
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">🌍 EXO Admin</h1>
+          <button
+            onClick={onViewHome}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+          >
+            <EyeIcon size={18} />
+            <span>View Site</span>
+          </button>
+        </div>
+      </header>
+
+      {/* Tabs */}
+      <div className="border-b border-gray-200 bg-white">
+        <div className="flex">
           {[
-            { id: 'venues', label: 'Venues', icon: MapPin },
-            { id: 'categories', label: 'Categories', icon: Plus },
-            { id: 'subcategories', label: 'Subcategories', icon: Search }
+            { id: 'venues', label: 'Venues' },
+            { id: 'categories', label: 'Categories' },
+            { id: 'subcategories', label: 'Subcategories' }
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id as AdminTab)
-                setCurrentPage(1)
-              }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+              onClick={() => setActiveTab(tab.id as AdminTab)}
+              className={`px-6 py-4 font-medium border-b-2 transition-colors ${
                 activeTab === tab.id
-                  ? 'bg-blue-50 text-blue-700 font-medium border border-blue-200'
-                  : 'text-gray-700 hover:bg-gray-50'
+                  ? 'text-blue-600 border-blue-600'
+                  : 'text-gray-600 border-transparent hover:text-gray-900'
               }`}
             >
-              <tab.icon size={18} />
-              <span>{tab.label}</span>
+              {tab.label}
             </button>
           ))}
-        </nav>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 space-y-6">
-        {/* Messages */}
-        {message && (
-          <div className="rounded-lg bg-green-50 border border-green-200 p-4 flex items-center justify-between animate-slide-in">
-            <p className="text-sm font-medium text-green-800">{message}</p>
-            <button
-              onClick={() => setMessage('')}
-              className="text-green-600 hover:text-green-700"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        )}
-
-        {/* Venues Tab */}
-        {activeTab === 'venues' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Venues</h2>
-              <button
-                onClick={() => {
-                  setShowVenueForm(!showVenueForm)
-                  if (showVenueForm) resetVenueForm()
-                }}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus size={18} />
-                <span>Add Venue</span>
-              </button>
+      {/* Content */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-6 space-y-4">
+          {/* Messages */}
+          {message && (
+            <div className="rounded-lg bg-green-50 border border-green-200 p-4 animate-slide-in">
+              <p className="text-sm font-medium text-green-800">{message}</p>
             </div>
+          )}
 
-            {/* Venue Form */}
-            {showVenueForm && (
-              <form onSubmit={handleSaveVenue} className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
-                {/* Lookup Section */}
-                <div className="pb-6 border-b border-gray-200">
-                  <h3 className="font-semibold text-gray-900 mb-4">Find Venue</h3>
-                  <div className="flex gap-2 mb-4">
-                    <input
-                      type="text"
-                      value={lookupQuery}
-                      onChange={(e) => setLookupQuery(e.target.value)}
-                      placeholder="Search for a venue..."
-                      className="input-field flex-1"
-                      onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleLookup}
-                      disabled={lookupLoading}
-                      className="btn-secondary"
-                    >
-                      {lookupLoading ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
+          {/* Venues Tab */}
+          {activeTab === 'venues' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Venues</h2>
+                <button
+                  onClick={() => {
+                    resetVenueForm()
+                    setShowVenueSheet(true)
+                  }}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  <span>Add Venue</span>
+                </button>
+              </div>
 
-                  {lookupResults.length > 0 && (
-                    <div className="space-y-2">
-                      {lookupResults.map((result, idx) => (
-                        <div
-                          key={idx}
-                          onClick={() => selectLookupResult(result)}
-                          className="p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+              <div className="grid gap-4">
+                {loading && !showVenueSheet ? (
+                  <div className="p-8 text-center text-gray-600">Loading venues...</div>
+                ) : venues.length === 0 ? (
+                  <div className="p-8 text-center text-gray-600">No venues yet</div>
+                ) : (
+                  venues.map(venue => (
+                    <div key={venue.id} className="card p-4 flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900">{venue.name}</h3>
+                        <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
+                        <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          venue.status === 'published'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {venue.status === 'published' ? 'Published' : 'Draft'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => editVenue(venue)}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                          title="Edit"
                         >
-                          <p className="font-medium text-gray-900">{result.name}</p>
-                          <p className="text-sm text-gray-600">{result.address}</p>
-                        </div>
-                      ))}
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handlePublishVenue(venue.id, venue.status || 'draft')}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title={venue.status === 'published' ? 'Unpublish' : 'Publish'}
+                        >
+                          <EyeIcon size={16} className={venue.status === 'published' ? 'text-green-600' : 'text-gray-400'} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteVenue(venue.id)}
+                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
-                  )}
+                  ))
+                )}
+              </div>
+            </div>
+          )}
 
-                  <div className="mt-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={manualAddressEnabled}
-                        onChange={(e) => setManualAddressEnabled(e.target.checked)}
-                        className="rounded"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Or enter manually</span>
-                    </label>
+          {/* Categories Tab */}
+          {activeTab === 'categories' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Categories</h2>
+                <button
+                  onClick={() => {
+                    setNewCategoryName('')
+                    setEditingCategoryId(null)
+                    setShowCategorySheet(true)
+                  }}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  <span>Add Category</span>
+                </button>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {categories.map(cat => (
+                  <div key={cat.id} className="card p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <h3 className="font-bold text-lg text-gray-900">{cat.name}</h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setNewCategoryName(cat.name)
+                            setEditingCategoryId(cat.id)
+                            setShowCategorySheet(true)
+                          }}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteCategory(cat.id)}
+                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600">{cat.subcategories.length} subcategories</p>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Subcategories Tab */}
+          {activeTab === 'subcategories' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">Subcategories</h2>
+                <button
+                  onClick={() => {
+                    setNewSubcategoryName('')
+                    setSelectedCategoryForSubcat(null)
+                    setShowSubcategorySheet(true)
+                  }}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <Plus size={18} />
+                  <span>Add Subcategory</span>
+                </button>
+              </div>
+
+              <div className="grid gap-4">
+                {categories.flatMap(cat =>
+                  cat.subcategories.map(sub => (
+                    <div key={sub.id} className="card p-4 flex items-start justify-between">
+                      <div>
+                        <h3 className="font-bold text-gray-900">{sub.name}</h3>
+                        <p className="text-sm text-gray-600">in {cat.name}</p>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteSubcategory(sub.id)}
+                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Venue Sheet */}
+      <BottomSheet
+        isOpen={showVenueSheet}
+        onClose={resetVenueForm}
+        title={editingVenueId ? 'Edit Venue' : 'Add Venue'}
+      >
+        <form onSubmit={handleSaveVenue} className="space-y-6">
+          {/* Lookup Section - Only show when adding new venue */}
+          {!editingVenueId && (
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4 space-y-3">
+              <h3 className="font-semibold text-blue-900">Quick Lookup</h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={lookupQuery}
+                  onChange={(e) => setLookupQuery(e.target.value)}
+                  placeholder="Search for a venue..."
+                  className="input-field flex-1"
+                  onKeyPress={(e) => e.key === 'Enter' && handleLookup()}
+                />
+                <button
+                  type="button"
+                  onClick={handleLookup}
+                  disabled={lookupLoading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm"
+                >
+                  {lookupLoading ? '...' : 'Search'}
+                </button>
+              </div>
+
+              {lookupResults.length > 0 && (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {lookupResults.map((result, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => selectLookupResult(result)}
+                      className="p-3 bg-white border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors"
+                    >
+                      <p className="font-medium text-gray-900 text-sm">{result.name}</p>
+                      <p className="text-xs text-gray-600">{result.address}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={manualAddressEnabled}
+                  onChange={(e) => setManualAddressEnabled(e.target.checked)}
+                  className="rounded"
+                />
+                <span className="text-sm font-medium text-blue-900">Or enter details manually</span>
+              </label>
+            </div>
+          )}
+
+          {/* Form Sections */}
+          <div className="space-y-4">
+            {/* Basic Info Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Basic Information</h3>
+              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="input-field"
+                    required
+                  />
                 </div>
 
-                {/* Form Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
-                    <input
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="input-field"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
                     <select
                       name="category"
                       value={formData.category}
@@ -493,7 +663,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory</label>
                     <select
                       name="subcategory_id"
                       value={formData.subcategory_id}
@@ -506,35 +676,48 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
                       ))}
                     </select>
                   </div>
+                </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Rating (0-5)</label>
-                    <input
-                      type="number"
-                      name="rating"
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      value={formData.rating}
-                      onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value }))}
-                      className="input-field"
-                    />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rating (0-5)</label>
+                  <input
+                    type="number"
+                    name="rating"
+                    min="0"
+                    max="5"
+                    step="0.1"
+                    value={formData.rating}
+                    onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value }))}
+                    className="input-field"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Location Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Location</h3>
+              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                {!manualAddressEnabled ? (
+                  <div className="text-center py-6">
+                    <p className="text-sm text-gray-600 mb-2">Auto-filled from lookup</p>
+                    <p className="text-xs text-gray-500">{formData.address || 'Use quick lookup above'}</p>
                   </div>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                        className="input-field"
+                      />
+                    </div>
 
-                  {manualAddressEnabled && (
-                    <>
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                        <input
-                          type="text"
-                          value={formData.address}
-                          onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                          className="input-field"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Latitude *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
                         <input
                           type="number"
                           name="latitude"
@@ -547,7 +730,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Longitude *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitude *</label>
                         <input
                           type="number"
                           name="longitude"
@@ -558,337 +741,167 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated 
                           required
                         />
                       </div>
-                    </>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
-                    <input
-                      type="url"
-                      name="website_url"
-                      value={formData.website_url}
-                      onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
-                      className="input-field"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      name="phone_number"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
-                      className="input-field"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Reservation Link</label>
-                    <input
-                      type="url"
-                      name="reservation_link"
-                      value={formData.reservation_link}
-                      onChange={(e) => setFormData(prev => ({ ...prev, reservation_link: e.target.value }))}
-                      className="input-field"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="input-field"
-                    />
-                  </div>
-                </div>
-
-                {imagePreview && (
-                  <div>
-                    <img src={imagePreview} alt="Preview" className="w-32 h-32 object-cover rounded-lg" />
-                  </div>
-                )}
-
-                <div className="flex gap-3 pt-4 border-t border-gray-200">
-                  <button type="submit" disabled={loading} className="btn-primary flex-1">
-                    {loading ? 'Saving...' : editingVenueId ? 'Update Venue' : 'Create Venue'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetVenueForm}
-                    className="btn-secondary flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Venues List */}
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              {loading && !showVenueForm ? (
-                <div className="p-8 text-center text-gray-600">Loading venues...</div>
-              ) : venues.length === 0 ? (
-                <div className="p-8 text-center text-gray-600">No venues yet</div>
-              ) : (
-                <>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b border-gray-200">
-                        <tr>
-                          <th className="text-left px-6 py-3 font-semibold text-gray-900">Name</th>
-                          <th className="text-left px-6 py-3 font-semibold text-gray-900">Category</th>
-                          <th className="text-left px-6 py-3 font-semibold text-gray-900">Status</th>
-                          <th className="text-right px-6 py-3 font-semibold text-gray-900">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {venues.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(venue => (
-                          <tr key={venue.id} className="hover:bg-gray-50 transition-colors">
-                            <td className="px-6 py-4 font-medium text-gray-900">{venue.name}</td>
-                            <td className="px-6 py-4 text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</td>
-                            <td className="px-6 py-4">
-                              <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                venue.status === 'published'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}>
-                                {venue.status === 'published' ? 'Published' : 'Draft'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button
-                                  onClick={() => handlePublishVenue(venue.id, venue.status || 'draft')}
-                                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                                  title={venue.status === 'published' ? 'Unpublish' : 'Publish'}
-                                >
-                                  <Eye size={16} className={venue.status === 'published' ? 'text-green-600' : 'text-gray-400'} />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteVenue(venue.id)}
-                                  className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                                  title="Delete"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {getTotalPagesForCurrentTab() > 1 && (
-                    <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
-                      <button
-                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                        className="px-3 py-1 rounded border border-gray-200 disabled:opacity-50"
-                      >
-                        Prev
-                      </button>
-                      <span className="text-sm text-gray-600">
-                        Page {currentPage} of {getTotalPagesForCurrentTab()}
-                      </span>
-                      <button
-                        onClick={() => setCurrentPage(p => Math.min(getTotalPagesForCurrentTab(), p + 1))}
-                        disabled={currentPage === getTotalPagesForCurrentTab()}
-                        className="px-3 py-1 rounded border border-gray-200 disabled:opacity-50"
-                      >
-                        Next
-                      </button>
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Categories Tab */}
-        {activeTab === 'categories' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
-              <button
-                onClick={() => setShowCategoryForm(!showCategoryForm)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus size={18} />
-                <span>Add Category</span>
-              </button>
-            </div>
-
-            {showCategoryForm && (
-              <form onSubmit={handleSaveCategory} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
-                  <input
-                    type="text"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    className="input-field"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button type="submit" disabled={loading} className="btn-primary flex-1">
-                    {loading ? 'Saving...' : 'Create Category'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCategoryForm(false)
-                      setNewCategoryName('')
-                      setEditingCategoryId(null)
-                    }}
-                    className="btn-secondary flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {categories.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(cat => (
-                <div key={cat.id} className="card p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="font-bold text-lg text-gray-900">{cat.name}</h3>
-                    <button
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  <p className="text-sm text-gray-600">{cat.subcategories.length} subcategories</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Subcategories Tab */}
-        {activeTab === 'subcategories' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold text-gray-900">Subcategories</h2>
-              <button
-                onClick={() => setShowSubcategoryForm(!showSubcategoryForm)}
-                className="btn-primary flex items-center gap-2"
-              >
-                <Plus size={18} />
-                <span>Add Subcategory</span>
-              </button>
-            </div>
-
-            {showSubcategoryForm && (
-              <form onSubmit={handleSaveSubcategory} className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Parent Category</label>
-                  <select
-                    value={selectedCategoryForSubcat || ''}
-                    onChange={(e) => setSelectedCategoryForSubcat(e.target.value ? parseInt(e.target.value) : null)}
-                    className="input-field"
-                    required
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
-                  <input
-                    type="text"
-                    value={newSubcategoryName}
-                    onChange={(e) => setNewSubcategoryName(e.target.value)}
-                    className="input-field"
-                    required
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button type="submit" disabled={loading} className="btn-primary flex-1">
-                    {loading ? 'Saving...' : 'Create Subcategory'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowSubcategoryForm(false)
-                      setNewSubcategoryName('')
-                      setSelectedCategoryForSubcat(null)
-                    }}
-                    className="btn-secondary flex-1"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            )}
-
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 border-b border-gray-200">
-                    <tr>
-                      <th className="text-left px-6 py-3 font-semibold text-gray-900">Name</th>
-                      <th className="text-left px-6 py-3 font-semibold text-gray-900">Category</th>
-                      <th className="text-right px-6 py-3 font-semibold text-gray-900">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {(() => {
-                      const allSubcats = categories.flatMap(c => c.subcategories.map(s => ({ ...s, categoryName: c.name })))
-                      return allSubcats.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map(sub => (
-                        <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4 font-medium text-gray-900">{sub.name}</td>
-                          <td className="px-6 py-4 text-gray-600">{(sub as any).categoryName}</td>
-                          <td className="px-6 py-4 text-right">
-                          <button
-                            onClick={() => handleDeleteSubcategory(sub.id)}
-                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                      ))
-                    })()}
-                  </tbody>
-                </table>
+                  </>
+                )}
               </div>
+            </div>
 
-              {getTotalPagesForCurrentTab() > 1 && (
-                <div className="flex items-center justify-center gap-2 p-4 border-t border-gray-200">
-                  <button
-                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className="px-3 py-1 rounded border border-gray-200 disabled:opacity-50"
-                  >
-                    Prev
-                  </button>
-                  <span className="text-sm text-gray-600">
-                    Page {currentPage} of {getTotalPagesForCurrentTab()}
-                  </span>
-                  <button
-                    onClick={() => setCurrentPage(p => Math.min(getTotalPagesForCurrentTab(), p + 1))}
-                    disabled={currentPage === getTotalPagesForCurrentTab()}
-                    className="px-3 py-1 rounded border border-gray-200 disabled:opacity-50"
-                  >
-                    Next
-                  </button>
+            {/* Contact Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Contact & Links</h3>
+              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                  <input
+                    type="url"
+                    name="website_url"
+                    value={formData.website_url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, website_url: e.target.value }))}
+                    className="input-field"
+                    placeholder="https://..."
+                  />
                 </div>
-              )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                  <input
+                    type="tel"
+                    name="phone_number"
+                    value={formData.phone_number}
+                    onChange={(e) => setFormData(prev => ({ ...prev, phone_number: e.target.value }))}
+                    className="input-field"
+                    placeholder="+1 (555) 000-0000"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Reservation Link</label>
+                  <input
+                    type="url"
+                    name="reservation_link"
+                    value={formData.reservation_link}
+                    onChange={(e) => setFormData(prev => ({ ...prev, reservation_link: e.target.value }))}
+                    className="input-field"
+                    placeholder="https://..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Media Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Media</h3>
+              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="input-field"
+                  />
+                </div>
+                {imagePreview && (
+                  <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border border-gray-200" />
+                )}
+              </div>
             </div>
           </div>
-        )}
-      </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="submit" disabled={loading} className="btn-primary flex-1 font-semibold">
+              {loading ? 'Saving...' : editingVenueId ? 'Update Venue' : 'Create Venue'}
+            </button>
+            <button
+              type="button"
+              onClick={resetVenueForm}
+              className="btn-secondary flex-1 font-semibold"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* Category Sheet */}
+      <BottomSheet
+        isOpen={showCategorySheet}
+        onClose={() => setShowCategorySheet(false)}
+        title={editingCategoryId ? 'Edit Category' : 'Add Category'}
+      >
+        <form onSubmit={handleSaveCategory} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+            <input
+              type="text"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="submit" disabled={loading} className="btn-primary flex-1">
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowCategorySheet(false)}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
+
+      {/* Subcategory Sheet */}
+      <BottomSheet
+        isOpen={showSubcategorySheet}
+        onClose={() => setShowSubcategorySheet(false)}
+        title="Add Subcategory"
+      >
+        <form onSubmit={handleSaveSubcategory} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Parent Category</label>
+            <select
+              value={selectedCategoryForSubcat || ''}
+              onChange={(e) => setSelectedCategoryForSubcat(e.target.value ? parseInt(e.target.value) : null)}
+              className="input-field"
+              required
+            >
+              <option value="">Select a category</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
+            <input
+              type="text"
+              value={newSubcategoryName}
+              onChange={(e) => setNewSubcategoryName(e.target.value)}
+              className="input-field"
+              required
+            />
+          </div>
+          <div className="flex gap-3 pt-4 border-t border-gray-200">
+            <button type="submit" disabled={loading} className="btn-primary flex-1">
+              {loading ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSubcategorySheet(false)}
+              className="btn-secondary flex-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </BottomSheet>
     </div>
   )
 }
