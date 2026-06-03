@@ -99,9 +99,12 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
   }
 
   const selectLookupResult = async (result: any) => {
+    console.log('Selected lookup result:', result)
+
     // If we have a place_id, fetch full details including phone and website
     if (result.place_id) {
       try {
+        console.log('Fetching full details for place_id:', result.place_id)
         const detailsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/lookup`, {
           method: 'POST',
           headers: {
@@ -111,9 +114,11 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
           body: JSON.stringify({ placeId: result.place_id })
         })
         const detailsData = await detailsResponse.json()
+        console.log('Details response:', detailsData)
         const fullResult = detailsData.results?.[0]
 
         if (fullResult) {
+          console.log('Full result with details:', fullResult)
           setFormData(prev => ({
             ...prev,
             name: fullResult.name,
@@ -137,6 +142,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
       }
     } else {
       // Fallback for results without place_id
+      console.log('No place_id found, using basic info')
       setFormData(prev => ({
         ...prev,
         name: result.name,
