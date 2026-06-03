@@ -115,10 +115,13 @@ export async function generateItinerary(req, res) {
           nearestFood.latitude,
           nearestFood.longitude
         )
-        stops[stops.length - 1].travelToNext = {
-          distanceMeters: Math.round(travelDist),
-          walkable: travelDist <= 800,
-          minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
+
+        if (stops.length > 0) {
+          stops[stops.length - 1].travelToNext = {
+            distanceMeters: Math.round(travelDist),
+            walkable: travelDist <= 800,
+            minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
+          }
         }
 
         stops.push({
@@ -131,66 +134,70 @@ export async function generateItinerary(req, res) {
     }
 
     // Pick up to 2 bar stops
-    const barVenues = remaining.filter(v =>
-      v.id !== lastVenue?.id &&
-      inferCategoryType(v.category || '', v.subcategory_slug || '') === 'bar'
-    )
+    if (lastVenue && stops.length > 0) {
+      const barVenues = remaining.filter(v =>
+        v.id !== lastVenue.id &&
+        inferCategoryType(v.category || '', v.subcategory_slug || '') === 'bar'
+      )
 
-    let barCount = 0
-    for (const barVenue of barVenues) {
-      if (barCount >= 2) break
+      let barCount = 0
+      for (const barVenue of barVenues) {
+        if (barCount >= 2) break
 
-      const travelDist = haversine(lastVenue.latitude, lastVenue.longitude, barVenue.latitude, barVenue.longitude)
+        const travelDist = haversine(lastVenue.latitude, lastVenue.longitude, barVenue.latitude, barVenue.longitude)
 
-      // Prefer bars within 1km, else take nearest
-      let useThisBar = travelDist <= 1000
-      if (!useThisBar && barCount === 0) {
-        // Take nearest bar if we don't have one yet
-        useThisBar = true
-      }
-
-      if (useThisBar) {
-        stops[stops.length - 1].travelToNext = {
-          distanceMeters: Math.round(travelDist),
-          walkable: travelDist <= 800,
-          minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
+        // Prefer bars within 1km, else take nearest
+        let useThisBar = travelDist <= 1000
+        if (!useThisBar && barCount === 0) {
+          // Take nearest bar if we don't have one yet
+          useThisBar = true
         }
 
-        stops.push({
-          venue: barVenue,
-          duration: 60,
-          travelToNext: null
-        })
-        lastVenue = barVenue
-        barCount++
+        if (useThisBar) {
+          stops[stops.length - 1].travelToNext = {
+            distanceMeters: Math.round(travelDist),
+            walkable: travelDist <= 800,
+            minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
+          }
+
+          stops.push({
+            venue: barVenue,
+            duration: 60,
+            travelToNext: null
+          })
+          lastVenue = barVenue
+          barCount++
+        }
       }
     }
 
     // Pick 1 nightcap (dessert first, else bar) within 1.5km
-    const nightcapPool = remaining.filter(v => v.id !== lastVenue.id)
-    const dessertVenues = nightcapPool.filter(v => inferCategoryType(v.category || '', v.subcategory_slug || '') === 'dessert')
-    const nightcapCandidates = dessertVenues.length > 0 ? dessertVenues : nightcapPool
+    if (lastVenue && stops.length > 0) {
+      const nightcapPool = remaining.filter(v => v.id !== lastVenue.id)
+      const dessertVenues = nightcapPool.filter(v => inferCategoryType(v.category || '', v.subcategory_slug || '') === 'dessert')
+      const nightcapCandidates = dessertVenues.length > 0 ? dessertVenues : nightcapPool
 
-    if (nightcapCandidates.length > 0) {
-      const nearestNightcap = nightcapCandidates.reduce((nearest, v) => {
-        const dist = haversine(lastVenue.latitude, lastVenue.longitude, v.latitude, v.longitude)
-        const nearestDist = haversine(lastVenue.latitude, lastVenue.longitude, nearest.latitude, nearest.longitude)
-        return dist < nearestDist ? v : nearest
-      })
-
-      const travelDist = haversine(lastVenue.latitude, lastVenue.longitude, nearestNightcap.latitude, nearestNightcap.longitude)
-      if (travelDist <= 1500 || nightcapCandidates.length === 1) {
-        stops[stops.length - 1].travelToNext = {
-          distanceMeters: Math.round(travelDist),
-          walkable: travelDist <= 800,
-          minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
-        }
-
-        stops.push({
-          venue: nearestNightcap,
-          duration: 37,
-          travelToNext: null
+      if (nightcapCandidates.length > 0) {
+        const nearestNightcap = nightcapCandidates.reduce((nearest, v) => {
+          const dist = haversine(lastVenue.latitude, lastVenue.longitude, v.latitude, v.longitude)
+          const nearestDist = haversine(lastVenue.latitude, lastVenue.longitude, nearest.latitude, nearest.longitude)
+          return dist < nearestDist ? v : nearest
         })
+
+        const travelDist = haversine(lastVenue.latitude, lastVenue.longitude, nearestNightcap.latitude, nearestNightcap.longitude)
+        if (travelDist <= 1500 || nightcapCandidates.length === 1) {
+          stops[stops.length - 1].travelToNext = {
+            distanceMeters: Math.round(travelDist),
+            walkable: travelDist <= 800,
+            minutes: Math.ceil(travelDist / (travelDist <= 800 ? 83 : 333))
+          }
+
+          stops.push({
+            venue: nearestNightcap,
+            duration: 37,
+            travelToNext: null
+          })
+        }
       }
     }
 
