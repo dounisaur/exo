@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import './App.css'
+import { Settings, LogOut } from 'lucide-react'
 import Map from './components/Map'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
+import BottomTabBar from './components/BottomTabBar'
 import type { Venue, Category } from './types'
 
 function App() {
@@ -13,16 +14,13 @@ function App() {
   const [category, setCategory] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  // Auth states
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
   const [loginUsername, setLoginUsername] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [loginError, setLoginError] = useState('')
 
-  // Categories
   const [categories, setCategories] = useState<Category[]>([])
 
-  // Get user location on mount
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -30,14 +28,12 @@ function App() {
           lat: position.coords.latitude,
           lng: position.coords.longitude
         })
-      }, (error) => {
-        console.log('Location access denied:', error)
-        setUserLocation({ lat: 40.7128, lng: -74.0060 }) // NYC
+      }, () => {
+        setUserLocation({ lat: 40.7128, lng: -74.0060 })
       })
     }
   }, [])
 
-  // Fetch categories on mount
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -51,7 +47,6 @@ function App() {
     fetchCategories()
   }, [])
 
-  // Verify auth token on mount
   useEffect(() => {
     if (authToken) {
       verifyAuth()
@@ -63,9 +58,7 @@ function App() {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
       })
-      if (response.ok) {
-        await response.json()
-      } else {
+      if (!response.ok) {
         setAuthToken(null)
         localStorage.removeItem('authToken')
       }
@@ -107,10 +100,9 @@ function App() {
   const handleLogout = () => {
     setAuthToken(null)
     localStorage.removeItem('authToken')
-    setPage('login')
+    setPage('home')
   }
 
-  // Fetch venues
   const fetchVenues = async () => {
     setLoading(true)
     try {
@@ -131,7 +123,6 @@ function App() {
     }
   }
 
-  // Fetch venues when filters change
   useEffect(() => {
     if (userLocation) {
       fetchVenues()
@@ -139,72 +130,233 @@ function App() {
   }, [category, userLocation])
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>🌍 EXO</h1>
-        <nav>
-          <button onClick={() => setPage('home')} className={page === 'home' ? 'active' : ''}>Home</button>
-          {!authToken && (
-            <button onClick={() => setPage('login')} className={page === 'login' ? 'active' : ''}>Login</button>
-          )}
-          {authToken && (
-            <>
-              <button onClick={() => setPage('admin')} className={page === 'admin' ? 'active' : ''}>Dashboard</button>
-              <button onClick={handleLogout} style={{ marginLeft: 'auto', padding: '0.8rem 1.5rem', background: 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(147, 51, 234, 0.3)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)' }} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(147, 51, 234, 0.4)' }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)' }}>Logout</button>
-            </>
-          )}
-        </nav>
-      </header>
+    <div className="flex flex-col h-screen bg-white">
+      {/* Header */}
+      {(page === 'home' || page === 'login') && (
+        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-4 py-4 md:px-6">
+            <h1 className="text-2xl font-bold text-gray-900">🌍 EXO</h1>
+            <nav className="flex items-center gap-2">
+              {!authToken && page === 'home' && (
+                <button
+                  onClick={() => setPage('login')}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Login
+                </button>
+              )}
+              {!authToken && page === 'login' && (
+                <button
+                  onClick={() => setPage('home')}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Back
+                </button>
+              )}
+              {authToken && (
+                <>
+                  <button
+                    onClick={() => setPage('admin')}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                  >
+                    <Settings size={18} />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    <LogOut size={18} />
+                    <span className="hidden sm:inline">Logout</span>
+                  </button>
+                </>
+              )}
+            </nav>
+          </div>
+        </header>
+      )}
 
-      <main>
-        {page === 'login' ? (
-          // Login form
-          <div className="login-container">
-            <form onSubmit={handleLogin} className="login-form">
-              <h2>Login</h2>
-              {loginError && <p className="error">{loginError}</p>}
-              <div className="form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  value={loginUsername}
-                  onChange={(e) => setLoginUsername(e.target.value)}
-                  required
-                />
+      {/* Admin Header */}
+      {page === 'admin' && authToken && (
+        <header className="sticky top-0 z-40 border-b border-gray-200 bg-white">
+          <div className="flex items-center justify-between px-4 py-4 md:px-6">
+            <h1 className="text-2xl font-bold text-gray-900">🌍 EXO Admin</h1>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+            >
+              <LogOut size={18} />
+              <span>Logout</span>
+            </button>
+          </div>
+        </header>
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 overflow-auto pb-16 md:pb-0">
+        {page === 'login' && (
+          <div className="flex items-center justify-center min-h-full px-4">
+            <form
+              onSubmit={handleLogin}
+              className="w-full max-w-md space-y-6 rounded-xl bg-white p-8 shadow-lg border border-gray-200"
+            >
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Sign in to EXO</h2>
+                <p className="mt-2 text-sm text-gray-600">Manage venues and categories</p>
               </div>
-              <div className="form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  required
-                />
+
+              {loginError && (
+                <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+                  <p className="text-sm font-medium text-red-800">{loginError}</p>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={loginUsername}
+                    onChange={(e) => setLoginUsername(e.target.value)}
+                    className="input-field"
+                    placeholder="admin"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className="input-field"
+                    placeholder="••••••••"
+                    required
+                  />
+                </div>
               </div>
-              <button type="submit">Login</button>
-              <p style={{ textAlign: 'center', marginTop: '1rem', color: '#666', fontSize: '0.9rem' }}>
-                Demo: username=<strong>admin</strong>, password=<strong>admin123</strong>
-              </p>
+
+              <button
+                type="submit"
+                className="w-full btn-primary"
+              >
+                Sign in
+              </button>
+
+              <div className="rounded-lg bg-blue-50 p-4 border border-blue-200">
+                <p className="text-sm text-gray-600">
+                  <strong>Demo credentials:</strong> <br />
+                  Username: <code className="bg-blue-100 px-2 py-1 rounded text-blue-900 font-mono text-xs">admin</code> <br />
+                  Password: <code className="bg-blue-100 px-2 py-1 rounded text-blue-900 font-mono text-xs">admin123</code>
+                </p>
+              </div>
             </form>
           </div>
-        ) : page === 'home' ? (
-          <div className="home">
-            <div className="filters">
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                ))}
-              </select>
-              {loading && <p>Loading...</p>}
+        )}
+
+        {page === 'home' && (
+          <div className="flex flex-col h-full md:flex-row gap-0 md:gap-4 md:p-4">
+            {/* Map on desktop or when filters closed on mobile */}
+            <div className="flex-1 flex flex-col min-h-0">
+              {userLocation && (
+                <Map
+                  venues={venues}
+                  userLocation={userLocation}
+                  selectedVenue={selectedVenue}
+                />
+              )}
             </div>
 
-            <div className="content">
-              {userLocation && <Map venues={venues} userLocation={userLocation} selectedVenue={selectedVenue} />}
-              <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} categories={categories} />
+            {/* Venue list - sidebar on desktop, sheet on mobile */}
+            <div className="hidden md:flex md:flex-col md:w-96 min-h-0">
+              <div className="p-4 border-b border-gray-200">
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-gray-700">Filter by Category</label>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setCategory('')}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        category === ''
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setCategory(cat.slug)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          category === cat.slug
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {loading && <p className="mt-3 text-sm text-gray-600">Loading venues...</p>}
+              </div>
+              <div className="flex-1 overflow-auto">
+                <VenueList
+                  venues={venues}
+                  onSelectVenue={setSelectedVenue}
+                  selectedVenue={selectedVenue}
+                  categories={categories}
+                />
+              </div>
+            </div>
+
+            {/* Mobile: Bottom sheet for venues and filters */}
+            <div className="fixed md:hidden bottom-16 left-0 right-0 bg-white rounded-t-2xl shadow-lg border-t border-gray-200 max-h-1/2 overflow-auto">
+              <div className="p-4 space-y-3 sticky top-0 bg-white border-b border-gray-200 rounded-t-2xl">
+                <label className="block text-sm font-medium text-gray-700">Filter by Category</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setCategory('')}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      category === ''
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setCategory(cat.slug)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        category === cat.slug
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+                {loading && <p className="text-sm text-gray-600">Loading venues...</p>}
+              </div>
+              <VenueList
+                venues={venues}
+                onSelectVenue={setSelectedVenue}
+                selectedVenue={selectedVenue}
+                categories={categories}
+              />
             </div>
           </div>
-        ) : authToken ? (
+        )}
+
+        {page === 'admin' && authToken && (
           <AdminPanel
             authToken={authToken}
             categories={categories}
@@ -221,25 +373,11 @@ function App() {
               fetchUpdatedCategories()
             }}
           />
-        ) : (
-          <div className="home">
-            <div className="filters">
-              <select value={category} onChange={(e) => setCategory(e.target.value)}>
-                <option value="">All Categories</option>
-                {categories.map(cat => (
-                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                ))}
-              </select>
-              {loading && <p>Loading...</p>}
-            </div>
-
-            <div className="content">
-              {userLocation && <Map venues={venues} userLocation={userLocation} selectedVenue={selectedVenue} />}
-              <VenueList venues={venues} onSelectVenue={setSelectedVenue} selectedVenue={selectedVenue} categories={categories} />
-            </div>
-          </div>
         )}
       </main>
+
+      {/* Mobile Bottom Tab Bar */}
+      {page === 'home' && <BottomTabBar currentPage={page} onNavigate={setPage} />}
     </div>
   )
 }

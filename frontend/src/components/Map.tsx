@@ -93,5 +93,5 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
     }
   }, [selectedVenue])
 
-  return <div ref={mapRef} style={{ height: '500px', width: '100%' }} />
+  return <div ref={mapRef} className="h-96 md:h-full w-full" />
 }
