@@ -10,3 +10,4 @@ build/
 uploads/*
 !uploads/.gitkeep
 *.db
+backups/*
