@@ -283,12 +283,12 @@ function App() {
 
           {/* Filters & Actions */}
           <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
-            {/* Plan My Night Button */}
+            {/* Plan My Itinerary Button */}
             <button
               onClick={() => generateItinerary()}
               className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
-              Plan My Night
+              Plan My Itinerary
             </button>
 
             {/* Category Filters */}

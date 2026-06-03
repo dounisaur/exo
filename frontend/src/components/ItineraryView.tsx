@@ -111,7 +111,7 @@ export default function ItineraryView({
       <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Your Night Out 🌙</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Your Itinerary</h2>
             {startVenueName && (
               <p className="text-sm text-gray-600">Starting from {startVenueName}</p>
             )}
