@@ -44,7 +44,7 @@ export default function VenueList({ venues, categories = [], userLocation }: Ven
             <img
               src={venue.image_url}
               alt={venue.name}
-              className="w-full h-40 md:h-48 object-cover rounded-lg mb-4"
+              className="w-full h-48 md:h-64 lg:h-72 object-cover rounded-lg mb-4"
             />
           )}
 
