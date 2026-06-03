@@ -1,14 +1,17 @@
-import { Globe, Phone, MapPin, Star } from 'lucide-react'
+import { useState } from 'react'
+import { Phone, MapPin, Star, X } from 'lucide-react'
+import Map from './Map'
 import type { Venue, Category } from '../types'
 
 interface VenueListProps {
   venues: Venue[]
-  onSelectVenue: (venue: Venue) => void
-  selectedVenue: Venue | null
   categories?: Category[]
+  userLocation?: { lat: number; lng: number }
 }
 
-export default function VenueList({ venues, onSelectVenue, selectedVenue, categories = [] }: VenueListProps) {
+export default function VenueList({ venues, categories = [], userLocation }: VenueListProps) {
+  const [expandedMapVenue, setExpandedMapVenue] = useState<number | null>(null)
+
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
 
@@ -34,15 +37,8 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
   return (
     <div className="space-y-3 md:space-y-4 p-3 md:p-4">
       {venues.map((venue) => (
-        <div
-          key={venue.id}
-          onClick={() => onSelectVenue(venue)}
-          className={`card p-4 cursor-pointer transition-all duration-200 ${
-            selectedVenue?.id === venue.id
-              ? 'ring-2 ring-blue-500 bg-blue-50 shadow-md'
-              : 'hover:shadow-md'
-          }`}
-        >
+        <div key={venue.id}>
+          <div className="card p-4 transition-all duration-200 hover:shadow-md">
           {/* Image */}
           {venue.image_url && (
             <img
@@ -60,15 +56,6 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
             <span className="inline-block px-2.5 py-0.5 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
               {getSubcategoryName(venue.subcategory_id) || venue.category}
             </span>
-            {venue.status && (
-              <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                venue.status === 'published'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-amber-100 text-amber-700'
-              }`}>
-                {venue.status === 'published' ? 'Live' : 'Draft'}
-              </span>
-            )}
           </div>
 
           {/* Address */}
@@ -114,22 +101,9 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
 
           {/* Links */}
           <div className="flex flex-wrap gap-2">
-            {venue.website_url && (
-              <a
-                href={venue.website_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-              >
-                <Globe size={16} />
-                <span className="hidden sm:inline">Website</span>
-              </a>
-            )}
             {venue.phone_number && (
               <a
                 href={`tel:${venue.phone_number}`}
-                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
               >
                 <Phone size={16} />
@@ -141,7 +115,6 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
                 href={venue.reservation_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-colors"
               >
                 <span>Reserve</span>
@@ -151,13 +124,43 @@ export default function VenueList({ venues, onSelectVenue, selectedVenue, catego
               href={`https://maps.google.com/?q=${encodeURIComponent(venue.name)}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
             >
               <MapPin size={16} />
               <span className="hidden sm:inline">Directions</span>
             </a>
+            <button
+              onClick={() => setExpandedMapVenue(expandedMapVenue === venue.id ? null : venue.id)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <MapPin size={16} />
+              <span>{expandedMapVenue === venue.id ? 'Hide' : 'View'}</span>
+            </button>
           </div>
+          </div>
+
+          {/* Inline Map */}
+          {expandedMapVenue === venue.id && userLocation && (
+            <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+              <div className="relative h-80 bg-gray-200">
+                <Map
+                  venues={[venue]}
+                  userLocation={userLocation}
+                  selectedVenue={venue}
+                  onVenueClick={() => {}}
+                />
+              </div>
+              <div className="p-4 bg-white border-t border-gray-200 flex justify-end">
+                <button
+                  onClick={() => setExpandedMapVenue(null)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  <X size={16} />
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>

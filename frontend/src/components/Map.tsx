@@ -7,9 +7,10 @@ interface MapProps {
   venues: Venue[]
   userLocation: { lat: number; lng: number }
   selectedVenue: Venue | null
+  onVenueClick?: (venue: Venue) => void
 }
 
-export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
+export default function Map({ venues, userLocation, selectedVenue, onVenueClick }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
 
@@ -64,7 +65,7 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
       const isSelected = selectedVenue?.id === venue.id
       const fillColor = isSelected ? '#ff3333' : '#a78bfa'
       const borderColor = isSelected ? '#991b1b' : '#6d28d9'
-      L.circleMarker([venue.latitude, venue.longitude], {
+      const marker = L.circleMarker([venue.latitude, venue.longitude], {
         radius: isSelected ? 10 : 8,
         fillColor: fillColor,
         color: borderColor,
@@ -73,25 +74,37 @@ export default function Map({ venues, userLocation, selectedVenue }: MapProps) {
         fillOpacity: 0.95
       })
         .addTo(mapInstance.current!)
-        .bindPopup(`<strong>${venue.name}</strong><br/>${venue.category}`)
-        .bindTooltip(venue.name, {
-          permanent: isSelected,
-          direction: 'top',
-          offset: [0, -15],
-          className: 'venue-tooltip'
-        })
+
+      // Add click handler to show venue in bottom sheet
+      marker.on('click', (e) => {
+        console.log('Marker clicked:', venue.name)
+        L.DomEvent.stopPropagation(e)
+        if (onVenueClick) {
+          console.log('Calling onVenueClick for:', venue.name)
+          onVenueClick(venue)
+        }
+      })
+
+      // Show name on hover
+      marker.bindTooltip(venue.name, {
+        permanent: isSelected,
+        direction: 'top',
+        offset: [0, -15],
+        className: 'venue-tooltip'
+      })
     })
   }, [venues, selectedVenue])
 
-  // Center on selected venue
+  // Fit both user location and selected venue in view
   useEffect(() => {
-    if (selectedVenue && mapInstance.current) {
-      mapInstance.current.setView(
-        [selectedVenue.latitude, selectedVenue.longitude],
-        15
-      )
+    if (selectedVenue && mapInstance.current && userLocation) {
+      const bounds = L.latLngBounds([
+        [userLocation.lat, userLocation.lng],
+        [selectedVenue.latitude, selectedVenue.longitude]
+      ])
+      mapInstance.current.fitBounds(bounds, { padding: [50, 50] })
     }
-  }, [selectedVenue])
+  }, [selectedVenue, userLocation])
 
-  return <div ref={mapRef} className="h-96 md:h-full w-full" />
+  return <div ref={mapRef} className="w-full h-full" />
 }
