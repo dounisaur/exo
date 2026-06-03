@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { getDb } from './db.js';
 import { authenticateToken, requireAdmin, JWT_SECRET } from './auth.js';
+import { generateItinerary } from './itinerary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -277,6 +278,11 @@ export function setupRoutes(app) {
       res.status(500).json({ error: err.message });
     }
   });
+
+  // ===== ITINERARY ENDPOINTS =====
+
+  // Generate itinerary (public)
+  app.post('/api/itinerary/generate', generateItinerary);
 
   // ===== VENUE ENDPOINTS =====
 

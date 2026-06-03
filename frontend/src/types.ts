@@ -35,3 +35,19 @@ export interface User {
   username: string
   role: string
 }
+
+export interface TravelSegment {
+  distanceMeters: number
+  walkable: boolean
+  minutes: number
+}
+
+export interface ItineraryStop {
+  venue: Venue
+  duration: number
+  travelToNext: TravelSegment | null
+}
+
+export interface Itinerary {
+  stops: ItineraryStop[]
+}

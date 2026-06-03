@@ -7,9 +7,10 @@ interface VenueListProps {
   venues: Venue[]
   categories?: Category[]
   userLocation?: { lat: number; lng: number }
+  onStartHere?: (venue: Venue) => void
 }
 
-export default function VenueList({ venues, categories = [], userLocation }: VenueListProps) {
+export default function VenueList({ venues, categories = [], userLocation, onStartHere }: VenueListProps) {
   const [expandedMapVenue, setExpandedMapVenue] = useState<number | null>(null)
 
   const getSubcategoryName = (subcategoryId?: number) => {
@@ -136,6 +137,14 @@ export default function VenueList({ venues, categories = [], userLocation }: Ven
               <MapPin size={16} />
               <span>{expandedMapVenue === venue.id ? 'Hide' : 'View'}</span>
             </button>
+            {onStartHere && (
+              <button
+                onClick={() => onStartHere(venue)}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span>Start Here 🌙</span>
+              </button>
+            )}
           </div>
           </div>
 

@@ -2,10 +2,11 @@ import { useState, useEffect } from 'react'
 import { Settings, LogOut, Search } from 'lucide-react'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
-import type { Venue, Category, User } from './types'
+import ItineraryView from './components/ItineraryView'
+import type { Venue, Category, User, Itinerary } from './types'
 
 function App() {
-  const [page, setPage] = useState<'home' | 'login' | 'admin'>('home')
+  const [page, setPage] = useState<'home' | 'login' | 'admin' | 'itinerary'>('home')
   const [venues, setVenues] = useState<Venue[]>([])
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
@@ -22,6 +23,11 @@ function App() {
   const [loginError, setLoginError] = useState('')
 
   const [categories, setCategories] = useState<Category[]>([])
+
+  const [itinerary, setItinerary] = useState<Itinerary | null>(null)
+  const [itineraryLoading, setItineraryLoading] = useState(false)
+  const [itineraryError, setItineraryError] = useState<string | null>(null)
+  const [itineraryStartVenueName, setItineraryStartVenueName] = useState<string | undefined>()
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -134,6 +140,38 @@ function App() {
       console.error('Error fetching venues:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generateItinerary = async (options?: { startVenueId?: number }) => {
+    if (!userLocation) return
+
+    setPage('itinerary')
+    setItineraryLoading(true)
+    setItineraryError(null)
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/itinerary/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          lat: userLocation.lat,
+          lng: userLocation.lng,
+          startVenueId: options?.startVenueId
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to generate itinerary')
+      }
+
+      const data = await response.json()
+      setItinerary(data)
+    } catch (error) {
+      console.error('Error generating itinerary:', error)
+      setItineraryError(error instanceof Error ? error.message : 'Failed to generate itinerary')
+    } finally {
+      setItineraryLoading(false)
     }
   }
 
@@ -260,6 +298,14 @@ function App() {
               </button>
             </div>
 
+            {/* Plan My Night Button */}
+            <button
+              onClick={() => generateItinerary()}
+              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+            >
+              Plan My Night 🌙
+            </button>
+
             {/* Category Filters */}
             <div className="flex flex-wrap gap-2">
               <button
@@ -301,6 +347,10 @@ function App() {
               )}
               categories={categories}
               userLocation={userLocation || undefined}
+              onStartHere={(venue) => {
+                setItineraryStartVenueName(venue.name)
+                generateItinerary({ startVenueId: venue.id })
+              }}
             />
           </div>
         </div>
@@ -325,6 +375,17 @@ function App() {
             fetchUpdatedCategories()
           }}
           onViewHome={() => setPage('home')}
+        />
+      )}
+
+      {/* Itinerary */}
+      {page === 'itinerary' && (
+        <ItineraryView
+          itinerary={itinerary}
+          loading={itineraryLoading}
+          error={itineraryError}
+          onBack={() => setPage('home')}
+          startVenueName={itineraryStartVenueName}
         />
       )}
     </div>
