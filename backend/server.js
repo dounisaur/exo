@@ -29,7 +29,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://exo-1ade.onrender.com'
+  'https://exo-1ade.onrender.com',
+  'https://exo-frontend.onrender.com'
 ];
 
 // Middleware
