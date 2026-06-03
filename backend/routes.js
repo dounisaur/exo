@@ -328,35 +328,49 @@ export function setupRoutes(app) {
       // If direct extraction failed, try to follow the redirect
       // (useful for shortened links like maps.app.goo.gl/...)
       console.log('[MAPS] Direct extraction failed, following redirect...')
-      const response = await fetch(url, {
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
-        timeout: 10000
-      })
 
-      console.log('[MAPS] Redirect response status:', response.status, 'URL:', response.url)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000)
 
-      const html = await response.text()
-      console.log('[MAPS] Response text length:', html.length)
+      try {
+        const response = await fetch(url, {
+          redirect: 'follow',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          },
+          signal: controller.signal
+        })
 
-      // Extract from final URL
-      coords = extractCoordinates(response.url)
-      if (coords) {
-        console.log('[MAPS] Success: extracted from final URL after redirect')
-        return res.json(coords)
+        clearTimeout(timeoutId)
+        console.log('[MAPS] Redirect response status:', response.status, 'URL:', response.url)
+
+        const html = await response.text()
+        console.log('[MAPS] Response text length:', html.length)
+
+        // Extract from final URL
+        coords = extractCoordinates(response.url)
+        if (coords) {
+          console.log('[MAPS] Success: extracted from final URL after redirect')
+          return res.json(coords)
+        }
+
+        // Extract from HTML content
+        coords = extractCoordinates(html)
+        if (coords) {
+          console.log('[MAPS] Success: extracted from HTML content')
+          return res.json(coords)
+        }
+
+        console.log('[MAPS] Failed to extract coordinates')
+        res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one.' })
+      } catch (fetchError) {
+        clearTimeout(timeoutId)
+        if (fetchError.name === 'AbortError') {
+          console.error('[MAPS] Request timeout')
+          return res.status(500).json({ error: 'Request timeout - server unable to reach Google Maps. Please try again or use coordinates instead.' })
+        }
+        throw fetchError
       }
-
-      // Extract from HTML content
-      coords = extractCoordinates(html)
-      if (coords) {
-        console.log('[MAPS] Success: extracted from HTML content')
-        return res.json(coords)
-      }
-
-      console.log('[MAPS] Failed to extract coordinates')
-      res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one.' })
     } catch (error) {
       console.error('[MAPS] Error parsing maps link:', error.message)
       res.status(500).json({ error: `Failed to parse link: ${error.message}` })
