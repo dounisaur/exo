@@ -71,6 +71,7 @@ export async function generateItinerary(req, res) {
     })
 
     const stops = []
+    const selectedIds = new Set()
 
     // If start venue provided, lock it as stop #1
     if (startVenue) {
@@ -81,16 +82,40 @@ export async function generateItinerary(req, res) {
         duration,
         travelToNext: null
       })
+      selectedIds.add(startVenue.id)
     }
 
-    // Get remaining venues for selection
-    const remaining = nearby.filter(v => !startVenue || v.id !== startVenue.id)
+    // Get remaining venues for selection (excluding already selected)
+    const remaining = nearby.filter(v => !selectedIds.has(v.id))
 
-    // Pick 1 food stop (nearest to anchor, if not already food)
+    // Determine starting venue category
+    let startCategoryType = null
+    if (startVenue) {
+      startCategoryType = inferCategoryType(startVenue.category || '', startVenue.subcategory_slug || '')
+    }
+
     let lastVenue = startVenue
-    const categoryType = startVenue ? inferCategoryType(startVenue.category || '', startVenue.subcategory_slug || '') : null
 
-    if (categoryType !== 'food') {
+    // Pick next stop based on starting venue category
+    // If starting at food, skip to bars. If starting at bar, skip to nightcap. If starting at dessert, go to bars.
+    let nextCategoryType = null
+
+    if (startVenue) {
+      // When starting from a venue, pick something different
+      if (startCategoryType === 'food') {
+        nextCategoryType = 'bar'
+      } else if (startCategoryType === 'bar') {
+        nextCategoryType = 'dessert'
+      } else if (startCategoryType === 'dessert') {
+        nextCategoryType = 'bar'
+      }
+    } else {
+      // When starting from location, follow normal flow: food → bars → nightcap
+      nextCategoryType = 'food'
+    }
+
+    // Pick next stop
+    if (nextCategoryType === 'food') {
       const foodVenues = remaining.filter(v => inferCategoryType(v.category || '', v.subcategory_slug || '') === 'food')
       if (foodVenues.length > 0) {
         const nearestFood = foodVenues.reduce((nearest, v) => {
@@ -129,20 +154,24 @@ export async function generateItinerary(req, res) {
           duration: 90,
           travelToNext: null
         })
+        selectedIds.add(nearestFood.id)
         lastVenue = nearestFood
       }
     }
 
-    // Pick up to 2 bar stops
+    // Pick up to 2 bar/drinks stops
     if (lastVenue && stops.length > 0) {
       const barVenues = remaining.filter(v =>
-        v.id !== lastVenue.id &&
+        !selectedIds.has(v.id) &&
         inferCategoryType(v.category || '', v.subcategory_slug || '') === 'bar'
       )
 
+      // If we haven't picked bars yet (because we picked something else), limit to 1-2
+      const maxBars = nextCategoryType === 'bar' ? 2 : 1
+
       let barCount = 0
       for (const barVenue of barVenues) {
-        if (barCount >= 2) break
+        if (barCount >= maxBars) break
 
         const travelDist = haversine(lastVenue.latitude, lastVenue.longitude, barVenue.latitude, barVenue.longitude)
 
@@ -165,6 +194,7 @@ export async function generateItinerary(req, res) {
             duration: 60,
             travelToNext: null
           })
+          selectedIds.add(barVenue.id)
           lastVenue = barVenue
           barCount++
         }
@@ -173,7 +203,7 @@ export async function generateItinerary(req, res) {
 
     // Pick 1 nightcap (dessert first, else bar) within 1.5km
     if (lastVenue && stops.length > 0) {
-      const nightcapPool = remaining.filter(v => v.id !== lastVenue.id)
+      const nightcapPool = remaining.filter(v => !selectedIds.has(v.id))
       const dessertVenues = nightcapPool.filter(v => inferCategoryType(v.category || '', v.subcategory_slug || '') === 'dessert')
       const nightcapCandidates = dessertVenues.length > 0 ? dessertVenues : nightcapPool
 
@@ -197,6 +227,7 @@ export async function generateItinerary(req, res) {
             duration: 37,
             travelToNext: null
           })
+          selectedIds.add(nearestNightcap.id)
         }
       }
     }
