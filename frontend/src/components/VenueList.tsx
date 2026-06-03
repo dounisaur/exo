@@ -142,7 +142,7 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
                 onClick={() => onStartHere(venue)}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
-                <span>Start Here 🌙</span>
+                <span>Start Here</span>
               </button>
             )}
           </div>

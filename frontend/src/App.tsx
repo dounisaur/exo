@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, Search } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
 import ItineraryView from './components/ItineraryView'
@@ -11,7 +11,6 @@ function App() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
   const [loading, setLoading] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -282,28 +281,14 @@ function App() {
             </div>
           </header>
 
-          {/* Search & Filters */}
+          {/* Filters & Actions */}
           <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
-            {/* Search Bar */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Search Our Database"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field flex-1"
-              />
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                <Search size={18} />
-              </button>
-            </div>
-
             {/* Plan My Night Button */}
             <button
               onClick={() => generateItinerary()}
               className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
-              Plan My Night 🌙
+              Plan My Night
             </button>
 
             {/* Category Filters */}
@@ -339,12 +324,7 @@ function App() {
           {/* Venues List */}
           <div className="flex-1 overflow-y-auto">
             <VenueList
-              venues={venues.filter(venue =>
-                searchTerm === ''
-                  ? true
-                  : venue.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    venue.address?.toLowerCase().includes(searchTerm.toLowerCase())
-              )}
+              venues={venues}
               categories={categories}
               userLocation={userLocation || undefined}
               onStartHere={(venue) => {
