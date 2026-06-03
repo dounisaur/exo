@@ -13,6 +13,35 @@ interface AdminPanelProps {
 
 type AdminTab = 'venues' | 'categories' | 'subcategories' | 'users'
 
+function parseGoogleMapsLink(url: string): { lat: number; lng: number } | null {
+  try {
+    // Try to extract coordinates from various Google Maps URL formats
+    // Format 1: ?q=37.7749,-122.4194 or @37.7749,-122.4194
+    const coordMatch = url.match(/[?@](?:q=)?(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+    if (coordMatch) {
+      const lat = parseFloat(coordMatch[1])
+      const lng = parseFloat(coordMatch[2])
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng }
+      }
+    }
+
+    // Format 2: /maps/@37.7749,-122.4194,15z
+    const mapMatch = url.match(/\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/)
+    if (mapMatch) {
+      const lat = parseFloat(mapMatch[1])
+      const lng = parseFloat(mapMatch[2])
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng }
+      }
+    }
+
+    return null
+  } catch {
+    return null
+  }
+}
+
 export default function AdminPanel({ authToken, userRole, categories, onCategoriesUpdated, onViewHome }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('venues')
   const [venues, setVenues] = useState<Venue[]>([])
@@ -28,6 +57,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [manualAddressEnabled, setManualAddressEnabled] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
+  const [googleMapsLink, setGoogleMapsLink] = useState('')
 
   const [formData, setFormData] = useState({
     name: '',
@@ -169,6 +199,23 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setLookupQuery('')
   }
 
+  const handleParseGoogleMapsLink = () => {
+    const coords = parseGoogleMapsLink(googleMapsLink)
+    if (coords) {
+      setFormData(prev => ({
+        ...prev,
+        latitude: coords.lat.toString(),
+        longitude: coords.lng.toString()
+      }))
+      setGoogleMapsLink('')
+      setMessage('Coordinates extracted successfully!')
+      setTimeout(() => setMessage(''), 2000)
+    } else {
+      setMessage('Could not extract coordinates from link. Check the URL format.')
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
@@ -253,6 +300,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setImagePreview('')
     setLookupQuery('')
     setLookupResults([])
+    setGoogleMapsLink('')
     setShowVenueSheet(false)
     setEditingVenueId(null)
     setManualAddressEnabled(false)
@@ -927,6 +975,30 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       />
                     </div>
 
+                    {/* Google Maps Link Option */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Google Maps Link (optional)</label>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          placeholder="Paste Google Maps share link..."
+                          value={googleMapsLink}
+                          onChange={(e) => setGoogleMapsLink(e.target.value)}
+                          className="input-field flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleParseGoogleMapsLink}
+                          disabled={!googleMapsLink}
+                          className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 transition-colors text-sm font-medium"
+                        >
+                          Parse
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">or enter coordinates manually below</p>
+                    </div>
+
+                    {/* Manual Coordinates */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Latitude *</label>
