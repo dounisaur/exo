@@ -447,9 +447,44 @@ export function setupRoutes(app) {
     }
 
     try {
+      // Helper function to extract all 7 days of opening hours
+      const getAllHours = (openingHours) => {
+        const hours = {};
+
+        // Initialize all days as CLOSED
+        for (let day = 0; day < 7; day++) {
+          hours[day.toString()] = 'CLOSED';
+        }
+
+        if (!openingHours || !openingHours.periods) {
+          return JSON.stringify(hours);
+        }
+
+        // Convert time from "0900" format to "09:00"
+        const formatTime = (timeStr) => {
+          if (!timeStr || timeStr.length !== 4) return null;
+          return `${timeStr.slice(0, 2)}:${timeStr.slice(2, 4)}`;
+        };
+
+        // Group periods by day and extract hours
+        for (const period of openingHours.periods) {
+          if (period.open && period.open.day !== undefined && period.close) {
+            const day = period.open.day.toString();
+            const openTime = formatTime(period.open.time);
+            const closeTime = formatTime(period.close.time);
+
+            if (openTime && closeTime) {
+              hours[day] = `${openTime}-${closeTime}`;
+            }
+          }
+        }
+
+        return JSON.stringify(hours);
+      };
+
       // If placeId is provided, fetch details for that specific place
       if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
 
@@ -458,6 +493,8 @@ export function setupRoutes(app) {
         }
 
         const result = detailsData.result;
+        const openingHours = getAllHours(result.opening_hours);
+
         return res.json({
           results: [{
             name: result.name || '',
@@ -465,7 +502,8 @@ export function setupRoutes(app) {
             latitude: result.geometry?.location?.lat || null,
             longitude: result.geometry?.location?.lng || null,
             website_url: result.website || '',
-            phone: result.formatted_phone_number || ''
+            phone: result.formatted_phone_number || '',
+            opening_hours: openingHours
           }]
         });
       }
@@ -498,7 +536,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
 
       // Validate required fields
       if (!name || !category) {
@@ -523,9 +561,9 @@ export function setupRoutes(app) {
 
       console.log('Creating venue:', name);
       const result = db.prepare(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating);
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null);
       console.log('Venue created with ID:', result.lastInsertRowid);
       res.status(201).json({ id: result.lastInsertRowid });
     } catch (err) {
@@ -537,7 +575,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -560,9 +598,9 @@ export function setupRoutes(app) {
       }
 
       const result = db.prepare(
-        `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, updated_at=CURRENT_TIMESTAMP
+        `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, opening_hours=?, updated_at=CURRENT_TIMESTAMP
          WHERE id = ?`
-      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, req.params.id);
+      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null, req.params.id);
       if (result.changes === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }

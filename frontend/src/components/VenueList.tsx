@@ -23,6 +23,21 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
     return null
   }
 
+  const getTodayHours = (openingHours?: string): string | null => {
+    if (!openingHours) return null
+    try {
+      const hours = JSON.parse(openingHours)
+      const today = new Date().getDay().toString() // "0"–"6"
+      const todayHours = hours[today]
+      if (!todayHours || todayHours === 'CLOSED') {
+        return null
+      }
+      return todayHours // "09:00-22:00"
+    } catch {
+      return null
+    }
+  }
+
   if (venues.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -64,6 +79,13 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             <div className="flex items-start gap-2 mb-3 text-sm text-gray-600">
               <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
               <span>{venue.address}</span>
+            </div>
+          )}
+
+          {/* Hours */}
+          {venue.opening_hours && (
+            <div className="mb-3 text-sm text-gray-600">
+              <p>⏰ {getTodayHours(venue.opening_hours) || 'Closed today'}</p>
             </div>
           )}
 

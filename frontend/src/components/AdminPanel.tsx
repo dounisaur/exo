@@ -30,6 +30,67 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [imagePreview, setImagePreview] = useState<string>('')
   const [googleMapsLink, setGoogleMapsLink] = useState('')
 
+  // Hours grid state: { "0": { open: "09:00", close: "22:00", closed: false }, ... }
+  const [hoursGrid, setHoursGrid] = useState<Record<string, { open: string; close: string; closed: boolean }>>({
+    '0': { open: '', close: '', closed: false },
+    '1': { open: '', close: '', closed: false },
+    '2': { open: '', close: '', closed: false },
+    '3': { open: '', close: '', closed: false },
+    '4': { open: '', close: '', closed: false },
+    '5': { open: '', close: '', closed: false },
+    '6': { open: '', close: '', closed: false }
+  })
+
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+  // Helper: convert hours grid to JSON string for form submission
+  const buildOpeningHoursJSON = (grid: Record<string, { open: string; close: string; closed: boolean }>) => {
+    const result: Record<string, string> = {}
+    for (let day = 0; day < 7; day++) {
+      const dayKey = day.toString()
+      const dayData = grid[dayKey]
+      if (dayData.closed || !dayData.open || !dayData.close) {
+        result[dayKey] = 'CLOSED'
+      } else {
+        result[dayKey] = `${dayData.open}-${dayData.close}`
+      }
+    }
+    return JSON.stringify(result)
+  }
+
+  // Helper: parse JSON string to hours grid
+  const parseOpeningHoursJSON = (jsonStr?: string) => {
+    const grid: Record<string, { open: string; close: string; closed: boolean }> = {
+      '0': { open: '', close: '', closed: false },
+      '1': { open: '', close: '', closed: false },
+      '2': { open: '', close: '', closed: false },
+      '3': { open: '', close: '', closed: false },
+      '4': { open: '', close: '', closed: false },
+      '5': { open: '', close: '', closed: false },
+      '6': { open: '', close: '', closed: false }
+    }
+
+    if (!jsonStr) return grid
+
+    try {
+      const hours = JSON.parse(jsonStr)
+      for (let day = 0; day < 7; day++) {
+        const dayKey = day.toString()
+        const dayHours = hours[dayKey]
+        if (dayHours === 'CLOSED') {
+          grid[dayKey] = { open: '', close: '', closed: true }
+        } else if (dayHours && typeof dayHours === 'string') {
+          const [open, close] = dayHours.split('-')
+          grid[dayKey] = { open: open || '', close: close || '', closed: false }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse opening_hours:', e)
+    }
+
+    return grid
+  }
+
   const [formData, setFormData] = useState({
     name: '',
     category: categories.length > 0 ? categories[0].slug : 'food',
@@ -41,7 +102,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     website_url: '',
     phone_number: '',
     reservation_link: '',
-    rating: ''
+    rating: '',
+    opening_hours: ''
   })
 
   // Category sheet state
@@ -139,8 +201,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             latitude: fullResult.latitude.toString(),
             longitude: fullResult.longitude.toString(),
             website_url: fullResult.website_url || '',
-            phone_number: fullResult.phone || ''
+            phone_number: fullResult.phone || '',
+            opening_hours: fullResult.opening_hours || ''
           }))
+          setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
         }
       } catch (error) {
         console.error('Error fetching venue details:', error)
@@ -163,38 +227,48 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         latitude: result.latitude.toString(),
         longitude: result.longitude.toString(),
         website_url: result.website_url || '',
-        phone_number: result.phone || ''
+        phone_number: result.phone || '',
+        opening_hours: result.opening_hours || ''
       }))
+      setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
     }
     setLookupResults([])
     setLookupQuery('')
   }
 
   const handleParseGoogleMapsLink = async () => {
+    console.log('[PARSE] Starting parse with URL:', googleMapsLink)
+
     try {
+      console.log('[PARSE] Sending request to backend...')
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parse-maps-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: googleMapsLink })
       })
 
+      console.log('[PARSE] Response status:', response.status)
       const data = await response.json()
+      console.log('[PARSE] Response data:', data)
 
       if (response.ok && data.lat && data.lng) {
+        console.log('[PARSE] Success! Setting coordinates:', data.lat, data.lng)
         setFormData(prev => ({
           ...prev,
           latitude: data.lat.toString(),
           longitude: data.lng.toString()
         }))
         setGoogleMapsLink('')
-        setMessage('Coordinates extracted successfully!')
-        setTimeout(() => setMessage(''), 2000)
+        setMessage(`✓ Success! Coordinates: ${data.lat}, ${data.lng}`)
+        setTimeout(() => setMessage(''), 3000)
       } else {
+        console.log('[PARSE] Failed - no coordinates in response')
         setMessage(data.error || 'Could not extract coordinates from link')
         setTimeout(() => setMessage(''), 3000)
       }
     } catch (error) {
-      setMessage('Error parsing link')
+      console.error('[PARSE] Error:', error)
+      setMessage('Error parsing link: ' + (error instanceof Error ? error.message : 'Unknown error'))
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -270,7 +344,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : null,
         latitude: lat,
         longitude: lng,
-        rating: formData.rating ? parseFloat(formData.rating) : null
+        rating: formData.rating ? parseFloat(formData.rating) : null,
+        opening_hours: buildOpeningHoursJSON(hoursGrid)
       }
 
       const method = editingVenueId ? 'PUT' : 'POST'
@@ -312,7 +387,17 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       website_url: '',
       phone_number: '',
       reservation_link: '',
-      rating: ''
+      rating: '',
+      opening_hours: ''
+    })
+    setHoursGrid({
+      '0': { open: '', close: '', closed: false },
+      '1': { open: '', close: '', closed: false },
+      '2': { open: '', close: '', closed: false },
+      '3': { open: '', close: '', closed: false },
+      '4': { open: '', close: '', closed: false },
+      '5': { open: '', close: '', closed: false },
+      '6': { open: '', close: '', closed: false }
     })
     setImageFile(null)
     setImagePreview('')
@@ -336,8 +421,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       website_url: venue.website_url || '',
       phone_number: venue.phone_number || '',
       reservation_link: venue.reservation_link || '',
-      rating: venue.rating?.toString() || ''
+      rating: venue.rating?.toString() || '',
+      opening_hours: venue.opening_hours || ''
     })
+    setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
     setImagePreview(venue.image_url || '')
     setEditingVenueId(venue.id)
     setShowVenueSheet(true)
@@ -1046,6 +1133,59 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     </div>
                   </>
                 )}
+              </div>
+            </div>
+
+            {/* Hours Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Hours</h3>
+              <div className="space-y-2 bg-white rounded-lg p-4 border border-gray-200">
+                {dayNames.map((dayName, dayIndex) => {
+                  const dayKey = dayIndex.toString()
+                  const dayData = hoursGrid[dayKey]
+                  return (
+                    <div key={dayKey} className="flex items-center gap-3 pb-2 border-b border-gray-100 last:border-b-0">
+                      <div className="w-20">
+                        <label className="block text-xs font-medium text-gray-700">{dayName}</label>
+                      </div>
+                      <div className="flex gap-2 flex-1">
+                        <input
+                          type="time"
+                          value={dayData.open}
+                          onChange={(e) => setHoursGrid(prev => ({
+                            ...prev,
+                            [dayKey]: { ...prev[dayKey], open: e.target.value, closed: false }
+                          }))}
+                          disabled={dayData.closed}
+                          className="input-field text-sm h-8 flex-1 disabled:bg-gray-100"
+                        />
+                        <span className="text-gray-400 px-1 flex items-center">–</span>
+                        <input
+                          type="time"
+                          value={dayData.close}
+                          onChange={(e) => setHoursGrid(prev => ({
+                            ...prev,
+                            [dayKey]: { ...prev[dayKey], close: e.target.value, closed: false }
+                          }))}
+                          disabled={dayData.closed}
+                          className="input-field text-sm h-8 flex-1 disabled:bg-gray-100"
+                        />
+                      </div>
+                      <label className="flex items-center gap-2 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          checked={dayData.closed}
+                          onChange={(e) => setHoursGrid(prev => ({
+                            ...prev,
+                            [dayKey]: { ...prev[dayKey], closed: e.target.checked, open: '', close: '' }
+                          }))}
+                          className="w-4 h-4 rounded"
+                        />
+                        <span className="text-xs text-gray-600">Closed</span>
+                      </label>
+                    </div>
+                  )
+                })}
               </div>
             </div>
 

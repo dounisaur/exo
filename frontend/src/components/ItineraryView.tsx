@@ -9,6 +9,21 @@ interface ItineraryViewProps {
   startVenueName?: string
 }
 
+const getTodayHours = (openingHours?: string): string | null => {
+  if (!openingHours) return null
+  try {
+    const hours = JSON.parse(openingHours)
+    const today = new Date().getDay().toString() // "0"–"6"
+    const todayHours = hours[today]
+    if (!todayHours || todayHours === 'CLOSED') {
+      return null
+    }
+    return todayHours // "09:00-22:00"
+  } catch {
+    return null
+  }
+}
+
 export default function ItineraryView({
   itinerary,
   loading,
@@ -95,37 +110,41 @@ export default function ItineraryView({
       <div className="flex-1 overflow-y-auto">
         {/* Timeline */}
         <div className="px-4 pb-8">
-          {/* Starting Point */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
-                📍
+          {/* Starting Point - only show if not starting from a venue card */}
+          {!startVenueName && (
+            <>
+              <div className="flex gap-4 mb-6">
+                <div className="flex flex-col items-center">
+                  <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center font-bold text-sm">
+                    📍
+                  </div>
+                  {itinerary.stops.length > 0 && (
+                    <div className="w-0.5 h-20 bg-green-200 my-2"></div>
+                  )}
+                </div>
+
+                <div className="flex-1 pb-4">
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">Your Location</h3>
+                  <p className="text-sm text-gray-600">Starting point for your itinerary</p>
+                </div>
               </div>
-              {itinerary.stops.length > 0 && (
-                <div className="w-0.5 h-20 bg-green-200 my-2"></div>
+
+              {/* Travel to First Stop */}
+              {itinerary.travelToFirst && (
+                <div className="flex gap-4 mb-6">
+                  <div className="w-8 flex justify-center">
+                    <span className="text-2xl">{itinerary.travelToFirst.walkable ? '🚶' : '🚕'}</span>
+                  </div>
+                  <div className="flex-1 flex items-center gap-2 text-sm text-gray-600 pb-4 border-b border-gray-200">
+                    {itinerary.travelToFirst.walkable ? (
+                      <span>{itinerary.travelToFirst.minutes} min walk · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
+                    ) : (
+                      <span>Taxi needed (~{itinerary.travelToFirst.minutes} min) · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
+                    )}
+                  </div>
+                </div>
               )}
-            </div>
-
-            <div className="flex-1 pb-4">
-              <h3 className="text-lg font-bold text-gray-900 mb-1">Your Location</h3>
-              <p className="text-sm text-gray-600">Starting point for your itinerary</p>
-            </div>
-          </div>
-
-          {/* Travel to First Stop */}
-          {itinerary.travelToFirst && (
-            <div className="flex gap-4 mb-6">
-              <div className="w-8 flex justify-center">
-                <span className="text-2xl">{itinerary.travelToFirst.walkable ? '🚶' : '🚕'}</span>
-              </div>
-              <div className="flex-1 flex items-center gap-2 text-sm text-gray-600 pb-4 border-b border-gray-200">
-                {itinerary.travelToFirst.walkable ? (
-                  <span>{itinerary.travelToFirst.minutes} min walk · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
-                ) : (
-                  <span>Taxi needed (~{itinerary.travelToFirst.minutes} min) · {(itinerary.travelToFirst.distanceMeters / 1000).toFixed(2)}km</span>
-                )}
-              </div>
-            </div>
+            </>
           )}
 
           {itinerary.stops.map((stop, index) => {
@@ -156,6 +175,12 @@ export default function ItineraryView({
                         </>
                       )}
                     </div>
+
+                    {stop.venue.opening_hours && (
+                      <div className="text-sm text-gray-600 mb-3">
+                        <p>⏰ {getTodayHours(stop.venue.opening_hours) || 'Closed today'}</p>
+                      </div>
+                    )}
 
                     <div className="flex gap-2">
                       {stop.venue.phone_number && (

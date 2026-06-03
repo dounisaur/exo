@@ -11,6 +11,7 @@ export interface Venue {
   phone_number?: string
   reservation_link?: string
   rating?: number
+  opening_hours?: string
   status?: 'draft' | 'published'
   created_at?: string
   updated_at?: string
