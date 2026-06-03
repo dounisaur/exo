@@ -48,7 +48,7 @@ export async function generateItinerary(req, res) {
       SELECT v.*, s.slug as subcategory_slug
       FROM venues v
       LEFT JOIN subcategories s ON v.subcategory_id = s.id
-      WHERE v.published = 1
+      WHERE v.status = 'published'
     `).all()
 
     // Get start venue if provided
