@@ -244,7 +244,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parse-maps-link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: googleMapsLink })
+        body: JSON.stringify({ url: googleMapsLink, address: formData.address })
       })
 
       console.log('[PARSE] Response status:', response.status)
@@ -300,7 +300,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parse-maps-link`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ url: googleMapsLink })
+          body: JSON.stringify({ url: googleMapsLink, address: formData.address })
         })
 
         const coords = await response.json()

@@ -283,7 +283,7 @@ export function setupRoutes(app) {
 
   // Parse Google Maps link to extract coordinates
   app.post('/api/parse-maps-link', async (req, res) => {
-    const { url } = req.body
+    const { url, address } = req.body
 
     if (!url) {
       return res.status(400).json({ error: 'URL required' })
@@ -361,8 +361,32 @@ export function setupRoutes(app) {
           return res.json(coords)
         }
 
-        console.log('[MAPS] Failed to extract coordinates')
-        res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one.' })
+        console.log('[MAPS] Failed to extract coordinates from URL')
+
+        // Fallback: try Google Places text search with address if provided
+        if (address && address.trim()) {
+          console.log('[MAPS] Trying Places API text search with address:', address)
+          try {
+            const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(address)}&key=${apiKey}`
+            const placesResponse = await fetch(textSearchUrl, { signal: controller.signal })
+            const placesData = await placesResponse.json()
+
+            if (placesData.results && placesData.results.length > 0) {
+              const firstResult = placesData.results[0]
+              const lat = firstResult.geometry?.location?.lat
+              const lng = firstResult.geometry?.location?.lng
+              if (lat && lng) {
+                console.log('[MAPS] Success: extracted from Places API:', { lat, lng })
+                clearTimeout(timeoutId)
+                return res.json({ lat, lng })
+              }
+            }
+          } catch (placesError) {
+            console.error('[MAPS] Places API fallback failed:', placesError.message)
+          }
+        }
+
+        res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one, or enter the address and coordinates manually.' })
       } catch (fetchError) {
         clearTimeout(timeoutId)
         if (fetchError.name === 'AbortError') {
