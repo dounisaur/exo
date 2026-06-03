@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock, MapIcon, AlertCircle } from 'lucide-react'
+import { ArrowLeft, MapIcon, AlertCircle } from 'lucide-react'
 import type { Itinerary } from '../types'
 
 interface ItineraryViewProps {
@@ -16,34 +16,6 @@ export default function ItineraryView({
   onBack,
   startVenueName
 }: ItineraryViewProps) {
-  const startTime = new Date()
-  startTime.setHours(19, 0, 0) // 7:00 PM
-
-  const calculateArrivalTime = (stopIndex: number): Date => {
-    const time = new Date(startTime)
-    let minutes = 0
-
-    for (let i = 0; i < stopIndex; i++) {
-      if (itinerary?.stops[i]) {
-        minutes += itinerary.stops[i].duration
-        if (i < stopIndex - 1 && itinerary.stops[i].travelToNext) {
-          minutes += itinerary.stops[i].travelToNext!.minutes
-        }
-      }
-    }
-
-    if (stopIndex > 0 && itinerary?.stops[stopIndex - 1]?.travelToNext) {
-      minutes += itinerary.stops[stopIndex - 1].travelToNext!.minutes
-    }
-
-    time.setMinutes(time.getMinutes() + minutes)
-    return time
-  }
-
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-
   const totalDuration = itinerary?.stops.reduce((total, stop) => {
     const duration = stop.duration
     const travel = stop.travelToNext?.minutes || 0
@@ -130,9 +102,6 @@ export default function ItineraryView({
         {/* Info Box */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 m-4 rounded">
           <p className="text-sm text-blue-900">
-            <strong>If you start at {formatTime(startTime)}...</strong>
-          </p>
-          <p className="text-xs text-blue-800 mt-1">
             Total estimated duration: <strong>{Math.round(totalDuration / 60)} hours {totalDuration % 60} minutes</strong> (including travel)
           </p>
         </div>
@@ -151,10 +120,7 @@ export default function ItineraryView({
             </div>
 
             <div className="flex-1 pb-4">
-              <div className="flex items-baseline justify-between mb-2">
-                <h3 className="text-lg font-bold text-gray-900">Your Location</h3>
-                <span className="text-sm font-semibold text-green-600">{formatTime(startTime)}</span>
-              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">Your Location</h3>
               <p className="text-sm text-gray-600">Starting point for your itinerary</p>
             </div>
           </div>
@@ -176,8 +142,6 @@ export default function ItineraryView({
           )}
 
           {itinerary.stops.map((stop, index) => {
-            const arrivalTime = calculateArrivalTime(index)
-
             return (
               <div key={stop.venue.id}>
                 {/* Stop */}
@@ -194,12 +158,9 @@ export default function ItineraryView({
 
                   {/* Content */}
                   <div className="flex-1 pb-4">
-                    <div className="flex items-baseline justify-between mb-2">
-                      <h3 className="text-lg font-bold text-gray-900">{stop.venue.name}</h3>
-                      <span className="text-sm font-semibold text-blue-600">{formatTime(arrivalTime)}</span>
-                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{stop.venue.name}</h3>
 
-                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
                       <span className="text-gray-500">{stop.venue.category}</span>
                       {stop.venue.address && (
                         <>
@@ -207,11 +168,6 @@ export default function ItineraryView({
                           <span className="text-gray-500">{stop.venue.address}</span>
                         </>
                       )}
-                    </div>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <Clock size={16} className="text-gray-400" />
-                      <span className="text-sm text-gray-600">{stop.duration} mins</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -267,12 +223,6 @@ export default function ItineraryView({
           })}
         </div>
 
-        {/* Footer */}
-        <div className="bg-gray-50 border-t border-gray-200 p-4 mt-4">
-          <div className="text-center text-sm text-gray-600">
-            <p>Night wraps up around <strong>{formatTime(new Date(startTime.getTime() + totalDuration * 60000))}</strong></p>
-          </div>
-        </div>
       </div>
     </div>
   )
