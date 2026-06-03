@@ -279,6 +279,75 @@ export function setupRoutes(app) {
     }
   });
 
+  // ===== GOOGLE MAPS PARSING =====
+
+  // Parse Google Maps link to extract coordinates
+  app.post('/api/parse-maps-link', async (req, res) => {
+    const { url } = req.body
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL required' })
+    }
+
+    try {
+      // Function to extract coordinates from various Google Maps URL formats
+      const extractCoordinates = (urlText) => {
+        // Try various patterns
+        const patterns = [
+          /[?&@]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,           // ?q=lat,lng
+          /@(-?\d+\.?\d*),(-?\d+\.?\d*),\d+z/,             // /@lat,lng,zoom
+          /\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,          // /maps/@lat,lng
+          /[\?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/,       // ?center=lat,lng
+        ]
+
+        for (const pattern of patterns) {
+          const match = urlText.match(pattern)
+          if (match) {
+            const lat = parseFloat(match[1])
+            const lng = parseFloat(match[2])
+            if (!isNaN(lat) && !isNaN(lng)) {
+              return { lat, lng }
+            }
+          }
+        }
+        return null
+      }
+
+      // First try direct extraction (works for full URLs)
+      let coords = extractCoordinates(url)
+      if (coords) {
+        return res.json(coords)
+      }
+
+      // If direct extraction failed, try to follow the redirect
+      // (useful for shortened links like maps.app.go.gl/...)
+      const response = await fetch(url, {
+        redirect: 'follow',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        }
+      })
+
+      const html = await response.text()
+      coords = extractCoordinates(html)
+
+      if (coords) {
+        return res.json(coords)
+      }
+
+      // Try one more pattern specific to the response
+      const centerMatch = html.match(/center[\\s]*=[\\s]*{[\\s]*lat[\\s]*:[\\s]*(-?\d+\.?\d*)[^}]*lng[\\s]*:[\\s]*(-?\d+\.?\d*)/)
+      if (centerMatch) {
+        return res.json({ lat: parseFloat(centerMatch[1]), lng: parseFloat(centerMatch[2]) })
+      }
+
+      res.status(400).json({ error: 'Could not extract coordinates from link' })
+    } catch (error) {
+      console.error('Error parsing maps link:', error)
+      res.status(500).json({ error: 'Failed to parse link' })
+    }
+  });
+
   // ===== ITINERARY ENDPOINTS =====
 
   // Generate itinerary (public)

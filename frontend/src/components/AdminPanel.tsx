@@ -13,35 +13,6 @@ interface AdminPanelProps {
 
 type AdminTab = 'venues' | 'categories' | 'subcategories' | 'users'
 
-function parseGoogleMapsLink(url: string): { lat: number; lng: number } | null {
-  try {
-    // Try to extract coordinates from various Google Maps URL formats
-    // Format 1: ?q=37.7749,-122.4194 or @37.7749,-122.4194
-    const coordMatch = url.match(/[?@](?:q=)?(-?\d+\.?\d*),(-?\d+\.?\d*)/)
-    if (coordMatch) {
-      const lat = parseFloat(coordMatch[1])
-      const lng = parseFloat(coordMatch[2])
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng }
-      }
-    }
-
-    // Format 2: /maps/@37.7749,-122.4194,15z
-    const mapMatch = url.match(/\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/)
-    if (mapMatch) {
-      const lat = parseFloat(mapMatch[1])
-      const lng = parseFloat(mapMatch[2])
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng }
-      }
-    }
-
-    return null
-  } catch {
-    return null
-  }
-}
-
 export default function AdminPanel({ authToken, userRole, categories, onCategoriesUpdated, onViewHome }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('venues')
   const [venues, setVenues] = useState<Venue[]>([])
@@ -199,19 +170,31 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setLookupQuery('')
   }
 
-  const handleParseGoogleMapsLink = () => {
-    const coords = parseGoogleMapsLink(googleMapsLink)
-    if (coords) {
-      setFormData(prev => ({
-        ...prev,
-        latitude: coords.lat.toString(),
-        longitude: coords.lng.toString()
-      }))
-      setGoogleMapsLink('')
-      setMessage('Coordinates extracted successfully!')
-      setTimeout(() => setMessage(''), 2000)
-    } else {
-      setMessage('Could not extract coordinates from link. Check the URL format.')
+  const handleParseGoogleMapsLink = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parse-maps-link`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: googleMapsLink })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.lat && data.lng) {
+        setFormData(prev => ({
+          ...prev,
+          latitude: data.lat.toString(),
+          longitude: data.lng.toString()
+        }))
+        setGoogleMapsLink('')
+        setMessage('Coordinates extracted successfully!')
+        setTimeout(() => setMessage(''), 2000)
+      } else {
+        setMessage(data.error || 'Could not extract coordinates from link')
+        setTimeout(() => setMessage(''), 3000)
+      }
+    } catch (error) {
+      setMessage('Error parsing link')
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -239,12 +222,23 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
     // If coordinates are missing but Google Maps link is provided, try to parse it
     if ((isNaN(lat) || isNaN(lng)) && googleMapsLink) {
-      const coords = parseGoogleMapsLink(googleMapsLink)
-      if (coords) {
-        lat = coords.lat
-        lng = coords.lng
-      } else {
-        setMessage('Could not extract coordinates from Google Maps link')
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/parse-maps-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: googleMapsLink })
+        })
+
+        const coords = await response.json()
+        if (response.ok && coords.lat && coords.lng) {
+          lat = coords.lat
+          lng = coords.lng
+        } else {
+          setMessage('Could not extract coordinates from Google Maps link')
+          return
+        }
+      } catch (error) {
+        setMessage('Error parsing Google Maps link')
         return
       }
     }
