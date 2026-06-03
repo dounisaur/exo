@@ -98,16 +98,55 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
     }
   }
 
-  const selectLookupResult = (result: any) => {
-    setFormData(prev => ({
-      ...prev,
-      name: result.name,
-      address: result.address,
-      latitude: result.latitude.toString(),
-      longitude: result.longitude.toString(),
-      website_url: result.website_url || '',
-      phone_number: result.phone || ''
-    }))
+  const selectLookupResult = async (result: any) => {
+    // If we have a place_id, fetch full details including phone and website
+    if (result.place_id) {
+      try {
+        const detailsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/lookup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          },
+          body: JSON.stringify({ placeId: result.place_id })
+        })
+        const detailsData = await detailsResponse.json()
+        const fullResult = detailsData.results?.[0]
+
+        if (fullResult) {
+          setFormData(prev => ({
+            ...prev,
+            name: fullResult.name,
+            address: fullResult.address,
+            latitude: fullResult.latitude.toString(),
+            longitude: fullResult.longitude.toString(),
+            website_url: fullResult.website_url || '',
+            phone_number: fullResult.phone || ''
+          }))
+        }
+      } catch (error) {
+        console.error('Error fetching venue details:', error)
+        // Fallback to basic result if detail fetch fails
+        setFormData(prev => ({
+          ...prev,
+          name: result.name,
+          address: result.address,
+          latitude: result.latitude.toString(),
+          longitude: result.longitude.toString()
+        }))
+      }
+    } else {
+      // Fallback for results without place_id
+      setFormData(prev => ({
+        ...prev,
+        name: result.name,
+        address: result.address,
+        latitude: result.latitude.toString(),
+        longitude: result.longitude.toString(),
+        website_url: result.website_url || '',
+        phone_number: result.phone || ''
+      }))
+    }
     setLookupResults([])
     setLookupQuery('')
   }
@@ -362,7 +401,7 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
       {/* Header */}
       <header className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">🌍 EXO Admin</h1>
+          <h1 className="text-2xl font-bold text-gray-900">🍴 EXΩ 🍷 Admin</h1>
           <button
             onClick={onViewHome}
             className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
