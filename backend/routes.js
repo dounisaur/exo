@@ -290,22 +290,27 @@ export function setupRoutes(app) {
     }
 
     try {
+      console.log('[MAPS] Parsing URL:', url)
+
       // Function to extract coordinates from various Google Maps URL formats
-      const extractCoordinates = (urlText) => {
+      const extractCoordinates = (text) => {
         // Try various patterns
         const patterns = [
-          /[?&@]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,           // ?q=lat,lng
-          /@(-?\d+\.?\d*),(-?\d+\.?\d*),\d+z/,             // /@lat,lng,zoom
-          /\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,          // /maps/@lat,lng
-          /[\?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/,       // ?center=lat,lng
+          /[?&@]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,                    // ?q=lat,lng
+          /@(-?\d+\.?\d*),(-?\d+\.?\d*),\d+z/,                      // /@lat,lng,zoom
+          /\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,                   // /maps/@lat,lng
+          /[\?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/,                // ?center=lat,lng
+          /center["\s]*:\s*{[^}]*lat["\s]*:\s*(-?\d+\.?\d*)[^}]*lng["\s]*:\s*(-?\d+\.?\d*)/,  // JSON lat/lng
+          /"lat"\s*:\s*(-?\d+\.?\d*)[^}]*"lng"\s*:\s*(-?\d+\.?\d*)/,  // JSON format
         ]
 
         for (const pattern of patterns) {
-          const match = urlText.match(pattern)
+          const match = text.match(pattern)
           if (match) {
             const lat = parseFloat(match[1])
             const lng = parseFloat(match[2])
-            if (!isNaN(lat) && !isNaN(lng)) {
+            if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+              console.log('[MAPS] Found coordinates:', { lat, lng }, 'via pattern:', pattern)
               return { lat, lng }
             }
           }
@@ -316,35 +321,45 @@ export function setupRoutes(app) {
       // First try direct extraction (works for full URLs)
       let coords = extractCoordinates(url)
       if (coords) {
+        console.log('[MAPS] Success: extracted from URL directly')
         return res.json(coords)
       }
 
       // If direct extraction failed, try to follow the redirect
-      // (useful for shortened links like maps.app.go.gl/...)
+      // (useful for shortened links like maps.app.goo.gl/...)
+      console.log('[MAPS] Direct extraction failed, following redirect...')
       const response = await fetch(url, {
         redirect: 'follow',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        }
+        },
+        timeout: 10000
       })
 
-      const html = await response.text()
-      coords = extractCoordinates(html)
+      console.log('[MAPS] Redirect response status:', response.status, 'URL:', response.url)
 
+      const html = await response.text()
+      console.log('[MAPS] Response text length:', html.length)
+
+      // Extract from final URL
+      coords = extractCoordinates(response.url)
       if (coords) {
+        console.log('[MAPS] Success: extracted from final URL after redirect')
         return res.json(coords)
       }
 
-      // Try one more pattern specific to the response
-      const centerMatch = html.match(/center[\\s]*=[\\s]*{[\\s]*lat[\\s]*:[\\s]*(-?\d+\.?\d*)[^}]*lng[\\s]*:[\\s]*(-?\d+\.?\d*)/)
-      if (centerMatch) {
-        return res.json({ lat: parseFloat(centerMatch[1]), lng: parseFloat(centerMatch[2]) })
+      // Extract from HTML content
+      coords = extractCoordinates(html)
+      if (coords) {
+        console.log('[MAPS] Success: extracted from HTML content')
+        return res.json(coords)
       }
 
-      res.status(400).json({ error: 'Could not extract coordinates from link' })
+      console.log('[MAPS] Failed to extract coordinates')
+      res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one.' })
     } catch (error) {
-      console.error('Error parsing maps link:', error)
-      res.status(500).json({ error: 'Failed to parse link' })
+      console.error('[MAPS] Error parsing maps link:', error.message)
+      res.status(500).json({ error: `Failed to parse link: ${error.message}` })
     }
   });
 
