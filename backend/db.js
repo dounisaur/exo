@@ -1,7 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import bcrypt from 'bcryptjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, 'venues.db');
@@ -78,8 +77,6 @@ function initializeTables() {
 
     db.exec(`CREATE INDEX IF NOT EXISTS idx_category ON venues(category)`);
 
-    seedData();
-
     // Update schema version
     db.prepare('DELETE FROM schema_version').run();
     db.prepare('INSERT INTO schema_version (version) VALUES (?)').run(SCHEMA_VERSION);
@@ -87,31 +84,6 @@ function initializeTables() {
   } else {
     console.log(`[DB] Schema version ${SCHEMA_VERSION} matches. Skipping initialization.`);
   }
-}
-
-function seedData() {
-  // Only seed if no users exist (skip on subsequent startups)
-  const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get();
-  if (userCount.count > 0) return;
-
-  const adminPassword = bcrypt.hashSync('admin123', 10);
-
-  const insertUser = db.prepare(`INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)`);
-  insertUser.run('admin', adminPassword, 'admin');
-
-  const insertCategory = db.prepare(`INSERT INTO categories (name, slug) VALUES (?, ?)`);
-  insertCategory.run('Food', 'food');
-  insertCategory.run('Bar', 'bar');
-  insertCategory.run('Concert', 'concert');
-  insertCategory.run('Cafe', 'cafe');
-
-  const insertSubcategory = db.prepare(`INSERT INTO subcategories (category_id, name, slug) VALUES ((SELECT id FROM categories WHERE slug = ?), ?, ?)`);
-  insertSubcategory.run('food', 'Street Food', 'street-food');
-  insertSubcategory.run('food', 'Michelin', 'michelin');
-  insertSubcategory.run('food', 'Taverna', 'taverna');
-  insertSubcategory.run('food', 'Gastro Taverna', 'gastro-taverna');
-  insertSubcategory.run('food', 'Asian', 'asian');
-  insertSubcategory.run('food', 'Indian', 'indian');
 }
 
 export function initDb() {
