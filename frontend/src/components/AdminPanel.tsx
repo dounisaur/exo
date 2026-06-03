@@ -848,7 +848,20 @@ export default function AdminPanel({ authToken, categories, onCategoriesUpdated,
                   />
                 </div>
                 {imagePreview && (
-                  <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border border-gray-200" />
+                  <div className="space-y-2">
+                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover rounded-lg border border-gray-200" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setImagePreview('')
+                        setImageFile(null)
+                        setFormData(prev => ({ ...prev, image_url: '' }))
+                      }}
+                      className="w-full px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Delete Image
+                    </button>
+                  </div>
                 )}
               </div>
             </div>
