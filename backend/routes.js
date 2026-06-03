@@ -117,6 +117,27 @@ export function setupRoutes(app) {
     }
   });
 
+  // Update user password (admin only)
+  app.put('/api/users/:id', authenticateToken, requireAdmin, (req, res) => {
+    const targetId = parseInt(req.params.id);
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({ error: 'Password required' });
+    }
+
+    try {
+      const passwordHash = bcrypt.hashSync(password, 10);
+      const result = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, targetId);
+      if (result.changes === 0) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // ===== CATEGORY ENDPOINTS =====
 
   // Get all categories with subcategories (public)

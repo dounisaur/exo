@@ -59,6 +59,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [newUserUsername, setNewUserUsername] = useState('')
   const [newUserPassword, setNewUserPassword] = useState('')
   const [newUserRole, setNewUserRole] = useState<'admin' | 'creator'>('creator')
+  const [editingUserId, setEditingUserId] = useState<number | null>(null)
+  const [editUserPassword, setEditUserPassword] = useState('')
 
   useEffect(() => {
     if (activeTab === 'venues') {
@@ -466,6 +468,41 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     }
   }
 
+  const handleEditUser = (user: User) => {
+    setEditingUserId(user.id)
+    setEditUserPassword('')
+    setShowUserSheet(true)
+  }
+
+  const handleUpdateUserPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editUserPassword.trim() || !editingUserId) return
+    setLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/${editingUserId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ password: editUserPassword })
+      })
+      if (!response.ok) {
+        const err = await response.json()
+        setMessage(err.error || 'Error updating password')
+        return
+      }
+      setMessage('Password updated')
+      setEditingUserId(null)
+      setEditUserPassword('')
+      setShowUserSheet(false)
+    } catch (error) {
+      setMessage('Error updating password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const getSubcategoryName = (subcategoryId?: number) => {
     for (const category of categories) {
       const subcategory = category.subcategories.find(s => s.id === subcategoryId)
@@ -718,16 +755,25 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           {user.role}
                         </span>
                       </div>
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                        title="Delete user"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEditUser(user)}
+                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                          title="Edit password"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                          title="Delete user"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -1085,54 +1131,100 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       {/* User Sheet */}
       <BottomSheet
         isOpen={showUserSheet}
-        onClose={() => setShowUserSheet(false)}
-        title="Add User"
+        onClose={() => {
+          setShowUserSheet(false)
+          setEditingUserId(null)
+          setEditUserPassword('')
+          setNewUserUsername('')
+          setNewUserPassword('')
+        }}
+        title={editingUserId ? 'Edit Password' : 'Add User'}
       >
-        <form onSubmit={handleCreateUser} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-            <input
-              type="text"
-              value={newUserUsername}
-              onChange={(e) => setNewUserUsername(e.target.value)}
-              className="input-field"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              value={newUserPassword}
-              onChange={(e) => setNewUserPassword(e.target.value)}
-              className="input-field"
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
-            <select
-              value={newUserRole}
-              onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'creator')}
-              className="input-field"
-            >
-              <option value="creator">Creator</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
-            <button type="submit" disabled={loading} className="btn-primary flex-1">
-              {loading ? 'Creating...' : 'Create User'}
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowUserSheet(false)}
-              className="btn-secondary flex-1"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+        {editingUserId ? (
+          <form onSubmit={handleUpdateUserPassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input
+                type="text"
+                value={users.find(u => u.id === editingUserId)?.username || ''}
+                disabled
+                className="input-field bg-gray-100 cursor-not-allowed"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+              <input
+                type="password"
+                value={editUserPassword}
+                onChange={(e) => setEditUserPassword(e.target.value)}
+                className="input-field"
+                required
+              />
+            </div>
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
+                {loading ? 'Updating...' : 'Update Password'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowUserSheet(false)
+                  setEditingUserId(null)
+                  setEditUserPassword('')
+                }}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
+              <input
+                type="text"
+                value={newUserUsername}
+                onChange={(e) => setNewUserUsername(e.target.value)}
+                className="input-field"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <input
+                type="password"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                className="input-field"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Role</label>
+              <select
+                value={newUserRole}
+                onChange={(e) => setNewUserRole(e.target.value as 'admin' | 'creator')}
+                className="input-field"
+              >
+                <option value="creator">Creator</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+              <button type="submit" disabled={loading} className="btn-primary flex-1">
+                {loading ? 'Creating...' : 'Create User'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowUserSheet(false)}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </BottomSheet>
     </div>
   )
