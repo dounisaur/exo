@@ -760,15 +760,30 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
               {/* Search and Filters */}
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
-                {/* Search */}
-                <div>
-                  <input
-                    type="text"
-                    placeholder="Search venues by name..."
-                    value={venueSearchQuery}
-                    onChange={(e) => setVenueSearchQuery(e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  />
+                <div className="flex items-end gap-2">
+                  {/* Search */}
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      placeholder="Search venues by name..."
+                      value={venueSearchQuery}
+                      onChange={(e) => setVenueSearchQuery(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    />
+                  </div>
+                  {/* Clear Button */}
+                  {(venueSearchQuery || venueFilterCategory || venueFilterSubcategory) && (
+                    <button
+                      onClick={() => {
+                        setVenueSearchQuery('')
+                        setVenueFilterCategory('')
+                        setVenueFilterSubcategory(null)
+                      }}
+                      className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                    >
+                      Clear
+                    </button>
+                  )}
                 </div>
 
                 {/* Category and Subcategory Filters */}
