@@ -760,7 +760,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
               {/* Search and Filters */}
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex items-end gap-2">
+                <div className="flex items-stretch gap-2">
                   {/* Search */}
                   <div className="flex-1">
                     <input
