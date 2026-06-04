@@ -779,8 +779,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                         setVenueFilterCategory('')
                         setVenueFilterSubcategory(null)
                       }}
-                      className="px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex items-center justify-center"
-                      style={{ height: '100%' }}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                     >
                       Clear
                     </button>
