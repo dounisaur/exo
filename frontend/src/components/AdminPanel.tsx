@@ -30,6 +30,11 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [imagePreview, setImagePreview] = useState<string>('')
   const [googleMapsLink, setGoogleMapsLink] = useState('')
 
+  // Venue search and filter state
+  const [venueSearchQuery, setVenueSearchQuery] = useState('')
+  const [venueFilterCategory, setVenueFilterCategory] = useState<string>('')
+  const [venueFilterSubcategory, setVenueFilterSubcategory] = useState<number | null>(null)
+
   // Hours grid state: { "0": { open: "09:00", close: "22:00", closed: false }, ... }
   const [hoursGrid, setHoursGrid] = useState<Record<string, { open: string; close: string; closed: boolean }>>({
     '0': { open: '', close: '', closed: false },
@@ -753,53 +758,121 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 </button>
               </div>
 
+              {/* Search and Filters */}
+              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                {/* Search */}
+                <div>
+                  <input
+                    type="text"
+                    placeholder="Search venues by name..."
+                    value={venueSearchQuery}
+                    onChange={(e) => setVenueSearchQuery(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                {/* Category and Subcategory Filters */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Category</label>
+                    <select
+                      value={venueFilterCategory}
+                      onChange={(e) => {
+                        setVenueFilterCategory(e.target.value)
+                        setVenueFilterSubcategory(null)
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                    >
+                      <option value="">All Categories</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Subcategory</label>
+                    <select
+                      value={venueFilterSubcategory || ''}
+                      onChange={(e) => setVenueFilterSubcategory(e.target.value ? parseInt(e.target.value) : null)}
+                      disabled={!venueFilterCategory}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">All Subcategories</option>
+                      {venueFilterCategory && getCategoryById(venueFilterCategory)?.subcategories.map(subcat => (
+                        <option key={subcat.id} value={subcat.id}>{subcat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid gap-4">
                 {loading && !showVenueSheet ? (
                   <div className="p-8 text-center text-gray-600">Loading venues...</div>
                 ) : venues.length === 0 ? (
                   <div className="p-8 text-center text-gray-600">No venues yet</div>
                 ) : (
-                  venues.map(venue => (
-                    <div key={venue.id} className="card p-4 flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-gray-900">{venue.name}</h3>
-                        <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
-                        <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          venue.status === 'published'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {venue.status === 'published' ? 'Published' : 'Draft'}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => editVenue(venue)}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handlePublishVenue(venue.id, venue.status || 'draft')}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title={venue.status === 'published' ? 'Unpublish' : 'Publish'}
-                        >
-                          <EyeIcon size={16} className={venue.status === 'published' ? 'text-green-600' : 'text-gray-400'} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteVenue(venue.id)}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                  (() => {
+                    const filteredVenues = venues.filter(venue => {
+                      // Filter by search query
+                      const matchesSearch = venue.name.toLowerCase().includes(venueSearchQuery.toLowerCase())
+
+                      // Filter by category
+                      const matchesCategory = !venueFilterCategory || venue.category === venueFilterCategory
+
+                      // Filter by subcategory
+                      const matchesSubcategory = !venueFilterSubcategory || venue.subcategory_id === venueFilterSubcategory
+
+                      return matchesSearch && matchesCategory && matchesSubcategory
+                    })
+
+                    return filteredVenues.length === 0 ? (
+                      <div className="p-8 text-center text-gray-600">No venues match your filters</div>
+                    ) : (
+                      filteredVenues.map(venue => (
+                        <div key={venue.id} className="card p-4 flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-bold text-gray-900">{venue.name}</h3>
+                            <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
+                            <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              venue.status === 'published'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {venue.status === 'published' ? 'Published' : 'Draft'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => editVenue(venue)}
+                              className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handlePublishVenue(venue.id, venue.status || 'draft')}
+                              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                              title={venue.status === 'published' ? 'Unpublish' : 'Publish'}
+                            >
+                              <EyeIcon size={16} className={venue.status === 'published' ? 'text-green-600' : 'text-gray-400'} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteVenue(venue.id)}
+                              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )
+                  })()
                 )}
               </div>
             </div>
