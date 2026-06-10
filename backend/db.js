@@ -25,6 +25,16 @@ export async function initDb() {
 
 function seedDefaultUser() {
   try {
+    // Check if users table exists
+    const usersTableExists = db.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
+    ).get();
+
+    if (!usersTableExists) {
+      console.log('[DB] Users table does not exist, skipping seed');
+      return;
+    }
+
     // Check if admin user exists
     const adminExists = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
     if (adminExists) {
