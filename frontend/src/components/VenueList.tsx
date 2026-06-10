@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Phone, MapPin, Star, X, Banknote, Building2 } from 'lucide-react'
+import { Phone, MapPin, Star, X, Banknote, Building2, MessageCircle } from 'lucide-react'
 import Map from './Map'
-import type { Venue, Category } from '../types'
+import type { Venue, Category, VenueComment } from '../types'
 
 interface VenueListProps {
   venues: Venue[]
@@ -12,6 +12,8 @@ interface VenueListProps {
 
 export default function VenueList({ venues, categories = [], userLocation, onStartHere }: VenueListProps) {
   const [expandedMapVenue, setExpandedMapVenue] = useState<number | null>(null)
+  const [expandedCommentsVenue, setExpandedCommentsVenue] = useState<number | null>(null)
+  const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
 
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
@@ -51,6 +53,17 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
     return null
   }
 
+  const fetchVenueComments = async (venueId: number) => {
+    if (venueComments[venueId]) return // Already loaded
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${venueId}/comments`)
+      if (!response.ok) return
+      const comments = await response.json()
+      setVenueComments(prev => ({ ...prev, [venueId]: Array.isArray(comments) ? comments : [] }))
+    } catch (error) {
+      console.error('Error fetching comments:', error)
+    }
+  }
 
   if (venues.length === 0) {
     return (
@@ -192,6 +205,18 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
               <MapPin size={16} />
               <span>{expandedMapVenue === venue.id ? 'Hide' : 'View'}</span>
             </button>
+            <button
+              onClick={() => {
+                if (expandedCommentsVenue !== venue.id) {
+                  fetchVenueComments(venue.id)
+                }
+                setExpandedCommentsVenue(expandedCommentsVenue === venue.id ? null : venue.id)
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              <MessageCircle size={16} />
+              <span className="font-semibold">{(venueComments[venue.id] || []).length}</span>
+            </button>
             {onStartHere && (
               <button
                 onClick={() => onStartHere(venue)}
@@ -217,6 +242,38 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
               <div className="p-4 bg-white border-t border-gray-200 flex justify-end">
                 <button
                   onClick={() => setExpandedMapVenue(null)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+                >
+                  <X size={16} />
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Comments Section */}
+          {expandedCommentsVenue === venue.id && (
+            <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+              <div className="p-4 bg-white border-b border-gray-200">
+                <h4 className="font-semibold text-gray-900 mb-3">Comments ({(venueComments[venue.id] || []).length})</h4>
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {(venueComments[venue.id] || []).length === 0 ? (
+                    <p className="text-sm text-gray-500">No comments yet</p>
+                  ) : (
+                    (venueComments[venue.id] || []).map(comment => (
+                      <div key={comment.id} className="p-3 bg-gray-50 rounded border border-gray-100">
+                        <p className="text-sm text-gray-700">{comment.content}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {comment.created_by} • {new Date(comment.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+              <div className="p-4 bg-white border-t border-gray-200 flex justify-end">
+                <button
+                  onClick={() => setExpandedCommentsVenue(null)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
                 >
                   <X size={16} />
