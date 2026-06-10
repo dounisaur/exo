@@ -35,6 +35,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [venueFilterCategory, setVenueFilterCategory] = useState<string>('')
   const [venueFilterSubcategory, setVenueFilterSubcategory] = useState<number | null>(null)
 
+  // Subcategory filter state
+  const [subcategoryFilterCategory, setSubcategoryFilterCategory] = useState<string>('')
+
   // Pagination state
   const [venuePage, setVenuePage] = useState(1)
   const [categoryPage, setCategoryPage] = useState(1)
@@ -147,6 +150,11 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       fetchUsers()
     }
   }, [activeTab])
+
+  // Reset subcategory pagination when filter changes
+  useEffect(() => {
+    setSubcategoryPage(1)
+  }, [subcategoryFilterCategory])
 
   const fetchAdminVenues = async () => {
     setLoading(true)
@@ -1088,14 +1096,52 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 </button>
               </div>
 
+              {/* Category Filter */}
+              <div className="bg-white rounded-lg p-4 border border-gray-200">
+                <label className="block text-sm font-medium text-gray-700 mb-3">Filter by Category</label>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setSubcategoryFilterCategory('')}
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                      subcategoryFilterCategory === ''
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSubcategoryFilterCategory(cat.slug)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                        subcategoryFilterCategory === cat.slug
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid gap-4">
                 {(() => {
                   const allSubs = categories.flatMap(cat =>
-                    cat.subcategories.map(sub => ({ ...sub, categoryName: cat.name, categoryId: cat.id }))
+                    cat.subcategories.map(sub => ({ ...sub, categoryName: cat.name, categoryId: cat.id, categorySlug: cat.slug }))
                   )
-                  const start = (subcategoryPage - 1) * ITEMS_PER_PAGE
-                  const paginatedSubs = allSubs.slice(start, start + ITEMS_PER_PAGE)
-                  const totalPages = Math.ceil(allSubs.length / ITEMS_PER_PAGE)
+
+                  // Filter by category if selected
+                  const filteredSubs = subcategoryFilterCategory
+                    ? allSubs.filter(sub => sub.categorySlug === subcategoryFilterCategory)
+                    : allSubs
+
+                  // Reset to page 1 when filter changes
+                  const currentPage = subcategoryPage > Math.ceil(filteredSubs.length / ITEMS_PER_PAGE) ? 1 : subcategoryPage
+                  const start = (currentPage - 1) * ITEMS_PER_PAGE
+                  const paginatedSubs = filteredSubs.slice(start, start + ITEMS_PER_PAGE)
+                  const totalPages = Math.ceil(filteredSubs.length / ITEMS_PER_PAGE)
 
                   return (
                     <>
@@ -1134,15 +1180,15 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                           <button
                             onClick={() => setSubcategoryPage(p => Math.max(1, p - 1))}
-                            disabled={subcategoryPage === 1}
+                            disabled={currentPage === 1}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Previous
                           </button>
-                          <span className="text-sm text-gray-600">Page {subcategoryPage} of {totalPages}</span>
+                          <span className="text-sm text-gray-600">Page {currentPage} of {totalPages}</span>
                           <button
                             onClick={() => setSubcategoryPage(p => Math.min(totalPages, p + 1))}
-                            disabled={subcategoryPage === totalPages}
+                            disabled={currentPage === totalPages}
                             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Next
