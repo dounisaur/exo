@@ -437,6 +437,8 @@ export function setupRoutes(app) {
   app.get('/api/venues', async (req, res) => {
     try {
       const { category, lat, lng, radiusMin, radiusMax } = req.query;
+      console.log('[VENUES] Query params:', { category, lat, lng, radiusMin, radiusMax });
+
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
       let paramIndex = 1;
@@ -449,6 +451,7 @@ export function setupRoutes(app) {
       if (lat && lng) {
         const radiusMinKm = radiusMin ? parseFloat(radiusMin) : 0;
         const radiusMaxKm = radiusMax ? parseFloat(radiusMax) : 100;
+        console.log('[VENUES] Radius filter - min:', radiusMinKm, 'max:', radiusMaxKm, 'user location:', { lat, lng });
 
         query += ` AND (
           6371 * acos(
@@ -461,7 +464,10 @@ export function setupRoutes(app) {
         paramIndex += 4;
       }
 
+      console.log('[VENUES] Final query:', query);
+      console.log('[VENUES] Params:', params);
       const { rows } = await pool.query(query, params);
+      console.log('[VENUES] Results count:', rows.length);
       res.json(rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
