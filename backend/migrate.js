@@ -61,9 +61,34 @@ export async function runMigrations(db) {
     return;
   }
 
-  // SAFETY CHECK: Warn if running all migrations on fresh database
+  // SAFETY CHECK: If running ALL migrations AND database has existing data, STOP and warn
   if (pendingMigrations.length === migrationFiles.length) {
-    console.warn(`[MIGRATE] Running ALL ${pendingMigrations.length} migrations (fresh database detected)`);
+    // Check if any tables have data
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'applied_migrations'")
+      .all()
+      .map(row => row.name);
+
+    let hasData = false;
+    for (const table of tables) {
+      try {
+        const count = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get().count;
+        if (count > 0) {
+          console.error(`[MIGRATE] SAFETY CHECK FAILED: Table '${table}' contains ${count} rows`);
+          hasData = true;
+        }
+      } catch (err) {
+        // Table might not exist yet, ignore
+      }
+    }
+
+    if (hasData) {
+      console.error('[MIGRATE] REFUSING TO RUN MIGRATIONS: Database contains existing data');
+      console.error('[MIGRATE] This would wipe out your data. Please check backups.');
+      process.exit(1);
+    }
+
+    console.warn(`[MIGRATE] Running ALL ${migrationFiles.length} migrations on empty database`);
   }
 
   console.log(`[MIGRATE] Found ${pendingMigrations.length} pending migration(s). Starting...`);
