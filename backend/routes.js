@@ -484,7 +484,7 @@ export function setupRoutes(app) {
     try {
       // If placeId is provided, fetch details for that specific place
       if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
 
@@ -493,6 +493,29 @@ export function setupRoutes(app) {
         }
 
         const result = detailsData.result;
+
+        // Parse opening_hours from Google format to app format
+        let openingHours = '';
+        if (result.opening_hours && result.opening_hours.periods) {
+          const hoursObj = {};
+          // Initialize all days as CLOSED
+          for (let i = 0; i < 7; i++) {
+            hoursObj[i.toString()] = 'CLOSED';
+          }
+
+          // Map Google's periods to our format
+          result.opening_hours.periods.forEach(period => {
+            if (period.open && period.close) {
+              const day = period.open.day;
+              const openTime = period.open.time.slice(0, 2) + ':' + period.open.time.slice(2, 4);
+              const closeTime = period.close.time.slice(0, 2) + ':' + period.close.time.slice(2, 4);
+              hoursObj[day.toString()] = `${openTime}-${closeTime}`;
+            }
+          });
+
+          openingHours = JSON.stringify(hoursObj);
+        }
+
         return res.json({
           results: [{
             name: result.name || '',
@@ -500,7 +523,8 @@ export function setupRoutes(app) {
             latitude: result.geometry?.location?.lat || null,
             longitude: result.geometry?.location?.lng || null,
             website_url: result.website || '',
-            phone: result.formatted_phone_number || ''
+            phone: result.formatted_phone_number || '',
+            opening_hours: openingHours
           }]
         });
       }
