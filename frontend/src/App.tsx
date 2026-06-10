@@ -48,10 +48,16 @@ function App() {
     const fetchCategories = async () => {
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
+        if (!response.ok) {
+          console.error('Failed to fetch categories:', response.status)
+          setCategories([])
+          return
+        }
         const data = await response.json()
-        setCategories(data)
+        setCategories(Array.isArray(data) ? data : [])
       } catch (error) {
         console.error('Error fetching categories:', error)
+        setCategories([])
       }
     }
     fetchCategories()
@@ -138,10 +144,16 @@ function App() {
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues?${params}`)
+      if (!response.ok) {
+        console.error('Failed to fetch venues:', response.status)
+        setVenues([])
+        return
+      }
       const data = await response.json()
-      setVenues(data)
+      setVenues(Array.isArray(data) ? data : [])
     } catch (error) {
       console.error('Error fetching venues:', error)
+      setVenues([])
     } finally {
       setLoading(false)
     }
