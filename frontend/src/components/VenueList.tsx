@@ -98,32 +98,33 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </div>
           )}
 
-          {/* City & Address */}
+          {/* City */}
+          {venue.canonical_city && (
+            <div className="flex items-center gap-2 text-sm text-gray-700 mb-3">
+              <Building2 size={16} className="flex-shrink-0 text-gray-400" />
+              <span>{venue.canonical_city}</span>
+            </div>
+          )}
+
+          {/* Address */}
           {venue.address && (
-            <div className="mb-3">
-              {venue.canonical_city && (
-                <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
-                  <Building2 size={16} className="flex-shrink-0 text-gray-400" />
-                  <span>{venue.canonical_city}</span>
-                </div>
-              )}
-              <div className="flex items-start gap-2 text-sm text-gray-600">
-                <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
-                <span>{venue.address}</span>
-              </div>
+            <div className="flex items-start gap-2 text-sm text-gray-600 mb-3">
+              <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
+              <span>{venue.address}</span>
             </div>
           )}
 
           {/* Hours */}
           {venue.opening_hours && (
-            <div className="mb-3 text-sm text-gray-600">
-              <p>⏰ {getTodayHours(venue.opening_hours) || 'Closed today'}</p>
+            <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+              <span>⏰</span>
+              <span>{getTodayHours(venue.opening_hours) || 'Closed today'}</span>
             </div>
           )}
 
           {/* Rating */}
           {venue.rating && (
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-3">
               <div className="flex gap-1">
                 {[...Array(5)].map((_, i) => {
                   const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
