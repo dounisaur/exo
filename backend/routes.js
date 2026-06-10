@@ -27,6 +27,22 @@ const upload = multer({
 });
 
 export function setupRoutes(app) {
+  // DEBUG: test database connection
+  app.get('/api/debug/db', async (req, res) => {
+    try {
+      const { rows: categories } = await pool.query('SELECT COUNT(*) as count FROM categories');
+      const { rows: venues } = await pool.query('SELECT COUNT(*) as count FROM venues');
+      const { rows: migrations } = await pool.query('SELECT * FROM applied_migrations');
+      res.json({
+        categories_count: categories[0]?.count,
+        venues_count: venues[0]?.count,
+        migrations: migrations.map(m => ({ version: m.version, name: m.name }))
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // ===== AUTH ENDPOINTS =====
 
   // Login endpoint
