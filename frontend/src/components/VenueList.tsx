@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Phone, MapPin, Star, X, Banknote, Building2, MessageCircle } from 'lucide-react'
 import Map from './Map'
 import type { Venue, Category, VenueComment } from '../types'
@@ -64,6 +64,15 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
       console.error('Error fetching comments:', error)
     }
   }
+
+  // Load comment counts when venues change
+  useEffect(() => {
+    venues.forEach(venue => {
+      if (!venueComments[venue.id]) {
+        fetchVenueComments(venue.id)
+      }
+    })
+  }, [venues])
 
   if (venues.length === 0) {
     return (
@@ -205,18 +214,20 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
               <MapPin size={16} />
               <span>{expandedMapVenue === venue.id ? 'Hide' : 'View'}</span>
             </button>
-            <button
-              onClick={() => {
-                if (expandedCommentsVenue !== venue.id) {
-                  fetchVenueComments(venue.id)
-                }
-                setExpandedCommentsVenue(expandedCommentsVenue === venue.id ? null : venue.id)
-              }}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              <MessageCircle size={16} />
-              <span className="font-semibold">{(venueComments[venue.id] || []).length}</span>
-            </button>
+            {(venueComments[venue.id] || []).length > 0 && (
+              <button
+                onClick={() => {
+                  if (expandedCommentsVenue !== venue.id) {
+                    fetchVenueComments(venue.id)
+                  }
+                  setExpandedCommentsVenue(expandedCommentsVenue === venue.id ? null : venue.id)
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <MessageCircle size={16} />
+                <span className="font-semibold">{(venueComments[venue.id] || []).length}</span>
+              </button>
+            )}
             {onStartHere && (
               <button
                 onClick={() => onStartHere(venue)}

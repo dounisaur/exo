@@ -765,8 +765,8 @@ export function setupRoutes(app) {
     }
   });
 
-  // Get venue comments (admin)
-  app.get('/api/venues/:id/comments', authenticateToken, async (req, res) => {
+  // Get venue comments (public)
+  app.get('/api/venues/:id/comments', async (req, res) => {
     try {
       const { rows } = await pool.query(
         'SELECT id, venue_id, content, created_by, created_at FROM venue_comments WHERE venue_id = $1 ORDER BY created_at DESC',
