@@ -484,7 +484,7 @@ export function setupRoutes(app) {
     try {
       // If placeId is provided, fetch details for that specific place
       if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours&key=${apiKey}`;
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours,price_level&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
 
@@ -516,6 +516,12 @@ export function setupRoutes(app) {
           openingHours = JSON.stringify(hoursObj);
         }
 
+        // Convert Google price_level (1-4) to $ format
+        let priceRange = '';
+        if (result.price_level) {
+          priceRange = '$'.repeat(result.price_level);
+        }
+
         return res.json({
           results: [{
             name: result.name || '',
@@ -524,6 +530,7 @@ export function setupRoutes(app) {
             longitude: result.geometry?.location?.lng || null,
             website_url: result.website || '',
             phone: result.formatted_phone_number || '',
+            price_range: priceRange,
             opening_hours: openingHours
           }]
         });
@@ -570,7 +577,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, opening_hours } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -593,9 +600,9 @@ export function setupRoutes(app) {
 
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null]
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, opening_hours)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, opening_hours || null]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -608,7 +615,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, opening_hours } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -630,9 +637,9 @@ export function setupRoutes(app) {
       }
 
       const { rowCount } = await pool.query(
-        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, opening_hours=$12, updated_at=NOW()
-         WHERE id = $13`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null, req.params.id]
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, price_range=$12, opening_hours=$13, updated_at=NOW()
+         WHERE id = $14`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, opening_hours || null, req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });

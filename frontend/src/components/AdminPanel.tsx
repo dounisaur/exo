@@ -115,6 +115,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     phone_number: '',
     reservation_link: '',
     rating: '',
+    price_range: '',
     opening_hours: ''
   })
 
@@ -216,6 +217,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             longitude: fullResult.longitude.toString(),
             website_url: fullResult.website_url || '',
             phone_number: fullResult.phone || '',
+            price_range: fullResult.price_range || '',
             opening_hours: fullResult.opening_hours || ''
           }))
           setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
@@ -242,6 +244,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         longitude: result.longitude.toString(),
         website_url: result.website_url || '',
         phone_number: result.phone || '',
+        price_range: result.price_range || '',
         opening_hours: result.opening_hours || ''
       }))
       setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
@@ -402,6 +405,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       phone_number: '',
       reservation_link: '',
       rating: '',
+      price_range: '',
       opening_hours: ''
     })
     setHoursGrid({
@@ -436,6 +440,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       phone_number: venue.phone_number || '',
       reservation_link: venue.reservation_link || '',
       rating: venue.rating?.toString() || '',
+      price_range: venue.price_range || '',
       opening_hours: venue.opening_hours || ''
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
@@ -1340,18 +1345,37 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Rating (0-5)</label>
-                  <input
-                    type="number"
-                    name="rating"
-                    min="0"
-                    max="5"
-                    step="0.1"
-                    value={formData.rating}
-                    onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value }))}
-                    className="input-field"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Rating (0-5)</label>
+                    <input
+                      type="number"
+                      name="rating"
+                      min="0"
+                      max="5"
+                      step="0.1"
+                      value={formData.rating}
+                      onChange={(e) => setFormData(prev => ({ ...prev, rating: e.target.value }))}
+                      className="input-field"
+                      placeholder="e.g. 4.5"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Range ($-$$$$)</label>
+                    <select
+                      name="price_range"
+                      value={formData.price_range}
+                      onChange={(e) => setFormData(prev => ({ ...prev, price_range: e.target.value }))}
+                      className="input-field"
+                    >
+                      <option value="">Not specified</option>
+                      <option value="$">$ - Budget</option>
+                      <option value="$$">$$ - Moderate</option>
+                      <option value="$$$">$$$ - Expensive</option>
+                      <option value="$$$$">$$$$ - Very Expensive</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
