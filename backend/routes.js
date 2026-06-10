@@ -447,45 +447,63 @@ export function setupRoutes(app) {
 
   // Search venues via Google Places API (for admin lookup)
   app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
+    const { query, placeId } = req.body;
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+
+    if (!query && !placeId) {
+      return res.status(400).json({ error: 'Query required' });
+    }
+
+    if (!apiKey) {
+      return res.status(500).json({ error: 'API key not configured' });
+    }
+
     try {
-      const { query } = req.body;
-      if (!query) {
-        return res.status(400).json({ error: 'Query required' });
+      // If placeId is provided, fetch details for that specific place
+      if (placeId) {
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number&key=${apiKey}`;
+        const detailsResponse = await fetch(detailsUrl);
+        const detailsData = await detailsResponse.json();
+
+        if (!detailsData.result || detailsData.status !== 'OK') {
+          return res.json({ results: [] });
+        }
+
+        const result = detailsData.result;
+        return res.json({
+          results: [{
+            name: result.name || '',
+            address: result.formatted_address || '',
+            latitude: result.geometry?.location?.lat || null,
+            longitude: result.geometry?.location?.lng || null,
+            website_url: result.website || '',
+            phone: result.formatted_phone_number || ''
+          }]
+        });
       }
 
-      const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-      if (!apiKey) {
-        console.error('GOOGLE_PLACES_API_KEY not configured');
-        return res.status(500).json({ error: 'Google Places API not configured' });
-      }
+      // Use Text Search API to find restaurants by name
+      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&key=${apiKey}`;
+      const searchResponse = await fetch(textSearchUrl);
+      const searchData = await searchResponse.json();
 
-      // Search for places using Google Places API
-      const searchUrl = new URL('https://maps.googleapis.com/maps/api/place/textsearch/json');
-      searchUrl.searchParams.append('query', query);
-      searchUrl.searchParams.append('key', apiKey);
-
-      const response = await fetch(searchUrl.toString());
-      const data = await response.json();
-
-      if (data.status !== 'OK') {
-        console.error('Google Places API error:', data.status, data.error_message);
+      if (!searchData.results || searchData.results.length === 0) {
         return res.json({ results: [] });
       }
 
-      // Transform results to match frontend expectations
-      const results = data.results.slice(0, 10).map(place => ({
-        name: place.name,
-        address: place.formatted_address,
-        latitude: place.geometry.location.lat,
-        longitude: place.geometry.location.lng,
-        placeId: place.place_id,
-        rating: place.rating || null
+      // Return results with place_id for later detail fetching
+      const results = searchData.results.map(place => ({
+        place_id: place.place_id,
+        name: place.name || '',
+        address: place.formatted_address || '',
+        latitude: place.geometry?.location?.lat || null,
+        longitude: place.geometry?.location?.lng || null
       }));
 
       res.json({ results });
-    } catch (err) {
-      console.error('Error searching venues:', err);
-      res.status(500).json({ error: err.message });
+    } catch (error) {
+      console.error('Places API error:', error);
+      res.json({ results: [] });
     }
   });
 
