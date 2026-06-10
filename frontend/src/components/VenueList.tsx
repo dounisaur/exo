@@ -275,7 +275,7 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
                       <div key={comment.id} className="p-3 bg-gray-50 rounded border border-gray-100">
                         <p className="text-sm text-gray-700">{comment.content}</p>
                         <p className="text-xs text-gray-500 mt-2">
-                          {comment.created_by} • {new Date(comment.created_at).toLocaleDateString()}
+                          {new Date(comment.created_at).toLocaleDateString()}
                         </p>
                       </div>
                     ))
