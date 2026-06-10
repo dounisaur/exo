@@ -78,3 +78,14 @@ initDb()
     console.error('[SERVER] Failed to initialize:', err);
     process.exit(1);
   });
+
+// Catch uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('[SERVER] Uncaught exception:', err);
+  process.exit(1);
+});
+
+// Catch unhandled promise rejections
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[SERVER] Unhandled rejection at:', promise, 'reason:', reason);
+});
