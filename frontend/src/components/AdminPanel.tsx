@@ -792,7 +792,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 p-4">
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white rounded-lg p-4 border border-blue-200">
-              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Total Venues</p>
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Venues</p>
               <p className="text-3xl font-bold text-gray-900 mt-1">{venues.length}</p>
             </div>
             <div className="bg-white rounded-lg p-4 border border-green-200">
