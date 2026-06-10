@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Eye as EyeIcon, Search } from 'lucide-react'
+import { Plus, Edit2, Eye as EyeIcon, Search, Building2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, User } from '../types'
 
@@ -972,7 +972,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           <div className="flex-1">
                             <h3 className="font-bold text-gray-900">{venue.name}</h3>
                             {venue.canonical_city && (
-                              <p className="text-xs font-semibold text-gray-700">{venue.canonical_city}</p>
+                              <div className="flex items-center gap-1.5 text-xs text-gray-600 mb-1">
+                                <Building2 size={14} className="flex-shrink-0 text-gray-400" />
+                                <span>{venue.canonical_city}</span>
+                              </div>
                             )}
                             <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
                             <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${

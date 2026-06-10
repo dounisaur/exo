@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Phone, MapPin, Star, X, Banknote } from 'lucide-react'
+import { Phone, MapPin, Star, X, Banknote, Building2 } from 'lucide-react'
 import Map from './Map'
 import type { Venue, Category } from '../types'
 
@@ -102,7 +102,10 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
           {venue.address && (
             <div className="mb-3">
               {venue.canonical_city && (
-                <div className="text-sm font-semibold text-gray-800 mb-1">{venue.canonical_city}</div>
+                <div className="flex items-center gap-2 text-sm text-gray-700 mb-1">
+                  <Building2 size={16} className="flex-shrink-0 text-gray-400" />
+                  <span>{venue.canonical_city}</span>
+                </div>
               )}
               <div className="flex items-start gap-2 text-sm text-gray-600">
                 <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
