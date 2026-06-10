@@ -7,6 +7,11 @@ const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 const BACKUPS_DIR = path.join(__dirname, 'backups');
 
 export async function runMigrations(db) {
+  // PRODUCTION SAFETY: Block NEW migrations on production
+  const isProduction = process.env.ENVIRONMENT === 'production' ||
+                       process.env.NODE_ENV === 'production' ||
+                       process.env.RENDER === 'true';
+
   // Create backups directory if it doesn't exist
   if (!fs.existsSync(BACKUPS_DIR)) {
     fs.mkdirSync(BACKUPS_DIR, { recursive: true });
@@ -59,6 +64,20 @@ export async function runMigrations(db) {
   if (pendingMigrations.length === 0) {
     console.log('[MIGRATE] Database is up to date.');
     return;
+  }
+
+  // PRODUCTION SAFETY: Block new migrations on production unless explicitly approved
+  if (isProduction && pendingMigrations.length > 0) {
+    const allowMigrations = process.env.ALLOW_MIGRATIONS === 'true';
+    if (!allowMigrations) {
+      console.error('[MIGRATE] ❌ BLOCKED: Production environment with pending migrations');
+      console.error(`[MIGRATE] Found ${pendingMigrations.length} pending migration(s):`);
+      pendingMigrations.forEach(m => console.error(`[MIGRATE]   - v${m.version}: ${m.name}`));
+      console.error('[MIGRATE] To apply migrations, set ALLOW_MIGRATIONS=true');
+      console.error('[MIGRATE] Exiting to prevent accidental data loss.');
+      process.exit(1);
+    }
+    console.warn('[MIGRATE] ⚠️  WARNING: Running new migrations on production!');
   }
 
   // SAFETY CHECK: If running ALL migrations AND database has existing data, STOP and warn
