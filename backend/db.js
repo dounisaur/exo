@@ -74,17 +74,34 @@ function seedDefaultUser() {
     // If no users at all, create default admin
     if (userCount === 0) {
       const passwordHash = bcrypt.hashSync('admin', 10);
-      console.log('[DB] Creating admin user with hash:', passwordHash.substring(0, 20) + '...');
+      console.log('[DB] Creating admin user');
+      console.log('[DB] Password hash length:', passwordHash.length);
+      console.log('[DB] Password hash (first 30 chars):', passwordHash.substring(0, 30));
+
       const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
         'admin',
         passwordHash,
         'admin'
       );
-      console.log('[DB] Insert result:', result);
+      console.log('[DB] Insert result:', { lastInsertRowid: result.lastInsertRowid, changes: result.changes });
 
-      // Verify it was created
+      // Force WAL checkpoint to ensure data is written
+      db.pragma('wal_checkpoint(RESTART)');
+
+      // Verify it was created and read back
       const verify = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
-      console.log('[DB] Verification - admin user exists:', !!verify, verify ? { id: verify.id, username: verify.username, role: verify.role } : null);
+      if (verify) {
+        console.log('[DB] Verification - admin user exists');
+        console.log('[DB] Stored hash length:', verify.password_hash.length);
+        console.log('[DB] Stored hash (first 30 chars):', verify.password_hash.substring(0, 30));
+        console.log('[DB] Hash match:', passwordHash === verify.password_hash);
+
+        // Test the bcrypt comparison
+        const testMatch = bcrypt.compareSync('admin', verify.password_hash);
+        console.log('[DB] Test bcrypt comparison:', testMatch);
+      } else {
+        console.error('[DB] ERROR: Admin user was not created!');
+      }
       console.log('[DB] Default admin user created (database was empty)');
       return;
     }
