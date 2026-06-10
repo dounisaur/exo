@@ -127,7 +127,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
   // Subcategory sheet state
   const [showSubcategorySheet, setShowSubcategorySheet] = useState(false)
-  const [newSubcategoryName, setNewSubcategoryName] = useState('')
   const [selectedCategoryForSubcat, setSelectedCategoryForSubcat] = useState<number | null>(null)
   const [editingSubcategoryId, setEditingSubcategoryId] = useState<number | null>(null)
   const [subcategoryNames, setSubcategoryNames] = useState<string[]>([''])
