@@ -103,10 +103,10 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
           )}
 
           {/* Rating & Price */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4">
             {/* Rating */}
             {venue.rating && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <div className="flex gap-1">
                   {[...Array(5)].map((_, i) => {
                     const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
@@ -139,9 +139,12 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
 
             {/* Price */}
             {getPriceDisplay(venue) && (
-              <span className="text-sm font-bold text-amber-600">
-                {getPriceDisplay(venue)}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Price Guide:</span>
+                <span className="text-sm font-bold text-green-600">
+                  {getPriceDisplay(venue)}
+                </span>
+              </div>
             )}
           </div>
 
