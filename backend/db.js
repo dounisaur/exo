@@ -42,11 +42,17 @@ function seedDefaultUser() {
     // If no users at all, create default admin
     if (userCount === 0) {
       const passwordHash = bcrypt.hashSync('admin', 10);
-      db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+      console.log('[DB] Creating admin user with hash:', passwordHash.substring(0, 20) + '...');
+      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
         'admin',
         passwordHash,
         'admin'
       );
+      console.log('[DB] Insert result:', result);
+
+      // Verify it was created
+      const verify = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
+      console.log('[DB] Verification - admin user exists:', !!verify, verify ? { id: verify.id, username: verify.username, role: verify.role } : null);
       console.log('[DB] Default admin user created (database was empty)');
       return;
     }

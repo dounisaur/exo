@@ -41,8 +41,18 @@ export function setupRoutes(app) {
 
     try {
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+      console.log(`[AUTH] Login attempt for ${username}, user found:`, !!user, user ? { id: user.id, username: user.username, role: user.role } : null);
 
-      if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+      if (!user) {
+        console.log(`[AUTH] User not found: ${username}`);
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const passwordMatch = bcrypt.compareSync(password, user.password_hash);
+      console.log(`[AUTH] Password match for ${username}:`, passwordMatch);
+
+      if (!passwordMatch) {
+        console.log(`[AUTH] Password mismatch for ${username}`);
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
