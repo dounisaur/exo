@@ -530,13 +530,15 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     e.preventDefault()
     if (!selectedCategoryForSubcat) return
 
-    // When editing, only allow single name
-    if (editingSubcategoryId) {
-      if (!subcategoryNames[0]?.trim()) return
+    const names = subcategoryNames.filter(n => n.trim())
+    if (names.length === 0) return
 
-      setLoading(true)
-      try {
-        const response = await fetch(
+    setLoading(true)
+    try {
+      // When editing, first name updates the existing, rest create new
+      if (editingSubcategoryId) {
+        // Update the existing subcategory with the first name
+        const updateResponse = await fetch(
           `${import.meta.env.VITE_API_URL}/api/subcategories/${editingSubcategoryId}`,
           {
             method: 'PUT',
@@ -544,32 +546,39 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${authToken}`
             },
-            body: JSON.stringify({ name: subcategoryNames[0] })
+            body: JSON.stringify({ name: names[0] })
           }
         )
 
-        if (!response.ok) throw new Error('Failed to update subcategory')
-        setMessage('Subcategory updated')
+        if (!updateResponse.ok) throw new Error('Failed to update subcategory')
+
+        // Create additional ones if provided
+        for (const name of names.slice(1)) {
+          const createResponse = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+              },
+              body: JSON.stringify({ name })
+            }
+          )
+
+          if (!createResponse.ok) throw new Error(`Failed to create "${name}"`)
+        }
+
+        setMessage(`Updated 1 subcategory${names.length > 1 ? ` and created ${names.length - 1} new one(s)` : ''}`)
         setSubcategoryNames([''])
         setSelectedCategoryForSubcat(null)
         setEditingSubcategoryId(null)
         setShowSubcategorySheet(false)
         onCategoriesUpdated()
-      } catch (error) {
-        setMessage('Error updating subcategory')
-      } finally {
-        setLoading(false)
+        return
       }
-      return
-    }
 
-    // When creating, allow multiple names
-    const names = subcategoryNames.filter(n => n.trim())
-    if (names.length === 0) return
-
-    setLoading(true)
-    try {
-      // Create each subcategory
+      // When creating, create each subcategory
       for (const name of names) {
         const response = await fetch(
           `${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`,
@@ -1626,31 +1635,24 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               ))}
             </select>
           </div>
-          {!editingSubcategoryId && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Names (one per line)</label>
-              <textarea
-                value={subcategoryNames.join('\n')}
-                onChange={(e) => setSubcategoryNames(e.target.value.split('\n').filter(s => s.trim()))}
-                className="input-field font-mono text-sm"
-                rows={5}
-                placeholder="Enter multiple subcategory names, one per line"
-              />
-              <p className="text-xs text-gray-500 mt-1">You can add multiple subcategories at once</p>
-            </div>
-          )}
-          {editingSubcategoryId && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
-              <input
-                type="text"
-                value={subcategoryNames[0] || ''}
-                onChange={(e) => setSubcategoryNames([e.target.value])}
-                className="input-field"
-                required
-              />
-            </div>
-          )}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Subcategory Names {editingSubcategoryId && '(first line is the edited name)'}
+            </label>
+            <textarea
+              value={subcategoryNames.join('\n')}
+              onChange={(e) => setSubcategoryNames(e.target.value.split('\n').filter(s => s.trim() || subcategoryNames.length > 0))}
+              className="input-field font-mono text-sm"
+              rows={5}
+              placeholder={editingSubcategoryId ? "Edit the first line, add new names below" : "Enter multiple subcategory names, one per line"}
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {editingSubcategoryId
+                ? "The first line updates the existing subcategory. Add new names below to create additional ones."
+                : "You can add multiple subcategories at once"}
+            </p>
+          </div>
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button type="submit" disabled={loading} className="btn-primary flex-1">
               {loading ? 'Saving...' : 'Save'}
