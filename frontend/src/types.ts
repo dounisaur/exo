@@ -12,7 +12,6 @@ export interface Venue {
   reservation_link?: string
   rating?: number
   price_range?: string
-  price_description?: string
   opening_hours?: string
   status?: 'draft' | 'published'
   created_at?: string

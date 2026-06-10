@@ -116,7 +116,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     reservation_link: '',
     rating: '',
     price_range: '',
-    price_description: '',
     opening_hours: ''
   })
 
@@ -219,7 +218,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             website_url: fullResult.website_url || '',
             phone_number: fullResult.phone || '',
             price_range: fullResult.price_range || '',
-            price_description: fullResult.price_description || '',
             opening_hours: fullResult.opening_hours || ''
           }))
           setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
@@ -247,7 +245,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         website_url: result.website_url || '',
         phone_number: result.phone || '',
         price_range: result.price_range || '',
-        price_description: result.price_description || '',
         opening_hours: result.opening_hours || ''
       }))
       setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
@@ -409,7 +406,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       reservation_link: '',
       rating: '',
       price_range: '',
-      price_description: '',
       opening_hours: ''
     })
     setHoursGrid({
@@ -445,7 +441,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       reservation_link: venue.reservation_link || '',
       rating: venue.rating?.toString() || '',
       price_range: venue.price_range || '',
-      price_description: venue.price_description || '',
       opening_hours: venue.opening_hours || ''
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
@@ -1381,19 +1376,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       <option value="$$$$">$$$$ - Very Expensive</option>
                     </select>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price Description (e.g., €10-35 per person)</label>
-                  <input
-                    type="text"
-                    name="price_description"
-                    value={formData.price_description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, price_description: e.target.value }))}
-                    className="input-field"
-                    placeholder="e.g. €10-35 per person"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Optional: Add the actual price range from Google search results</p>
                 </div>
               </div>
             </div>
