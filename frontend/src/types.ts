@@ -55,3 +55,11 @@ export interface ItineraryStop {
 export interface Itinerary {
   stops: ItineraryStop[]
 }
+
+export interface VenueComment {
+  id: number
+  venue_id: number
+  content: string
+  created_by: string
+  created_at: string
+}

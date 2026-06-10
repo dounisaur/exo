@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Eye as EyeIcon, Search, Building2 } from 'lucide-react'
+import { Plus, Edit2, Eye as EyeIcon, Search, Building2, Trash2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
-import type { Venue, Category, User } from '../types'
+import type { Venue, Category, User, VenueComment } from '../types'
 
 interface AdminPanelProps {
   authToken: string
@@ -124,6 +124,11 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     price_level: '',
     opening_hours: ''
   })
+
+  // Comments state
+  const [comments, setComments] = useState<VenueComment[]>([])
+  const [newComment, setNewComment] = useState('')
+  const [commentsLoading, setCommentsLoading] = useState(false)
 
   // Category sheet state
   const [showCategorySheet, setShowCategorySheet] = useState(false)
@@ -446,6 +451,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setShowVenueSheet(false)
     setEditingVenueId(null)
     setManualAddressEnabled(false)
+    setComments([])
+    setNewComment('')
   }
 
   const editVenue = (venue: Venue) => {
@@ -470,6 +477,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setEditingVenueId(venue.id)
     setShowVenueSheet(true)
     setManualAddressEnabled(true)
+    fetchComments(venue.id)
   }
 
   const handleDeleteVenue = async (id: number) => {
@@ -484,6 +492,56 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       fetchAdminVenues()
     } catch (error) {
       setMessage('Error deleting venue')
+    }
+  }
+
+  const fetchComments = async (venueId: number) => {
+    setCommentsLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${venueId}/comments`, {
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (!response.ok) throw new Error('Failed to fetch comments')
+      const data = await response.json()
+      setComments(Array.isArray(data) ? data : [])
+    } catch (error) {
+      console.error('Error fetching comments:', error)
+      setComments([])
+    } finally {
+      setCommentsLoading(false)
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !editingVenueId) return
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${editingVenueId}/comments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({ content: newComment })
+      })
+      if (!response.ok) throw new Error('Failed to add comment')
+      setNewComment('')
+      fetchComments(editingVenueId)
+    } catch (error) {
+      setMessage('Error adding comment')
+    }
+  }
+
+  const handleDeleteComment = async (commentId: number) => {
+    if (!editingVenueId || !confirm('Delete this comment?')) return
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${editingVenueId}/comments/${commentId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${authToken}` }
+      })
+      if (!response.ok) throw new Error('Failed to delete comment')
+      fetchComments(editingVenueId)
+    } catch (error) {
+      setMessage('Error deleting comment')
     }
   }
 
@@ -1684,6 +1742,62 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Comments Section */}
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Comments</h3>
+              {editingVenueId ? (
+                <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                  {/* Comments List */}
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {comments.length === 0 ? (
+                      <p className="text-sm text-gray-500">No comments yet</p>
+                    ) : (
+                      comments.map(comment => (
+                        <div key={comment.id} className="flex items-start justify-between gap-2 p-2 bg-gray-50 rounded border border-gray-100">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-700 break-words">{comment.content}</p>
+                            <p className="text-xs text-gray-500 mt-1">
+                              {comment.created_by} • {new Date(comment.created_at).toLocaleDateString()} {new Date(comment.created_at).toLocaleTimeString()}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteComment(comment.id)}
+                            className="flex-shrink-0 text-red-500 hover:text-red-700 transition-colors"
+                            title="Delete comment"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Add Comment */}
+                  <div className="space-y-2 pt-2 border-t border-gray-200">
+                    <textarea
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="input-field resize-none h-20"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Add Comment
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-3 bg-gray-50 rounded-lg p-4 border border-gray-200">
+                  <p className="text-sm text-gray-600">Save venue first to add comments</p>
+                </div>
+              )}
             </div>
           </div>
 

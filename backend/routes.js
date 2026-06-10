@@ -764,4 +764,54 @@ export function setupRoutes(app) {
       res.status(500).json({ error: err.message });
     }
   });
+
+  // Get venue comments (admin)
+  app.get('/api/venues/:id/comments', authenticateToken, async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        'SELECT id, venue_id, content, created_by, created_at FROM venue_comments WHERE venue_id = $1 ORDER BY created_at DESC',
+        [req.params.id]
+      );
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Add venue comment (admin)
+  app.post('/api/venues/:id/comments', authenticateToken, async (req, res) => {
+    try {
+      const { content } = req.body;
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: 'Comment content is required' });
+      }
+
+      // Extract username from token (stored in req.user)
+      const created_by = req.user.username || 'unknown';
+
+      const { rows } = await pool.query(
+        'INSERT INTO venue_comments (venue_id, content, created_by) VALUES ($1, $2, $3) RETURNING id, venue_id, content, created_by, created_at',
+        [req.params.id, content.trim(), created_by]
+      );
+      res.status(201).json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Delete venue comment (admin)
+  app.delete('/api/venues/:id/comments/:commentId', authenticateToken, async (req, res) => {
+    try {
+      const { rowCount } = await pool.query(
+        'DELETE FROM venue_comments WHERE id = $1 AND venue_id = $2',
+        [req.params.commentId, req.params.id]
+      );
+      if (rowCount === 0) {
+        return res.status(404).json({ error: 'Comment not found' });
+      }
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
 }
