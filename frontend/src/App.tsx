@@ -3,6 +3,8 @@ import { Settings, LogOut } from 'lucide-react'
 import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
 import ItineraryView from './components/ItineraryView'
+import FilterBar from './components/FilterBar'
+import FilterDropdowns from './components/FilterDropdowns'
 import type { Venue, Category, User, Itinerary } from './types'
 
 function App() {
@@ -10,6 +12,7 @@ function App() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
+  const [radius, setRadius] = useState<number>(1) // in km
   const [loading, setLoading] = useState(false)
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
@@ -130,6 +133,7 @@ function App() {
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
+        params.append('radius', (radius * 1000).toString()) // Convert km to meters
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues?${params}`)
@@ -178,7 +182,7 @@ function App() {
     if (userLocation) {
       fetchVenues()
     }
-  }, [category, userLocation])
+  }, [category, radius, userLocation])
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -281,44 +285,37 @@ function App() {
             </div>
           </header>
 
-          {/* Filters & Actions */}
-          <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
-            {/* Plan My Itinerary Button */}
+          {/* Plan My Itinerary Button */}
+          <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-20">
             <button
               onClick={() => generateItinerary()}
               className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
             >
               Plan My Itinerary
             </button>
+            {loading && <p className="text-xs text-gray-600 mt-2">Loading venues...</p>}
+          </div>
 
-            {/* Category Filters */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setCategory('')}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                  category === ''
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                All
-              </button>
-              {categories.map(cat => (
-                <button
-                  key={cat.id}
-                  onClick={() => setCategory(cat.slug)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    category === cat.slug
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
+          {/* Filters - Desktop */}
+          <div className="hidden md:block">
+            <FilterBar
+              categories={categories}
+              selectedCategory={category}
+              selectedRadius={radius}
+              onCategoryChange={setCategory}
+              onRadiusChange={setRadius}
+            />
+          </div>
 
-            {loading && <p className="text-xs text-gray-600">Loading venues...</p>}
+          {/* Filters - Mobile */}
+          <div className="md:hidden">
+            <FilterDropdowns
+              categories={categories}
+              selectedCategory={category}
+              selectedRadius={radius}
+              onCategoryChange={setCategory}
+              onRadiusChange={setRadius}
+            />
           </div>
 
           {/* Venues List */}
