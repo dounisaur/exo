@@ -139,8 +139,8 @@ function App() {
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
-        params.append('radiusMin', (radius.min * 1000).toString()) // Convert km to meters
-        params.append('radiusMax', (radius.max * 1000).toString()) // Convert km to meters
+        params.append('radiusMin', radius.min.toString())
+        params.append('radiusMax', radius.max.toString())
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues?${params}`)

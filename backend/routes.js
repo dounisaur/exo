@@ -424,8 +424,8 @@ export function setupRoutes(app) {
       }
 
       if (lat && lng) {
-        const radiusMinKm = radiusMin ? parseFloat(radiusMin) / 1000 : 0;
-        const radiusMaxKm = radiusMax ? parseFloat(radiusMax) / 1000 : 100;
+        const radiusMinKm = radiusMin ? parseFloat(radiusMin) : 0;
+        const radiusMaxKm = radiusMax ? parseFloat(radiusMax) : 100;
 
         query += ` AND (
           6371 * acos(
