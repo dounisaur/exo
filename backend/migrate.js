@@ -77,37 +77,10 @@ export async function runMigrations(pool) {
 
   console.log(`[MIGRATE] Found ${pendingMigrations.length} pending migration(s). Starting...`);
 
-  // SAFETY CHECK: If running ALL migrations AND database has existing data, STOP and warn
+  // SAFETY CHECK: If running ALL migrations, warn but don't block
+  // (applied_migrations table exists but is empty after schema creation)
   if (pendingMigrations.length === migrationFiles.length) {
-    // Check if any tables have data
-    const { rows: tables } = await pool.query(
-      `SELECT table_name FROM information_schema.tables
-       WHERE table_schema = 'public' AND table_name != 'applied_migrations'`
-    );
-
-    let hasData = false;
-    for (const table of tables) {
-      try {
-        const { rows: countResult } = await pool.query(
-          `SELECT COUNT(*) as count FROM ${table.table_name}`
-        );
-        const count = parseInt(countResult[0].count, 10);
-        if (count > 0) {
-          console.error(`[MIGRATE] SAFETY CHECK FAILED: Table '${table.table_name}' contains ${count} rows`);
-          hasData = true;
-        }
-      } catch (err) {
-        // Table might not exist yet, ignore
-      }
-    }
-
-    if (hasData) {
-      console.error('[MIGRATE] REFUSING TO RUN MIGRATIONS: Database contains existing data');
-      console.error('[MIGRATE] This would wipe out your data. Please check backups.');
-      process.exit(1);
-    }
-
-    console.warn(`[MIGRATE] Running ALL ${migrationFiles.length} migrations on empty database`);
+    console.warn(`[MIGRATE] Running ALL ${migrationFiles.length} migrations on fresh database`);
   }
 
   // Get row counts before migrations

@@ -3,7 +3,8 @@ const { Pool } = pg;
 import { runMigrations } from './migrate.js';
 
 const dbUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/exo';
-console.log('[DB] Using DATABASE_URL:', dbUrl.replace(/:[^@]+@/, ':***@'));
+console.log('[DB] DATABASE_URL env var:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+console.log('[DB] Using connection string:', dbUrl.substring(0, dbUrl.indexOf('@') + 1) + '***');
 
 const pool = new Pool({
   connectionString: dbUrl
