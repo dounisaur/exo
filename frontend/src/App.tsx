@@ -12,7 +12,7 @@ function App() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
-  const [radius, setRadius] = useState<{ min: number; max: number }>({ min: 0, max: 1 }) // in km
+  const [radius, setRadius] = useState<{ min: number; max: number }>({ min: 0, max: 100 }) // in km
   const [selectedCity, setSelectedCity] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
@@ -40,7 +40,8 @@ function App() {
           lng: position.coords.longitude
         })
       }, () => {
-        setUserLocation({ lat: 40.7128, lng: -74.0060 })
+        // Fallback to Athens, Greece
+        setUserLocation({ lat: 37.9838, lng: 23.7275 })
       })
     }
   }, [])
