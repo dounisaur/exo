@@ -434,7 +434,7 @@ export function setupRoutes(app) {
             sin(radians($${paramIndex})) * sin(radians(latitude))
           )
         ) BETWEEN $${paramIndex + 2} AND $${paramIndex + 3}`;
-        params.push(lat, lng, lat, radiusMinKm, radiusMaxKm);
+        params.push(lat, lng, radiusMinKm, radiusMaxKm);
         paramIndex += 4;
       }
 
