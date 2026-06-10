@@ -61,21 +61,9 @@ export async function runMigrations(db) {
     return;
   }
 
-  // SAFETY CHECK: If we're running all migrations (fresh database) AND we find a recent backup,
-  // warn that we're about to wipe data
+  // SAFETY CHECK: Warn if running all migrations on fresh database
   if (pendingMigrations.length === migrationFiles.length) {
-    const backups = fs
-      .readdirSync(BACKUPS_DIR)
-      .filter(f => f.endsWith('.db'))
-      .sort()
-      .reverse();
-
-    if (backups.length > 0) {
-      const latestBackup = backups[0];
-      console.warn(`[MIGRATE] WARNING: About to run ${pendingMigrations.length} migrations on fresh database.`);
-      console.warn(`[MIGRATE] A recent backup exists: ${latestBackup}`);
-      console.warn(`[MIGRATE] If you have existing data, consider restoring from backup.`);
-    }
+    console.warn(`[MIGRATE] Running ALL ${pendingMigrations.length} migrations (fresh database detected)`);
   }
 
   console.log(`[MIGRATE] Found ${pendingMigrations.length} pending migration(s). Starting...`);

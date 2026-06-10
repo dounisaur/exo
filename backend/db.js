@@ -1,13 +1,45 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import { runMigrations } from './migrate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DB_PATH = path.join(__dirname, 'venues.db');
+const BACKUPS_DIR = path.join(__dirname, 'backups');
 
 let db;
+
+// Check if we should restore from backup
+function restoreFromBackupIfNeeded() {
+  const dbExists = fs.existsSync(DB_PATH);
+  const dbSize = dbExists ? fs.statSync(DB_PATH).size : 0;
+
+  // If database doesn't exist or is very small (< 10KB), try to restore from backup
+  if ((!dbExists || dbSize < 10240) && fs.existsSync(BACKUPS_DIR)) {
+    const backups = fs
+      .readdirSync(BACKUPS_DIR)
+      .filter(f => f.endsWith('.db'))
+      .sort()
+      .reverse();
+
+    if (backups.length > 0) {
+      const latestBackup = backups[0];
+      const backupPath = path.join(BACKUPS_DIR, latestBackup);
+      try {
+        console.log(`[DB] Restoring database from backup: ${latestBackup}`);
+        fs.copyFileSync(backupPath, DB_PATH);
+        console.log('[DB] Database restored from backup');
+      } catch (err) {
+        console.error(`[DB] Failed to restore backup: ${err.message}`);
+      }
+    }
+  }
+}
+
+// Try to restore from backup before opening
+restoreFromBackupIfNeeded();
 
 // Open database immediately
 try {
