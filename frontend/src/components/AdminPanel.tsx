@@ -35,6 +35,13 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [venueFilterCategory, setVenueFilterCategory] = useState<string>('')
   const [venueFilterSubcategory, setVenueFilterSubcategory] = useState<number | null>(null)
 
+  // Pagination state
+  const [venuePage, setVenuePage] = useState(1)
+  const [categoryPage, setCategoryPage] = useState(1)
+  const [subcategoryPage, setSubcategoryPage] = useState(1)
+  const [userPage, setUserPage] = useState(1)
+  const ITEMS_PER_PAGE = 10
+
   // Hours grid state: { "0": { open: "09:00", close: "22:00", closed: false }, ... }
   const [hoursGrid, setHoursGrid] = useState<Record<string, { open: string; close: string; closed: boolean }>>({
     '0': { open: '', close: '', closed: false },
@@ -120,6 +127,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [showSubcategorySheet, setShowSubcategorySheet] = useState(false)
   const [newSubcategoryName, setNewSubcategoryName] = useState('')
   const [selectedCategoryForSubcat, setSelectedCategoryForSubcat] = useState<number | null>(null)
+  const [editingSubcategoryId, setEditingSubcategoryId] = useState<number | null>(null)
+  const [subcategoryNames, setSubcategoryNames] = useState<string[]>([''])
 
   // User management state (admin only)
   const [users, setUsers] = useState<User[]>([])
@@ -519,30 +528,71 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   // Subcategory handlers
   const handleSaveSubcategory = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newSubcategoryName.trim() || !selectedCategoryForSubcat) return
+    if (!selectedCategoryForSubcat) return
+
+    // When editing, only allow single name
+    if (editingSubcategoryId) {
+      if (!subcategoryNames[0]?.trim()) return
+
+      setLoading(true)
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/subcategories/${editingSubcategoryId}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ name: subcategoryNames[0] })
+          }
+        )
+
+        if (!response.ok) throw new Error('Failed to update subcategory')
+        setMessage('Subcategory updated')
+        setSubcategoryNames([''])
+        setSelectedCategoryForSubcat(null)
+        setEditingSubcategoryId(null)
+        setShowSubcategorySheet(false)
+        onCategoriesUpdated()
+      } catch (error) {
+        setMessage('Error updating subcategory')
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
+
+    // When creating, allow multiple names
+    const names = subcategoryNames.filter(n => n.trim())
+    if (names.length === 0) return
 
     setLoading(true)
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          },
-          body: JSON.stringify({ name: newSubcategoryName })
-        }
-      )
+      // Create each subcategory
+      for (const name of names) {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/categories/${selectedCategoryForSubcat}/subcategories`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({ name })
+          }
+        )
 
-      if (!response.ok) throw new Error('Failed to save subcategory')
-      setMessage('Subcategory created')
-      setNewSubcategoryName('')
+        if (!response.ok) throw new Error(`Failed to save "${name}"`)
+      }
+
+      setMessage(`Created ${names.length} subcategory(ies)`)
+      setSubcategoryNames([''])
       setSelectedCategoryForSubcat(null)
       setShowSubcategorySheet(false)
       onCategoriesUpdated()
     } catch (error) {
-      setMessage('Error saving subcategory')
+      setMessage('Error saving subcategories')
     } finally {
       setLoading(false)
     }
@@ -842,11 +892,18 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       return matchesSearch && matchesCategory && matchesSubcategory
                     })
 
-                    return filteredVenues.length === 0 ? (
-                      <div className="p-8 text-center text-gray-600">No venues match your filters</div>
-                    ) : (
-                      filteredVenues.map(venue => (
-                        <div key={venue.id} className="card p-4 flex items-start justify-between">
+                    if (filteredVenues.length === 0) {
+                      return <div className="p-8 text-center text-gray-600">No venues match your filters</div>
+                    }
+
+                    const start = (venuePage - 1) * ITEMS_PER_PAGE
+                    const paginatedVenues = filteredVenues.slice(start, start + ITEMS_PER_PAGE)
+                    const totalPages = Math.ceil(filteredVenues.length / ITEMS_PER_PAGE)
+
+                    return (
+                      <>
+                        {paginatedVenues.map(venue => (
+                          <div key={venue.id} className="card p-4 flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-bold text-gray-900">{venue.name}</h3>
                             <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
@@ -885,7 +942,27 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                             </button>
                           </div>
                         </div>
-                      ))
+                        ))}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => setVenuePage(p => Math.max(1, p - 1))}
+                              disabled={venuePage === 1}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Previous
+                            </button>
+                            <span className="text-sm text-gray-600">Page {venuePage} of {totalPages}</span>
+                            <button
+                              onClick={() => setVenuePage(p => Math.min(totalPages, p + 1))}
+                              disabled={venuePage === totalPages}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
+                      </>
                     )
                   })()
                 )}
@@ -912,35 +989,64 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               </div>
 
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {categories.map(cat => (
-                  <div key={cat.id} className="card p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <h3 className="font-bold text-lg text-gray-900">{cat.name}</h3>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => {
-                            setNewCategoryName(cat.name)
-                            setEditingCategoryId(cat.id)
-                            setShowCategorySheet(true)
-                          }}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteCategory(cat.id)}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                    <p className="text-sm text-gray-600">{cat.subcategories.length} subcategories</p>
-                  </div>
-                ))}
+                {(() => {
+                  const start = (categoryPage - 1) * ITEMS_PER_PAGE
+                  const paginatedCats = categories.slice(start, start + ITEMS_PER_PAGE)
+                  const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE)
+
+                  return (
+                    <>
+                      {paginatedCats.map(cat => (
+                        <div key={cat.id} className="card p-6">
+                          <div className="flex items-start justify-between mb-4">
+                            <h3 className="font-bold text-lg text-gray-900">{cat.name}</h3>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  setNewCategoryName(cat.name)
+                                  setEditingCategoryId(cat.id)
+                                  setShowCategorySheet(true)
+                                }}
+                                className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteCategory(cat.id)}
+                                className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600">{cat.subcategories.length} subcategories</p>
+                        </div>
+                      ))}
+                      {totalPages > 1 && (
+                        <div className="col-span-full flex items-center justify-between pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setCategoryPage(p => Math.max(1, p - 1))}
+                            disabled={categoryPage === 1}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-sm text-gray-600">Page {categoryPage} of {totalPages}</span>
+                          <button
+                            onClick={() => setCategoryPage(p => Math.min(totalPages, p + 1))}
+                            disabled={categoryPage === totalPages}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           )}
@@ -952,8 +1058,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 <h2 className="text-xl font-bold text-gray-900">Subcategories</h2>
                 <button
                   onClick={() => {
-                    setNewSubcategoryName('')
+                    setSubcategoryNames([''])
                     setSelectedCategoryForSubcat(null)
+                    setEditingSubcategoryId(null)
                     setShowSubcategorySheet(true)
                   }}
                   className="btn-primary flex items-center gap-2"
@@ -964,25 +1071,69 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               </div>
 
               <div className="grid gap-4">
-                {categories.flatMap(cat =>
-                  cat.subcategories.map(sub => (
-                    <div key={sub.id} className="card p-4 flex items-start justify-between">
-                      <div>
-                        <h3 className="font-bold text-gray-900">{sub.name}</h3>
-                        <p className="text-sm text-gray-600">in {cat.name}</p>
-                      </div>
-                      <button
-                        onClick={() => handleDeleteSubcategory(sub.id)}
-                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <polyline points="3 6 5 6 21 6"></polyline>
-                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                        </svg>
-                      </button>
-                    </div>
-                  ))
-                )}
+                {(() => {
+                  const allSubs = categories.flatMap(cat =>
+                    cat.subcategories.map(sub => ({ ...sub, categoryName: cat.name, categoryId: cat.id }))
+                  )
+                  const start = (subcategoryPage - 1) * ITEMS_PER_PAGE
+                  const paginatedSubs = allSubs.slice(start, start + ITEMS_PER_PAGE)
+                  const totalPages = Math.ceil(allSubs.length / ITEMS_PER_PAGE)
+
+                  return (
+                    <>
+                      {paginatedSubs.map(sub => (
+                        <div key={sub.id} className="card p-4 flex items-start justify-between">
+                          <div>
+                            <h3 className="font-bold text-gray-900">{sub.name}</h3>
+                            <p className="text-sm text-gray-600">in {sub.categoryName}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => {
+                                setEditingSubcategoryId(sub.id)
+                                setSubcategoryNames([sub.name])
+                                setSelectedCategoryForSubcat(sub.categoryId)
+                                setShowSubcategorySheet(true)
+                              }}
+                              className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSubcategory(sub.id)}
+                              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                              </svg>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                          <button
+                            onClick={() => setSubcategoryPage(p => Math.max(1, p - 1))}
+                            disabled={subcategoryPage === 1}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Previous
+                          </button>
+                          <span className="text-sm text-gray-600">Page {subcategoryPage} of {totalPages}</span>
+                          <button
+                            onClick={() => setSubcategoryPage(p => Math.min(totalPages, p + 1))}
+                            disabled={subcategoryPage === totalPages}
+                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Next
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )
+                })()}
               </div>
             </div>
           )}
@@ -1004,39 +1155,68 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 {users.length === 0 ? (
                   <div className="p-8 text-center text-gray-600">No users found</div>
                 ) : (
-                  users.map(user => (
-                    <div key={user.id} className="card p-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-bold text-gray-900">{user.username}</h3>
-                        <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.role === 'admin'
-                            ? 'bg-purple-100 text-purple-700'
-                            : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          {user.role}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                          title="Edit password"
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteUser(user.id)}
-                          className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                          title="Delete user"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))
+                  (() => {
+                    const start = (userPage - 1) * ITEMS_PER_PAGE
+                    const paginatedUsers = users.slice(start, start + ITEMS_PER_PAGE)
+                    const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE)
+
+                    return (
+                      <>
+                        {paginatedUsers.map(user => (
+                          <div key={user.id} className="card p-4 flex items-center justify-between">
+                            <div>
+                              <h3 className="font-bold text-gray-900">{user.username}</h3>
+                              <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                user.role === 'admin'
+                                  ? 'bg-purple-100 text-purple-700'
+                                  : 'bg-blue-100 text-blue-700'
+                              }`}>
+                                {user.role}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleEditUser(user)}
+                                className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                                title="Edit password"
+                              >
+                                <Edit2 size={16} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUser(user.id)}
+                                className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                                title="Delete user"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6"></polyline>
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {totalPages > 1 && (
+                          <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                            <button
+                              onClick={() => setUserPage(p => Math.max(1, p - 1))}
+                              disabled={userPage === 1}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Previous
+                            </button>
+                            <span className="text-sm text-gray-600">Page {userPage} of {totalPages}</span>
+                            <button
+                              onClick={() => setUserPage(p => Math.min(totalPages, p + 1))}
+                              disabled={userPage === totalPages}
+                              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Next
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )
+                  })()
                 )}
               </div>
             </div>
@@ -1423,8 +1603,12 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       {/* Subcategory Sheet */}
       <BottomSheet
         isOpen={showSubcategorySheet}
-        onClose={() => setShowSubcategorySheet(false)}
-        title="Add Subcategory"
+        onClose={() => {
+          setShowSubcategorySheet(false)
+          setEditingSubcategoryId(null)
+          setSubcategoryNames([''])
+        }}
+        title={editingSubcategoryId ? 'Edit Subcategory' : 'Add Subcategory'}
       >
         <form onSubmit={handleSaveSubcategory} className="space-y-4">
           <div>
@@ -1433,6 +1617,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               value={selectedCategoryForSubcat || ''}
               onChange={(e) => setSelectedCategoryForSubcat(e.target.value ? parseInt(e.target.value) : null)}
               className="input-field"
+              disabled={!!editingSubcategoryId}
               required
             >
               <option value="">Select a category</option>
@@ -1441,23 +1626,42 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
-            <input
-              type="text"
-              value={newSubcategoryName}
-              onChange={(e) => setNewSubcategoryName(e.target.value)}
-              className="input-field"
-              required
-            />
-          </div>
+          {!editingSubcategoryId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Names (one per line)</label>
+              <textarea
+                value={subcategoryNames.join('\n')}
+                onChange={(e) => setSubcategoryNames(e.target.value.split('\n').filter(s => s.trim()))}
+                className="input-field font-mono text-sm"
+                rows={5}
+                placeholder="Enter multiple subcategory names, one per line"
+              />
+              <p className="text-xs text-gray-500 mt-1">You can add multiple subcategories at once</p>
+            </div>
+          )}
+          {editingSubcategoryId && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Subcategory Name</label>
+              <input
+                type="text"
+                value={subcategoryNames[0] || ''}
+                onChange={(e) => setSubcategoryNames([e.target.value])}
+                className="input-field"
+                required
+              />
+            </div>
+          )}
           <div className="flex gap-3 pt-4 border-t border-gray-200">
             <button type="submit" disabled={loading} className="btn-primary flex-1">
               {loading ? 'Saving...' : 'Save'}
             </button>
             <button
               type="button"
-              onClick={() => setShowSubcategorySheet(false)}
+              onClick={() => {
+                setShowSubcategorySheet(false)
+                setEditingSubcategoryId(null)
+                setSubcategoryNames([''])
+              }}
               className="btn-secondary flex-1"
             >
               Cancel

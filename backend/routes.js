@@ -271,6 +271,29 @@ export function setupRoutes(app) {
     }
   });
 
+  // Update subcategory (admin)
+  app.put('/api/subcategories/:id', authenticateToken, async (req, res) => {
+    try {
+      const { name } = req.body;
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Name is required' });
+      }
+
+      const { rowCount } = await pool.query(
+        'UPDATE subcategories SET name = $1 WHERE id = $2',
+        [name.trim(), req.params.id]
+      );
+
+      if (rowCount === 0) {
+        return res.status(404).json({ error: 'Subcategory not found' });
+      }
+
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Delete subcategory (admin)
   app.delete('/api/subcategories/:id', authenticateToken, async (req, res) => {
     try {
