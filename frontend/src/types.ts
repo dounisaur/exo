@@ -6,6 +6,7 @@ export interface Venue {
   latitude: number
   longitude: number
   address: string
+  canonical_city?: string
   image_url?: string
   website_url?: string
   phone_number?: string

@@ -175,20 +175,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     }
   }
 
-  const extractCity = (address?: string): string | null => {
-    if (!address) return null
-    const parts = address.split(',')
-    if (parts.length < 2) return null
-    const cityPart = parts[1].trim()
-    const cityMatch = cityPart.match(/^([a-zA-Z\s]+)/)
-    return cityMatch ? cityMatch[1].trim() : null
-  }
-
   const getAdminUniqueCities = (): string[] => {
     const citySet = new Set<string>()
     venues.forEach(venue => {
-      const city = extractCity(venue.address)
-      if (city) citySet.add(city)
+      if (venue.canonical_city) citySet.add(venue.canonical_city)
     })
     return Array.from(citySet).sort()
   }
@@ -962,7 +952,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       const matchesSubcategory = !venueFilterSubcategory || venue.subcategory_id === venueFilterSubcategory
 
                       // Filter by city
-                      const matchesCity = !venueFilterCity || extractCity(venue.address) === venueFilterCity
+                      const matchesCity = !venueFilterCity || venue.canonical_city === venueFilterCity
 
                       return matchesSearch && matchesCategory && matchesSubcategory && matchesCity
                     })
@@ -981,8 +971,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           <div key={venue.id} className="card p-4 flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-bold text-gray-900">{venue.name}</h3>
-                            {extractCity(venue.address) && (
-                              <p className="text-xs font-semibold text-gray-700">{extractCity(venue.address)}</p>
+                            {venue.canonical_city && (
+                              <p className="text-xs font-semibold text-gray-700">{venue.canonical_city}</p>
                             )}
                             <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
                             <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${

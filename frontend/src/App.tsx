@@ -132,20 +132,10 @@ function App() {
     setPage('home')
   }
 
-  const extractCity = (address?: string): string | null => {
-    if (!address) return null
-    const parts = address.split(',')
-    if (parts.length < 2) return null
-    const cityPart = parts[1].trim()
-    const cityMatch = cityPart.match(/^([a-zA-Z\s]+)/)
-    return cityMatch ? cityMatch[1].trim() : null
-  }
-
   const getUniqueCities = (): string[] => {
     const citySet = new Set<string>()
     venues.forEach(venue => {
-      const city = extractCity(venue.address)
-      if (city) citySet.add(city)
+      if (venue.canonical_city) citySet.add(venue.canonical_city)
     })
     return Array.from(citySet).sort()
   }
@@ -360,10 +350,9 @@ function App() {
           <div className="flex-1 overflow-y-auto">
             <VenueList
               venues={venues.filter(venue => {
-                if (selectedCity && !venue.address) return false
+                if (selectedCity && !venue.canonical_city) return false
                 if (selectedCity) {
-                  const venueCity = extractCity(venue.address)
-                  return venueCity === selectedCity
+                  return venue.canonical_city === selectedCity
                 }
                 return true
               })}

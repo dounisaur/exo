@@ -9,6 +9,40 @@ import { generateItinerary } from './itinerary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Helper function to get canonical city from Google Reverse Geocoding API
+async function getCanonicalCity(latitude, longitude) {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      console.warn('Google API key not configured, skipping canonical city lookup');
+      return null;
+    }
+
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.results && data.results.length > 0) {
+      // Look for the city/municipality in the address components
+      for (const component of data.results[0].address_components) {
+        if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
+          return component.long_name;
+        }
+      }
+      // Fallback to administrative area level 1 if city not found
+      for (const component of data.results[0].address_components) {
+        if (component.types.includes('administrative_area_level_1')) {
+          return component.long_name;
+        }
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error calling Google Geocoding API:', error);
+    return null;
+  }
+}
+
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: path.join(__dirname, 'uploads'),
@@ -599,11 +633,14 @@ export function setupRoutes(app) {
         }
       }
 
+      // Get canonical city from Google Geocoding API
+      const canonicalCity = await getCanonicalCity(lat, lng);
+
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null]
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -637,10 +674,13 @@ export function setupRoutes(app) {
         }
       }
 
+      // Get canonical city from Google Geocoding API
+      const canonicalCity = await getCanonicalCity(lat, lng);
+
       const { rowCount } = await pool.query(
-        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, price_range=$12, price_level=$13, opening_hours=$14, updated_at=NOW()
-         WHERE id = $15`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, req.params.id]
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, updated_at=NOW()
+         WHERE id = $16`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
