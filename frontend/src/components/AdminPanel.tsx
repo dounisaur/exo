@@ -116,6 +116,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     reservation_link: '',
     rating: '',
     price_range: '',
+    price_level: '',
     opening_hours: ''
   })
 
@@ -218,6 +219,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             website_url: fullResult.website_url || '',
             phone_number: fullResult.phone || '',
             price_range: fullResult.price_range || '',
+            price_level: fullResult.price_level || '',
             opening_hours: fullResult.opening_hours || ''
           }))
           setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
@@ -245,6 +247,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         website_url: result.website_url || '',
         phone_number: result.phone || '',
         price_range: result.price_range || '',
+        price_level: result.price_level || '',
         opening_hours: result.opening_hours || ''
       }))
       setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
@@ -406,6 +409,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       reservation_link: '',
       rating: '',
       price_range: '',
+      price_level: '',
       opening_hours: ''
     })
     setHoursGrid({
@@ -441,6 +445,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       reservation_link: venue.reservation_link || '',
       rating: venue.rating?.toString() || '',
       price_range: venue.price_range || '',
+      price_level: (venue as any).price_level || '',
       opening_hours: venue.opening_hours || ''
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
@@ -1377,6 +1382,13 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     </select>
                   </div>
                 </div>
+
+                {formData.price_level && (
+                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                    <p className="text-xs font-medium text-blue-700 mb-1">Google Price Level</p>
+                    <p className="text-sm font-semibold text-blue-900">{formData.price_level} ({['', '$', '$$', '$$$', '$$$$'][parseInt(formData.price_level)] || 'Unknown'})</p>
+                  </div>
+                )}
               </div>
             </div>
 
