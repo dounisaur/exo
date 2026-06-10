@@ -35,21 +35,37 @@ function seedDefaultUser() {
       return;
     }
 
-    // Check if admin user exists
+    // Check total user count
+    const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+    console.log(`[DB] Found ${userCount} user(s) in database`);
+
+    // If no users at all, create default admin
+    if (userCount === 0) {
+      const passwordHash = bcrypt.hashSync('admin', 10);
+      db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+        'admin',
+        passwordHash,
+        'admin'
+      );
+      console.log('[DB] Default admin user created (database was empty)');
+      return;
+    }
+
+    // If users exist, check if admin exists
     const adminExists = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
     if (adminExists) {
       console.log('[DB] Admin user already exists');
       return;
     }
 
-    // Create default admin user if it doesn't exist
+    // If users exist but no admin, create admin
     const passwordHash = bcrypt.hashSync('admin', 10);
     db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
       'admin',
       passwordHash,
       'admin'
     );
-    console.log('[DB] Default admin user created');
+    console.log('[DB] Default admin user created (other users existed)');
   } catch (err) {
     console.error('[DB] Error seeding default user:', err.message);
   }
