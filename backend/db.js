@@ -13,10 +13,21 @@ let db;
 
 // Check if we should restore from backup
 function restoreFromBackupIfNeeded() {
+  const isProduction = process.env.ENVIRONMENT === 'production' ||
+                       process.env.NODE_ENV === 'production' ||
+                       process.env.RENDER === 'true';
+
+  // SAFETY: Do NOT auto-restore backups on production
+  // This can overwrite live data with corrupted backups
+  if (isProduction) {
+    console.log('[DB] Production mode - auto-restore disabled (use manual recovery if needed)');
+    return;
+  }
+
   const dbExists = fs.existsSync(DB_PATH);
   const dbSize = dbExists ? fs.statSync(DB_PATH).size : 0;
 
-  // If database doesn't exist or is very small (< 10KB), try to restore from backup
+  // Local development only: If database doesn't exist or is very small, restore from backup
   if ((!dbExists || dbSize < 10240) && fs.existsSync(BACKUPS_DIR)) {
     const backups = fs
       .readdirSync(BACKUPS_DIR)
@@ -51,8 +62,19 @@ try {
 }
 
 export async function initDb() {
+  const isProduction = process.env.ENVIRONMENT === 'production' ||
+                       process.env.NODE_ENV === 'production' ||
+                       process.env.RENDER === 'true';
+
   await runMigrations(db);
-  seedDefaultUser();
+
+  // CRITICAL: Do NOT touch user accounts on production
+  // Seed is ONLY for local development
+  if (!isProduction) {
+    seedDefaultUser();
+  } else {
+    console.log('[DB] Production mode - NOT seeding users (preserving existing accounts)');
+  }
 }
 
 function seedDefaultUser() {
@@ -71,38 +93,15 @@ function seedDefaultUser() {
     const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
     console.log(`[DB] Found ${userCount} user(s) in database`);
 
-    // If no users at all, create default admin
+    // If no users at all, create default admin (local development only)
     if (userCount === 0) {
       const passwordHash = bcrypt.hashSync('admin', 10);
-      console.log('[DB] Creating admin user');
-      console.log('[DB] Password hash length:', passwordHash.length);
-      console.log('[DB] Password hash (first 30 chars):', passwordHash.substring(0, 30));
-
-      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
+      db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
         'admin',
         passwordHash,
         'admin'
       );
-      console.log('[DB] Insert result:', { lastInsertRowid: result.lastInsertRowid, changes: result.changes });
-
-      // Force WAL checkpoint to ensure data is written
-      db.pragma('wal_checkpoint(RESTART)');
-
-      // Verify it was created and read back
-      const verify = db.prepare('SELECT * FROM users WHERE username = ?').get('admin');
-      if (verify) {
-        console.log('[DB] Verification - admin user exists');
-        console.log('[DB] Stored hash length:', verify.password_hash.length);
-        console.log('[DB] Stored hash (first 30 chars):', verify.password_hash.substring(0, 30));
-        console.log('[DB] Hash match:', passwordHash === verify.password_hash);
-
-        // Test the bcrypt comparison
-        const testMatch = bcrypt.compareSync('admin', verify.password_hash);
-        console.log('[DB] Test bcrypt comparison:', testMatch);
-      } else {
-        console.error('[DB] ERROR: Admin user was not created!');
-      }
-      console.log('[DB] Default admin user created (database was empty)');
+      console.log('[DB] Created default admin user (local development)');
       return;
     }
 
@@ -113,16 +112,16 @@ function seedDefaultUser() {
       return;
     }
 
-    // If users exist but no admin, create admin
+    // If users exist but no admin, create admin (local only)
     const passwordHash = bcrypt.hashSync('admin', 10);
     db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(
       'admin',
       passwordHash,
       'admin'
     );
-    console.log('[DB] Default admin user created (other users existed)');
+    console.log('[DB] Created admin user (local development, other users existed)');
   } catch (err) {
-    console.error('[DB] Error seeding default user:', err.message);
+    console.error('[DB] Error in seed function:', err.message);
   }
 }
 
