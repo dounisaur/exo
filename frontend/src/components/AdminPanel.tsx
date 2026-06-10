@@ -1249,10 +1249,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         title={editingVenueId ? 'Edit Venue' : 'Add Venue'}
       >
         <form onSubmit={handleSaveVenue} className="space-y-6">
-          {/* Lookup Section - Only show when adding new venue */}
-          {!editingVenueId && (
-            <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4 space-y-3">
-              <h3 className="font-semibold text-blue-900">Quick Lookup</h3>
+          {/* Lookup Section - For adding or refreshing venue data */}
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg border border-blue-200 p-4 space-y-3">
+            <h3 className="font-semibold text-blue-900">{editingVenueId ? 'Refresh from Google' : 'Quick Lookup'}</h3>
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -1287,17 +1286,18 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 </div>
               )}
 
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={manualAddressEnabled}
-                  onChange={(e) => setManualAddressEnabled(e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm font-medium text-blue-900">Or enter details manually</span>
-              </label>
+              {!editingVenueId && (
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={manualAddressEnabled}
+                    onChange={(e) => setManualAddressEnabled(e.target.checked)}
+                    className="rounded"
+                  />
+                  <span className="text-sm font-medium text-blue-900">Or enter details manually</span>
+                </label>
+              )}
             </div>
-          )}
 
           {/* Form Sections */}
           <div className="space-y-4">
