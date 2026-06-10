@@ -13,6 +13,7 @@ function App() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
   const [radius, setRadius] = useState<{ min: number; max: number }>({ min: 0, max: 1 }) // in km
+  const [selectedCity, setSelectedCity] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
@@ -129,6 +130,24 @@ function App() {
     localStorage.removeItem('authToken')
     localStorage.removeItem('currentUser')
     setPage('home')
+  }
+
+  const extractCity = (address?: string): string | null => {
+    if (!address) return null
+    const parts = address.split(',')
+    if (parts.length < 2) return null
+    const cityPart = parts[1].trim()
+    const cityMatch = cityPart.match(/^([a-zA-Z\s]+)/)
+    return cityMatch ? cityMatch[1].trim() : null
+  }
+
+  const getUniqueCities = (): string[] => {
+    const citySet = new Set<string>()
+    venues.forEach(venue => {
+      const city = extractCity(venue.address)
+      if (city) citySet.add(city)
+    })
+    return Array.from(citySet).sort()
   }
 
   const fetchVenues = async () => {
@@ -315,8 +334,11 @@ function App() {
               categories={categories}
               selectedCategory={category}
               selectedRadius={radius}
+              selectedCity={selectedCity}
+              cities={getUniqueCities()}
               onCategoryChange={setCategory}
               onRadiusChange={setRadius}
+              onCityChange={setSelectedCity}
             />
           </div>
 
@@ -326,15 +348,25 @@ function App() {
               categories={categories}
               selectedCategory={category}
               selectedRadius={radius}
+              selectedCity={selectedCity}
+              cities={getUniqueCities()}
               onCategoryChange={setCategory}
               onRadiusChange={setRadius}
+              onCityChange={setSelectedCity}
             />
           </div>
 
           {/* Venues List */}
           <div className="flex-1 overflow-y-auto">
             <VenueList
-              venues={venues}
+              venues={venues.filter(venue => {
+                if (selectedCity && !venue.address) return false
+                if (selectedCity) {
+                  const venueCity = extractCity(venue.address)
+                  return venueCity === selectedCity
+                }
+                return true
+              })}
               categories={categories}
               userLocation={userLocation || undefined}
               onStartHere={(venue) => {

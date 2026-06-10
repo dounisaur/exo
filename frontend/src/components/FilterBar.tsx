@@ -4,8 +4,11 @@ interface FilterBarProps {
   categories: Category[]
   selectedCategory: string
   selectedRadius: { min: number; max: number }
+  selectedCity: string
+  cities: string[]
   onCategoryChange: (categorySlug: string) => void
   onRadiusChange: (radius: { min: number; max: number }) => void
+  onCityChange: (city: string) => void
 }
 
 const RADIUS_OPTIONS = [
@@ -21,11 +24,46 @@ export default function FilterBar({
   categories,
   selectedCategory,
   selectedRadius,
+  selectedCity,
+  cities,
   onCategoryChange,
-  onRadiusChange
+  onRadiusChange,
+  onCityChange
 }: FilterBarProps) {
   return (
     <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
+      {/* City Filters */}
+      {cities.length > 0 && (
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">City:</label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => onCityChange('')}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                selectedCity === ''
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              All
+            </button>
+            {cities.map(city => (
+              <button
+                key={city}
+                onClick={() => onCityChange(city)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  selectedCity === city
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {city}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Category Filters */}
       <div className="flex flex-wrap gap-2">
         <button

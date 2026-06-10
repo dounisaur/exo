@@ -5,8 +5,11 @@ interface FilterDropdownsProps {
   categories: Category[]
   selectedCategory: string
   selectedRadius: { min: number; max: number }
+  selectedCity: string
+  cities: string[]
   onCategoryChange: (categorySlug: string) => void
   onRadiusChange: (radius: { min: number; max: number }) => void
+  onCityChange: (city: string) => void
 }
 
 const RADIUS_OPTIONS = [
@@ -22,11 +25,38 @@ export default function FilterDropdowns({
   categories,
   selectedCategory,
   selectedRadius,
+  selectedCity,
+  cities,
   onCategoryChange,
-  onRadiusChange
+  onRadiusChange,
+  onCityChange
 }: FilterDropdownsProps) {
   return (
     <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
+      {/* City Dropdown */}
+      {cities.length > 0 && (
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-2">City</label>
+          <div className="relative">
+            <select
+              value={selectedCity}
+              onChange={(e) => onCityChange(e.target.value)}
+              className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer"
+            >
+              <option value="">All Cities</option>
+              {cities.map(city => (
+                <option key={city} value={city}>
+                  {city}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={16}
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-500"
+            />
+          </div>
+        </div>
+      )}
       {/* Category Dropdown */}
       <div>
         <label className="block text-xs font-medium text-gray-700 mb-2">Venue Type</label>

@@ -51,6 +51,19 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
     return null
   }
 
+  const extractCity = (address?: string): string | null => {
+    if (!address) return null
+    // Pattern: "Street, City PostalCode, Country"
+    // Extract the part after the first comma and before the postal code
+    const parts = address.split(',')
+    if (parts.length < 2) return null
+
+    const cityPart = parts[1].trim()
+    // Extract city name (everything before the postal code/numbers)
+    const cityMatch = cityPart.match(/^([a-zA-Z\s]+)/)
+    return cityMatch ? cityMatch[1].trim() : null
+  }
+
   if (venues.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -97,11 +110,16 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </div>
           )}
 
-          {/* Address */}
+          {/* City & Address */}
           {venue.address && (
-            <div className="flex items-start gap-2 mb-3 text-sm text-gray-600">
-              <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
-              <span>{venue.address}</span>
+            <div className="mb-3">
+              {extractCity(venue.address) && (
+                <div className="text-sm font-semibold text-gray-800 mb-1">{extractCity(venue.address)}</div>
+              )}
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <MapPin size={16} className="mt-0.5 flex-shrink-0 text-gray-400" />
+                <span>{venue.address}</span>
+              </div>
             </div>
           )}
 
