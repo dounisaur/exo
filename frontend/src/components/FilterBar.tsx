@@ -3,18 +3,18 @@ import type { Category } from '../types'
 interface FilterBarProps {
   categories: Category[]
   selectedCategory: string
-  selectedRadius: number
+  selectedRadius: { min: number; max: number }
   onCategoryChange: (categorySlug: string) => void
-  onRadiusChange: (radiusKm: number) => void
+  onRadiusChange: (radius: { min: number; max: number }) => void
 }
 
 const RADIUS_OPTIONS = [
-  { label: '0 - 1 km', value: 1 },
-  { label: '1 - 5 km', value: 5 },
-  { label: '5 - 10 km', value: 10 },
-  { label: '10 - 20 km', value: 20 },
-  { label: '20 - 50 km', value: 50 },
-  { label: '50 - 100 km', value: 100 }
+  { label: '0 - 1 km', min: 0, max: 1 },
+  { label: '1 - 5 km', min: 1, max: 5 },
+  { label: '5 - 10 km', min: 5, max: 10 },
+  { label: '10 - 20 km', min: 10, max: 20 },
+  { label: '20 - 50 km', min: 20, max: 50 },
+  { label: '50 - 100 km', min: 50, max: 100 }
 ]
 
 export default function FilterBar({
@@ -59,10 +59,10 @@ export default function FilterBar({
         <div className="flex flex-wrap gap-2">
           {RADIUS_OPTIONS.map(option => (
             <button
-              key={option.value}
-              onClick={() => onRadiusChange(option.value)}
+              key={`${option.min}-${option.max}`}
+              onClick={() => onRadiusChange({ min: option.min, max: option.max })}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                selectedRadius === option.value
+                selectedRadius.min === option.min && selectedRadius.max === option.max
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}

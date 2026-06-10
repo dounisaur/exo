@@ -4,18 +4,18 @@ import type { Category } from '../types'
 interface FilterDropdownsProps {
   categories: Category[]
   selectedCategory: string
-  selectedRadius: number
+  selectedRadius: { min: number; max: number }
   onCategoryChange: (categorySlug: string) => void
-  onRadiusChange: (radiusKm: number) => void
+  onRadiusChange: (radius: { min: number; max: number }) => void
 }
 
 const RADIUS_OPTIONS = [
-  { label: '0 - 1 km', value: 1 },
-  { label: '1 - 5 km', value: 5 },
-  { label: '5 - 10 km', value: 10 },
-  { label: '10 - 20 km', value: 20 },
-  { label: '20 - 50 km', value: 50 },
-  { label: '50 - 100 km', value: 100 }
+  { label: '0 - 1 km', min: 0, max: 1 },
+  { label: '1 - 5 km', min: 1, max: 5 },
+  { label: '5 - 10 km', min: 5, max: 10 },
+  { label: '10 - 20 km', min: 10, max: 20 },
+  { label: '20 - 50 km', min: 20, max: 50 },
+  { label: '50 - 100 km', min: 50, max: 100 }
 ]
 
 export default function FilterDropdowns({
@@ -55,12 +55,15 @@ export default function FilterDropdowns({
         <label className="block text-xs font-medium text-gray-700 mb-2">Search Radius</label>
         <div className="relative">
           <select
-            value={selectedRadius}
-            onChange={(e) => onRadiusChange(parseInt(e.target.value))}
+            value={`${selectedRadius.min}-${selectedRadius.max}`}
+            onChange={(e) => {
+              const [min, max] = e.target.value.split('-').map(Number)
+              onRadiusChange({ min, max })
+            }}
             className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
           >
             {RADIUS_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
+              <option key={`${option.min}-${option.max}`} value={`${option.min}-${option.max}`}>
                 {option.label}
               </option>
             ))}

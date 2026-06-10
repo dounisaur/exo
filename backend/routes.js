@@ -432,7 +432,7 @@ export function setupRoutes(app) {
   // Get published venues with optional filters (public API)
   app.get('/api/venues', (req, res) => {
     try {
-      const { category, lat, lng, radius = 50 } = req.query;
+      const { category, lat, lng, radiusMin, radiusMax } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
 
@@ -442,13 +442,19 @@ export function setupRoutes(app) {
       }
 
       if (lat && lng) {
-        // Simple distance calculation (in km)
-        const radiusKm = radius / 1000;
+        // Haversine distance formula for accurate distance calculation
+        // radiusMin and radiusMax are in meters, convert to km
+        const radiusMinKm = radiusMin ? parseFloat(radiusMin) / 1000 : 0;
+        const radiusMaxKm = radiusMax ? parseFloat(radiusMax) / 1000 : 100;
+
         query += ` AND (
-          (latitude - ?) * (latitude - ?) +
-          (longitude - ?) * (longitude - ?)
-        ) < (? * ?)`;
-        params.push(lat, lat, lng, lng, radiusKm, radiusKm);
+          6371 * acos(
+            cos(radians(?)) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians(?)) +
+            sin(radians(?)) * sin(radians(latitude))
+          )
+        ) BETWEEN ? AND ?`;
+        params.push(lat, lng, lat, radiusMinKm, radiusMaxKm);
       }
 
       const rows = db.prepare(query).all(...params);
