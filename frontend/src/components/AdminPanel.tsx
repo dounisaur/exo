@@ -35,6 +35,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [venueSearchQuery, setVenueSearchQuery] = useState('')
   const [venueFilterCategory, setVenueFilterCategory] = useState<string>('')
   const [venueFilterSubcategory, setVenueFilterSubcategory] = useState<number | null>(null)
+  const [venueFilterCity, setVenueFilterCity] = useState<string>('')
 
   // Subcategory filter state
   const [subcategoryFilterCategory, setSubcategoryFilterCategory] = useState<string>('')
@@ -172,6 +173,24 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     } finally {
       setLoading(false)
     }
+  }
+
+  const extractCity = (address?: string): string | null => {
+    if (!address) return null
+    const parts = address.split(',')
+    if (parts.length < 2) return null
+    const cityPart = parts[1].trim()
+    const cityMatch = cityPart.match(/^([a-zA-Z\s]+)/)
+    return cityMatch ? cityMatch[1].trim() : null
+  }
+
+  const getAdminUniqueCities = (): string[] => {
+    const citySet = new Set<string>()
+    venues.forEach(venue => {
+      const city = extractCity(venue.address)
+      if (city) citySet.add(city)
+    })
+    return Array.from(citySet).sort()
   }
 
   const handleLookup = async () => {
@@ -859,12 +878,13 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       />
                     </div>
                     {/* Clear Button */}
-                    {(venueSearchQuery || venueFilterCategory || venueFilterSubcategory) && (
+                    {(venueSearchQuery || venueFilterCategory || venueFilterSubcategory || venueFilterCity) && (
                       <button
                         onClick={() => {
                           setVenueSearchQuery('')
                           setVenueFilterCategory('')
                           setVenueFilterSubcategory(null)
+                          setVenueFilterCity('')
                         }}
                         className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
                       >
@@ -873,8 +893,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     )}
                   </div>
 
-                  {/* Category and Subcategory Filters */}
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* Category, Subcategory, and City Filters */}
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Category</label>
                       <select
@@ -906,6 +926,20 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                         ))}
                       </select>
                     </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">City</label>
+                      <select
+                        value={venueFilterCity}
+                        onChange={(e) => setVenueFilterCity(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      >
+                        <option value="">All Cities</option>
+                        {getAdminUniqueCities().map(city => (
+                          <option key={city} value={city}>{city}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
@@ -927,7 +961,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       // Filter by subcategory
                       const matchesSubcategory = !venueFilterSubcategory || venue.subcategory_id === venueFilterSubcategory
 
-                      return matchesSearch && matchesCategory && matchesSubcategory
+                      // Filter by city
+                      const matchesCity = !venueFilterCity || extractCity(venue.address) === venueFilterCity
+
+                      return matchesSearch && matchesCategory && matchesSubcategory && matchesCity
                     })
 
                     if (filteredVenues.length === 0) {
@@ -944,6 +981,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           <div key={venue.id} className="card p-4 flex items-start justify-between">
                           <div className="flex-1">
                             <h3 className="font-bold text-gray-900">{venue.name}</h3>
+                            {extractCity(venue.address) && (
+                              <p className="text-xs font-semibold text-gray-700">{extractCity(venue.address)}</p>
+                            )}
                             <p className="text-sm text-gray-600">{getSubcategoryName(venue.subcategory_id) || venue.category}</p>
                             <span className={`inline-block mt-2 px-2.5 py-0.5 rounded-full text-xs font-medium ${
                               venue.status === 'published'
