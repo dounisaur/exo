@@ -62,19 +62,11 @@ try {
 }
 
 export async function initDb() {
-  const isProduction = process.env.ENVIRONMENT === 'production' ||
-                       process.env.NODE_ENV === 'production' ||
-                       process.env.RENDER === 'true';
-
   await runMigrations(db);
 
-  // CRITICAL: Do NOT touch user accounts on production
-  // Seed is ONLY for local development
-  if (!isProduction) {
-    seedDefaultUser();
-  } else {
-    console.log('[DB] Production mode - NOT seeding users (preserving existing accounts)');
-  }
+  // CRITICAL: Never automatically create or modify user accounts
+  // This function is COMPLETELY DISABLED - users must be managed manually
+  console.log('[DB] User seeding disabled - manage accounts manually');
 }
 
 function seedDefaultUser() {
