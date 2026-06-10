@@ -82,20 +82,28 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       '6': { open: '', close: '', closed: false }
     }
 
-    if (!jsonStr) return grid
+    if (!jsonStr) {
+      console.log('[HOURS] No JSON string provided')
+      return grid
+    }
 
     try {
+      console.log('[HOURS] Parsing JSON:', jsonStr)
       const hours = JSON.parse(jsonStr)
+      console.log('[HOURS] Parsed hours object:', hours)
       for (let day = 0; day < 7; day++) {
         const dayKey = day.toString()
         const dayHours = hours[dayKey]
         if (dayHours === 'CLOSED') {
           grid[dayKey] = { open: '', close: '', closed: true }
+          console.log(`[HOURS] Day ${day}: CLOSED`)
         } else if (dayHours && typeof dayHours === 'string') {
           const [open, close] = dayHours.split('-')
           grid[dayKey] = { open: open || '', close: close || '', closed: false }
+          console.log(`[HOURS] Day ${day}: ${open} - ${close}`)
         }
       }
+      console.log('[HOURS] Final grid:', grid)
     } catch (e) {
       console.error('Failed to parse opening_hours:', e)
     }

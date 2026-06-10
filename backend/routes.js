@@ -496,7 +496,9 @@ export function setupRoutes(app) {
 
         // Parse opening_hours from Google format to app format
         let openingHours = '';
+        console.log('[LOOKUP] result.opening_hours:', result.opening_hours);
         if (result.opening_hours && result.opening_hours.periods) {
+          console.log('[LOOKUP] Found periods:', result.opening_hours.periods.length);
           const hoursObj = {};
           // Initialize all days as CLOSED
           for (let i = 0; i < 7; i++) {
@@ -505,15 +507,21 @@ export function setupRoutes(app) {
 
           // Map Google's periods to our format
           result.opening_hours.periods.forEach(period => {
-            if (period.open && period.close) {
+            if (period.open && period.close && period.open.time && period.close.time) {
               const day = period.open.day;
-              const openTime = period.open.time.slice(0, 2) + ':' + period.open.time.slice(2, 4);
-              const closeTime = period.close.time.slice(0, 2) + ':' + period.close.time.slice(2, 4);
+              const openTime = period.open.time.padStart(4, '0').slice(0, 2) + ':' + period.open.time.padStart(4, '0').slice(2, 4);
+              const closeTime = period.close.time.padStart(4, '0').slice(0, 2) + ':' + period.close.time.padStart(4, '0').slice(2, 4);
               hoursObj[day.toString()] = `${openTime}-${closeTime}`;
+              console.log(`[LOOKUP] Day ${day}: ${openTime}-${closeTime}`);
+            } else {
+              console.log('[LOOKUP] Skipping period - missing data:', { period, hasOpen: !!period.open, hasClose: !!period.close });
             }
           });
 
           openingHours = JSON.stringify(hoursObj);
+          console.log('[LOOKUP] Final openingHours JSON:', openingHours);
+        } else {
+          console.log('[LOOKUP] No opening_hours or periods found in Google response');
         }
 
         // Convert Google price_level (1-4) to $ format
