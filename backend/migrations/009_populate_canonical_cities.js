@@ -15,18 +15,62 @@ async function getCanonicalCity(latitude, longitude) {
     const data = await response.json();
 
     if (data.results && data.results.length > 0) {
-      // Look for the city/municipality in the address components
+      let city = null;
+
+      // Priority 1: Look for actual city/locality names (e.g., "Athens", "Aegina")
       for (const component of data.results[0].address_components) {
-        if (component.types.includes('locality') || component.types.includes('administrative_area_level_2')) {
-          return component.long_name;
+        if (component.types.includes('locality')) {
+          city = component.long_name;
+          break;
         }
       }
-      // Fallback to administrative area level 1 if city not found
-      for (const component of data.results[0].address_components) {
-        if (component.types.includes('administrative_area_level_1')) {
-          return component.long_name;
+
+      // Priority 2: Look for administrative area level 2 (prefecture/municipality)
+      if (!city) {
+        for (const component of data.results[0].address_components) {
+          if (component.types.includes('administrative_area_level_2')) {
+            city = component.long_name;
+            break;
+          }
         }
       }
+
+      // Priority 3: Look for administrative area level 3 (smaller districts)
+      if (!city) {
+        for (const component of data.results[0].address_components) {
+          if (component.types.includes('administrative_area_level_3')) {
+            city = component.long_name;
+            break;
+          }
+        }
+      }
+
+      // Priority 4: Fallback to administrative area level 1 (region/state)
+      if (!city) {
+        for (const component of data.results[0].address_components) {
+          if (component.types.includes('administrative_area_level_1')) {
+            city = component.long_name;
+            break;
+          }
+        }
+      }
+
+      // Post-processing: Map known Athens suburbs to "Athina"
+      if (city === 'Kesariani') {
+        city = 'Athina';
+      }
+
+      // Post-processing: Map known island districts to island names
+      if (city === 'Portes') {
+        city = 'Aegina';
+      }
+
+      // Normalize Greek spellings to English
+      if (city === 'Egina') {
+        city = 'Aegina';
+      }
+
+      return city;
     }
     return null;
   } catch (error) {
