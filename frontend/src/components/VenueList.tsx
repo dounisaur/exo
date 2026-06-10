@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Phone, MapPin, Star, X } from 'lucide-react'
+import { Phone, MapPin, Star, X, Banknote } from 'lucide-react'
 import Map from './Map'
 import type { Venue, Category } from '../types'
 
@@ -87,6 +87,16 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </span>
           </div>
 
+          {/* Price Guide */}
+          {getPriceDisplay(venue) && (
+            <div className="flex items-center gap-2 mb-3">
+              <Banknote size={16} className="text-gray-400" />
+              <span className="text-sm text-green-600">
+                {getPriceDisplay(venue)}
+              </span>
+            </div>
+          )}
+
           {/* Address */}
           {venue.address && (
             <div className="flex items-start gap-2 mb-3 text-sm text-gray-600">
@@ -102,51 +112,38 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </div>
           )}
 
-          {/* Rating & Price */}
-          <div className="mb-4">
-            {/* Rating */}
-            {venue.rating && (
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex gap-1">
-                  {[...Array(5)].map((_, i) => {
-                    const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
-                    return (
-                      <div key={i} className="relative">
+          {/* Rating */}
+          {venue.rating && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex gap-1">
+                {[...Array(5)].map((_, i) => {
+                  const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
+                  return (
+                    <div key={i} className="relative">
+                      <Star
+                        size={16}
+                        className="text-gray-300"
+                        fill="currentColor"
+                      />
+                      <div
+                        className="absolute top-0 left-0 overflow-hidden text-yellow-400"
+                        style={{ width: `${fillPercentage * 100}%` }}
+                      >
                         <Star
                           size={16}
-                          className="text-gray-300"
+                          className="text-yellow-400"
                           fill="currentColor"
                         />
-                        <div
-                          className="absolute top-0 left-0 overflow-hidden text-yellow-400"
-                          style={{ width: `${fillPercentage * 100}%` }}
-                        >
-                          <Star
-                            size={16}
-                            className="text-yellow-400"
-                            fill="currentColor"
-                          />
-                        </div>
                       </div>
-                    )
-                  })}
-                </div>
-                <span className="text-sm font-medium text-gray-700 ml-1">
-                  {venue.rating.toFixed(1)}
-                </span>
+                    </div>
+                  )
+                })}
               </div>
-            )}
-
-            {/* Price */}
-            {getPriceDisplay(venue) && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Price Guide:</span>
-                <span className="text-sm font-bold text-green-600">
-                  {getPriceDisplay(venue)}
-                </span>
-              </div>
-            )}
-          </div>
+              <span className="text-sm font-medium text-gray-700 ml-1">
+                {venue.rating.toFixed(1)}
+              </span>
+            </div>
+          )}
 
           {/* Links */}
           <div className="flex flex-wrap gap-2">
