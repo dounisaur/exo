@@ -31,6 +31,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [googleMapsLink, setGoogleMapsLink] = useState('')
 
   // Venue search and filter state
+  const [showVenueSearchFilters, setShowVenueSearchFilters] = useState(false)
   const [venueSearchQuery, setVenueSearchQuery] = useState('')
   const [venueFilterCategory, setVenueFilterCategory] = useState<string>('')
   const [venueFilterSubcategory, setVenueFilterSubcategory] = useState<number | null>(null)
@@ -834,10 +835,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     <span>Add Venue</span>
                   </button>
                   <button
-                    onClick={() => {
-                      resetVenueForm()
-                      setShowVenueSheet(true)
-                    }}
+                    onClick={() => setShowVenueSearchFilters(!showVenueSearchFilters)}
                     className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
                   >
                     <Search size={18} />
@@ -846,69 +844,71 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 </div>
               </div>
 
-              {/* Search and Filters */}
-              <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
-                <div className="flex items-stretch gap-2">
-                  {/* Search */}
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      placeholder="Search venues by name..."
-                      value={venueSearchQuery}
-                      onChange={(e) => setVenueSearchQuery(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    />
-                  </div>
-                  {/* Clear Button */}
-                  {(venueSearchQuery || venueFilterCategory || venueFilterSubcategory) && (
-                    <button
-                      onClick={() => {
-                        setVenueSearchQuery('')
-                        setVenueFilterCategory('')
-                        setVenueFilterSubcategory(null)
-                      }}
-                      className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-
-                {/* Category and Subcategory Filters */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Category</label>
-                    <select
-                      value={venueFilterCategory}
-                      onChange={(e) => {
-                        setVenueFilterCategory(e.target.value)
-                        setVenueFilterSubcategory(null)
-                      }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
-                    >
-                      <option value="">All Categories</option>
-                      {categories.map(cat => (
-                        <option key={cat.id} value={cat.slug}>{cat.name}</option>
-                      ))}
-                    </select>
+              {/* Search and Filters - Only show when search is active */}
+              {showVenueSearchFilters && (
+                <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                  <div className="flex items-stretch gap-2">
+                    {/* Search */}
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        placeholder="Search venues by name..."
+                        value={venueSearchQuery}
+                        onChange={(e) => setVenueSearchQuery(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      />
+                    </div>
+                    {/* Clear Button */}
+                    {(venueSearchQuery || venueFilterCategory || venueFilterSubcategory) && (
+                      <button
+                        onClick={() => {
+                          setVenueSearchQuery('')
+                          setVenueFilterCategory('')
+                          setVenueFilterSubcategory(null)
+                        }}
+                        className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors whitespace-nowrap"
+                      >
+                        Clear
+                      </button>
+                    )}
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Subcategory</label>
-                    <select
-                      value={venueFilterSubcategory || ''}
-                      onChange={(e) => setVenueFilterSubcategory(e.target.value ? parseInt(e.target.value) : null)}
-                      disabled={!venueFilterCategory}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    >
-                      <option value="">All Subcategories</option>
-                      {venueFilterCategory && getCategoryById(venueFilterCategory)?.subcategories.map(subcat => (
-                        <option key={subcat.id} value={subcat.id}>{subcat.name}</option>
-                      ))}
-                    </select>
+                  {/* Category and Subcategory Filters */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Category</label>
+                      <select
+                        value={venueFilterCategory}
+                        onChange={(e) => {
+                          setVenueFilterCategory(e.target.value)
+                          setVenueFilterSubcategory(null)
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm"
+                      >
+                        <option value="">All Categories</option>
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase">Subcategory</label>
+                      <select
+                        value={venueFilterSubcategory || ''}
+                        onChange={(e) => setVenueFilterSubcategory(e.target.value ? parseInt(e.target.value) : null)}
+                        disabled={!venueFilterCategory}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                      >
+                        <option value="">All Subcategories</option>
+                        {venueFilterCategory && getCategoryById(venueFilterCategory)?.subcategories.map(subcat => (
+                          <option key={subcat.id} value={subcat.id}>{subcat.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid gap-4">
                 {loading && !showVenueSheet ? (
