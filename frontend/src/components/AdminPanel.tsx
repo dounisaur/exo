@@ -128,7 +128,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   // Comments state
   const [comments, setComments] = useState<VenueComment[]>([])
   const [newComment, setNewComment] = useState('')
-  const [commentsLoading, setCommentsLoading] = useState(false)
 
   // Category sheet state
   const [showCategorySheet, setShowCategorySheet] = useState(false)
@@ -496,7 +495,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   }
 
   const fetchComments = async (venueId: number) => {
-    setCommentsLoading(true)
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues/${venueId}/comments`, {
         headers: { 'Authorization': `Bearer ${authToken}` }
@@ -507,8 +505,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     } catch (error) {
       console.error('Error fetching comments:', error)
       setComments([])
-    } finally {
-      setCommentsLoading(false)
     }
   }
 
