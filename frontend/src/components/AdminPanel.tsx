@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Eye as EyeIcon } from 'lucide-react'
+import { Plus, Edit2, Eye as EyeIcon, Search } from 'lucide-react'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, User } from '../types'
 
@@ -822,16 +822,28 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">Venues</h2>
-                <button
-                  onClick={() => {
-                    resetVenueForm()
-                    setShowVenueSheet(true)
-                  }}
-                  className="btn-primary flex items-center gap-2"
-                >
-                  <Plus size={18} />
-                  <span>Add Venue</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => {
+                      resetVenueForm()
+                      setShowVenueSheet(true)
+                    }}
+                    className="btn-primary flex items-center gap-2"
+                  >
+                    <Plus size={18} />
+                    <span>Add Venue</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      resetVenueForm()
+                      setShowVenueSheet(true)
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg font-medium transition-colors"
+                  >
+                    <Search size={18} />
+                    <span>Search</span>
+                  </button>
+                </div>
               </div>
 
               {/* Search and Filters */}
