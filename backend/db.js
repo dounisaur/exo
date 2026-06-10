@@ -51,6 +51,22 @@ try {
 }
 
 export async function initDb() {
+  // SAFETY: Never auto-run migrations on production unless explicitly enabled
+  const isProduction = process.env.ENVIRONMENT === 'production' ||
+                       process.env.NODE_ENV === 'production' ||
+                       process.env.RENDER === 'true'; // Render sets this automatically
+
+  if (isProduction) {
+    const allowMigrations = process.env.ALLOW_MIGRATIONS === 'true';
+    if (!allowMigrations) {
+      console.log('[DB] Production environment detected. Migrations disabled.');
+      console.log('[DB] To enable migrations, set ALLOW_MIGRATIONS=true');
+      seedDefaultUser();
+      return;
+    }
+    console.warn('[DB] WARNING: Running migrations on production. Data backup recommended.');
+  }
+
   await runMigrations(db);
   seedDefaultUser();
 }
