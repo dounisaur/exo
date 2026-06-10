@@ -1365,29 +1365,29 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Price Range ($-$$$$)</label>
-                    <select
-                      name="price_range"
-                      value={formData.price_range}
-                      onChange={(e) => setFormData(prev => ({ ...prev, price_range: e.target.value }))}
-                      className="input-field"
-                    >
-                      <option value="">Not specified</option>
-                      <option value="$">$ - Budget</option>
-                      <option value="$$">$$ - Moderate</option>
-                      <option value="$$$">$$$ - Expensive</option>
-                      <option value="$$$$">$$$$ - Very Expensive</option>
-                    </select>
-                  </div>
+                  {!formData.price_level ? (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Price Range ($-$$$$)</label>
+                      <select
+                        name="price_range"
+                        value={formData.price_range}
+                        onChange={(e) => setFormData(prev => ({ ...prev, price_range: e.target.value }))}
+                        className="input-field"
+                      >
+                        <option value="">Not specified</option>
+                        <option value="$">$ - Budget</option>
+                        <option value="$$">$$ - Moderate</option>
+                        <option value="$$$">$$$ - Expensive</option>
+                        <option value="$$$$">$$$$ - Very Expensive</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                      <p className="text-xs font-medium text-blue-700 mb-1">Google Price Level</p>
+                      <p className="text-sm font-semibold text-blue-900">{formData.price_level} ({['', '$', '$$', '$$$', '$$$$'][parseInt(formData.price_level)] || 'Unknown'})</p>
+                    </div>
+                  )}
                 </div>
-
-                {formData.price_level && (
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                    <p className="text-xs font-medium text-blue-700 mb-1">Google Price Level</p>
-                    <p className="text-sm font-semibold text-blue-900">{formData.price_level} ({['', '$', '$$', '$$$', '$$$$'][parseInt(formData.price_level)] || 'Unknown'})</p>
-                  </div>
-                )}
               </div>
             </div>
 

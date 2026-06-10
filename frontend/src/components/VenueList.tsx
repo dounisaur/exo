@@ -38,6 +38,19 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
     }
   }
 
+  const getPriceDisplay = (venue: Venue): string | null => {
+    // Prefer Google price_level if available
+    if ((venue as any).price_level) {
+      const level = parseInt((venue as any).price_level)
+      return '$'.repeat(level)
+    }
+    // Fall back to manual price_range
+    if (venue.price_range) {
+      return venue.price_range
+    }
+    return null
+  }
+
   if (venues.length === 0) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -89,38 +102,48 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </div>
           )}
 
-          {/* Rating */}
-          {venue.rating && (
-            <div className="flex items-center gap-2 mb-4">
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, i) => {
-                  const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
-                  return (
-                    <div key={i} className="relative">
-                      <Star
-                        size={16}
-                        className="text-gray-300"
-                        fill="currentColor"
-                      />
-                      <div
-                        className="absolute top-0 left-0 overflow-hidden text-yellow-400"
-                        style={{ width: `${fillPercentage * 100}%` }}
-                      >
+          {/* Rating & Price */}
+          <div className="flex items-center justify-between mb-4">
+            {/* Rating */}
+            {venue.rating && (
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {[...Array(5)].map((_, i) => {
+                    const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
+                    return (
+                      <div key={i} className="relative">
                         <Star
                           size={16}
-                          className="text-yellow-400"
+                          className="text-gray-300"
                           fill="currentColor"
                         />
+                        <div
+                          className="absolute top-0 left-0 overflow-hidden text-yellow-400"
+                          style={{ width: `${fillPercentage * 100}%` }}
+                        >
+                          <Star
+                            size={16}
+                            className="text-yellow-400"
+                            fill="currentColor"
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
+                <span className="text-sm font-medium text-gray-700 ml-1">
+                  {venue.rating.toFixed(1)}
+                </span>
               </div>
-              <span className="text-sm font-medium text-gray-700 ml-1">
-                {venue.rating.toFixed(1)}
+            )}
+
+            {/* Price */}
+            {getPriceDisplay(venue) && (
+              <span className="text-sm font-bold text-amber-600">
+                {getPriceDisplay(venue)}
               </span>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Links */}
           <div className="flex flex-wrap gap-2">
