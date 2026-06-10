@@ -3,7 +3,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { getDb } from './db.js';
+import { pool } from './db.js';
 import { authenticateToken, requireAdmin, JWT_SECRET } from './auth.js';
 import { generateItinerary } from './itinerary.js';
 
@@ -20,19 +20,17 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     cb(null, file.mimetype.startsWith('image/'));
   }
 });
 
 export function setupRoutes(app) {
-  const db = getDb();
-
   // ===== AUTH ENDPOINTS =====
 
   // Login endpoint
-  app.post('/api/auth/login', (req, res) => {
+  app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
@@ -40,19 +38,10 @@ export function setupRoutes(app) {
     }
 
     try {
-      const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-      console.log(`[AUTH] Login attempt for ${username}, user found:`, !!user, user ? { id: user.id, username: user.username, role: user.role } : null);
+      const { rows } = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+      const user = rows[0];
 
-      if (!user) {
-        console.log(`[AUTH] User not found: ${username}`);
-        return res.status(401).json({ error: 'Invalid credentials' });
-      }
-
-      const passwordMatch = bcrypt.compareSync(password, user.password_hash);
-      console.log(`[AUTH] Password match for ${username}:`, passwordMatch);
-
-      if (!passwordMatch) {
-        console.log(`[AUTH] Password mismatch for ${username}`);
+      if (!user || !bcrypt.compareSync(password, user.password_hash)) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
 
@@ -64,7 +53,7 @@ export function setupRoutes(app) {
   });
 
   // Register endpoint (admin only)
-  app.post('/api/auth/register', authenticateToken, requireAdmin, (req, res) => {
+  app.post('/api/auth/register', authenticateToken, requireAdmin, async (req, res) => {
     const { username, password, role } = req.body;
 
     if (!username || !password) {
@@ -77,10 +66,13 @@ export function setupRoutes(app) {
 
     try {
       const passwordHash = bcrypt.hashSync(password, 10);
-      const result = db.prepare('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)').run(username, passwordHash, role);
-      res.status(201).json({ id: result.lastInsertRowid, username, role });
+      const { rows } = await pool.query(
+        'INSERT INTO users (username, password_hash, role) VALUES ($1, $2, $3) RETURNING id',
+        [username, passwordHash, role]
+      );
+      res.status(201).json({ id: rows[0].id, username, role });
     } catch (err) {
-      if (err.message.includes('UNIQUE')) {
+      if (err.code === '23505') {
         return res.status(400).json({ error: 'Username already exists' });
       }
       res.status(500).json({ error: err.message });
@@ -88,10 +80,10 @@ export function setupRoutes(app) {
   });
 
   // Get current user
-  app.get('/api/auth/me', authenticateToken, (req, res) => {
+  app.get('/api/auth/me', authenticateToken, async (req, res) => {
     try {
-      const user = db.prepare('SELECT id, username, role FROM users WHERE id = ?').get(req.user.id);
-      res.json(user);
+      const { rows } = await pool.query('SELECT id, username, role FROM users WHERE id = $1', [req.user.id]);
+      res.json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -100,11 +92,11 @@ export function setupRoutes(app) {
   // ===== USER MANAGEMENT ENDPOINTS (admin only) =====
 
   // List all users
-  app.get('/api/users', authenticateToken, requireAdmin, (req, res) => {
+  app.get('/api/users', authenticateToken, requireAdmin, async (req, res) => {
     try {
-      const users = db.prepare(
+      const { rows: users } = await pool.query(
         'SELECT id, username, role, created_at FROM users ORDER BY created_at DESC'
-      ).all();
+      );
       res.json(users);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -112,14 +104,14 @@ export function setupRoutes(app) {
   });
 
   // Delete a user (cannot delete yourself)
-  app.delete('/api/users/:id', authenticateToken, requireAdmin, (req, res) => {
+  app.delete('/api/users/:id', authenticateToken, requireAdmin, async (req, res) => {
     const targetId = parseInt(req.params.id);
     if (targetId === req.user.id) {
       return res.status(400).json({ error: 'Cannot delete your own account' });
     }
     try {
-      const result = db.prepare('DELETE FROM users WHERE id = ?').run(targetId);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('DELETE FROM users WHERE id = $1', [targetId]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'User not found' });
       }
       res.json({ success: true });
@@ -129,7 +121,7 @@ export function setupRoutes(app) {
   });
 
   // Update user password (admin only)
-  app.put('/api/users/:id', authenticateToken, requireAdmin, (req, res) => {
+  app.put('/api/users/:id', authenticateToken, requireAdmin, async (req, res) => {
     const targetId = parseInt(req.params.id);
     const { password } = req.body;
 
@@ -139,8 +131,8 @@ export function setupRoutes(app) {
 
     try {
       const passwordHash = bcrypt.hashSync(password, 10);
-      const result = db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(passwordHash, targetId);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [passwordHash, targetId]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'User not found' });
       }
       res.json({ success: true });
@@ -152,14 +144,15 @@ export function setupRoutes(app) {
   // ===== CATEGORY ENDPOINTS =====
 
   // Get all categories with subcategories (public)
-  app.get('/api/categories', (req, res) => {
+  app.get('/api/categories', async (req, res) => {
     try {
-      const categories = db.prepare('SELECT * FROM categories ORDER BY name').all();
+      const { rows: categories } = await pool.query('SELECT * FROM categories ORDER BY name');
 
-      const result = categories.map(cat => {
-        const subcategories = db.prepare('SELECT * FROM subcategories WHERE category_id = ? ORDER BY name').all(cat.id);
-        return { ...cat, subcategories };
-      });
+      const result = [];
+      for (const cat of categories) {
+        const { rows: subcategories } = await pool.query('SELECT * FROM subcategories WHERE category_id = $1 ORDER BY name', [cat.id]);
+        result.push({ ...cat, subcategories });
+      }
 
       res.json(result);
     } catch (err) {
@@ -168,7 +161,7 @@ export function setupRoutes(app) {
   });
 
   // Create category (admin)
-  app.post('/api/categories', authenticateToken, (req, res) => {
+  app.post('/api/categories', authenticateToken, async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -178,10 +171,13 @@ export function setupRoutes(app) {
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
     try {
-      const result = db.prepare('INSERT INTO categories (name, slug) VALUES (?, ?)').run(name, slug);
-      res.status(201).json({ id: result.lastInsertRowid, name, slug, subcategories: [] });
+      const { rows } = await pool.query(
+        'INSERT INTO categories (name, slug) VALUES ($1, $2) RETURNING id',
+        [name, slug]
+      );
+      res.status(201).json({ id: rows[0].id, name, slug, subcategories: [] });
     } catch (err) {
-      if (err.message.includes('UNIQUE')) {
+      if (err.code === '23505') {
         return res.status(400).json({ error: 'Category already exists' });
       }
       res.status(500).json({ error: err.message });
@@ -189,7 +185,7 @@ export function setupRoutes(app) {
   });
 
   // Update category (admin)
-  app.put('/api/categories/:id', authenticateToken, (req, res) => {
+  app.put('/api/categories/:id', authenticateToken, async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -199,13 +195,13 @@ export function setupRoutes(app) {
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
     try {
-      const result = db.prepare('UPDATE categories SET name = ?, slug = ? WHERE id = ?').run(name, slug, req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('UPDATE categories SET name = $1, slug = $2 WHERE id = $3', [name, slug, req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Category not found' });
       }
       res.json({ id: req.params.id, name, slug });
     } catch (err) {
-      if (err.message.includes('UNIQUE')) {
+      if (err.code === '23505') {
         return res.status(400).json({ error: 'Category name already exists' });
       }
       res.status(500).json({ error: err.message });
@@ -213,10 +209,10 @@ export function setupRoutes(app) {
   });
 
   // Delete category (admin)
-  app.delete('/api/categories/:id', authenticateToken, (req, res) => {
+  app.delete('/api/categories/:id', authenticateToken, async (req, res) => {
     try {
-      const result = db.prepare('DELETE FROM categories WHERE id = ?').run(req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('DELETE FROM categories WHERE id = $1', [req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Category not found' });
       }
       res.json({ success: true });
@@ -228,7 +224,7 @@ export function setupRoutes(app) {
   // ===== SUBCATEGORY ENDPOINTS =====
 
   // Create subcategory (admin)
-  app.post('/api/categories/:id/subcategories', authenticateToken, (req, res) => {
+  app.post('/api/categories/:id/subcategories', authenticateToken, async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -238,10 +234,13 @@ export function setupRoutes(app) {
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
     try {
-      const result = db.prepare('INSERT INTO subcategories (category_id, name, slug) VALUES (?, ?, ?)').run(req.params.id, name, slug);
-      res.status(201).json({ id: result.lastInsertRowid, category_id: parseInt(req.params.id), name, slug });
+      const { rows } = await pool.query(
+        'INSERT INTO subcategories (category_id, name, slug) VALUES ($1, $2, $3) RETURNING id',
+        [req.params.id, name, slug]
+      );
+      res.status(201).json({ id: rows[0].id, category_id: parseInt(req.params.id), name, slug });
     } catch (err) {
-      if (err.message.includes('UNIQUE')) {
+      if (err.code === '23505') {
         return res.status(400).json({ error: 'Subcategory already exists for this category' });
       }
       res.status(500).json({ error: err.message });
@@ -249,7 +248,7 @@ export function setupRoutes(app) {
   });
 
   // Update subcategory (admin)
-  app.put('/api/subcategories/:id', authenticateToken, (req, res) => {
+  app.put('/api/subcategories/:id', authenticateToken, async (req, res) => {
     const { name } = req.body;
 
     if (!name) {
@@ -259,13 +258,13 @@ export function setupRoutes(app) {
     const slug = name.toLowerCase().replace(/\s+/g, '-');
 
     try {
-      const result = db.prepare('UPDATE subcategories SET name = ?, slug = ? WHERE id = ?').run(name, slug, req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('UPDATE subcategories SET name = $1, slug = $2 WHERE id = $3', [name, slug, req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Subcategory not found' });
       }
       res.json({ id: req.params.id, name, slug });
     } catch (err) {
-      if (err.message.includes('UNIQUE')) {
+      if (err.code === '23505') {
         return res.status(400).json({ error: 'Subcategory name already exists for this category' });
       }
       res.status(500).json({ error: err.message });
@@ -273,14 +272,12 @@ export function setupRoutes(app) {
   });
 
   // Delete subcategory (admin)
-  app.delete('/api/subcategories/:id', authenticateToken, (req, res) => {
+  app.delete('/api/subcategories/:id', authenticateToken, async (req, res) => {
     try {
-      // First, clear subcategory_id from venues that reference this subcategory
-      db.prepare('UPDATE venues SET subcategory_id = NULL WHERE subcategory_id = ?').run(req.params.id);
+      await pool.query('UPDATE venues SET subcategory_id = NULL WHERE subcategory_id = $1', [req.params.id]);
 
-      // Then delete the subcategory
-      const result = db.prepare('DELETE FROM subcategories WHERE id = ?').run(req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('DELETE FROM subcategories WHERE id = $1', [req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Subcategory not found' });
       }
       res.json({ success: true });
@@ -306,12 +303,12 @@ export function setupRoutes(app) {
       const extractCoordinates = (text) => {
         // Try various patterns
         const patterns = [
-          /[?&@]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,                    // ?q=lat,lng
-          /@(-?\d+\.?\d*),(-?\d+\.?\d*),\d+z/,                      // /@lat,lng,zoom
-          /\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,                   // /maps/@lat,lng
-          /[\?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/,                // ?center=lat,lng
-          /center["\s]*:\s*{[^}]*lat["\s]*:\s*(-?\d+\.?\d*)[^}]*lng["\s]*:\s*(-?\d+\.?\d*)/,  // JSON lat/lng
-          /"lat"\s*:\s*(-?\d+\.?\d*)[^}]*"lng"\s*:\s*(-?\d+\.?\d*)/,  // JSON format
+          /[?&@]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+          /@(-?\d+\.?\d*),(-?\d+\.?\d*),\d+z/,
+          /\/maps\/@(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+          /[\?&]center=(-?\d+\.?\d*),(-?\d+\.?\d*)/,
+          /center["\s]*:\s*{[^}]*lat["\s]*:\s*(-?\d+\.?\d*)[^}]*lng["\s]*:\s*(-?\d+\.?\d*)/,
+          /"lat"\s*:\s*(-?\d+\.?\d*)[^}]*"lng"\s*:\s*(-?\d+\.?\d*)/,
         ]
 
         for (const pattern of patterns) {
@@ -328,7 +325,7 @@ export function setupRoutes(app) {
         return null
       }
 
-      // First try direct extraction (works for full URLs)
+      // First try direct extraction
       let coords = extractCoordinates(url)
       if (coords) {
         console.log('[MAPS] Success: extracted from URL directly')
@@ -336,7 +333,6 @@ export function setupRoutes(app) {
       }
 
       // If direct extraction failed, try to follow the redirect
-      // (useful for shortened links like maps.app.goo.gl/...)
       console.log('[MAPS] Direct extraction failed, following redirect...')
 
       const controller = new AbortController()
@@ -355,7 +351,6 @@ export function setupRoutes(app) {
         console.log('[MAPS] Redirect response status:', response.status, 'URL:', response.url)
 
         const html = await response.text()
-        console.log('[MAPS] Response text length:', html.length)
 
         // Extract from final URL
         coords = extractCoordinates(response.url)
@@ -372,29 +367,6 @@ export function setupRoutes(app) {
         }
 
         console.log('[MAPS] Failed to extract coordinates from URL')
-
-        // Fallback: try Google Places text search with address if provided
-        if (address && address.trim()) {
-          console.log('[MAPS] Trying Places API text search with address:', address)
-          try {
-            const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(address)}&key=${apiKey}`
-            const placesResponse = await fetch(textSearchUrl, { signal: controller.signal })
-            const placesData = await placesResponse.json()
-
-            if (placesData.results && placesData.results.length > 0) {
-              const firstResult = placesData.results[0]
-              const lat = firstResult.geometry?.location?.lat
-              const lng = firstResult.geometry?.location?.lng
-              if (lat && lng) {
-                console.log('[MAPS] Success: extracted from Places API:', { lat, lng })
-                clearTimeout(timeoutId)
-                return res.json({ lat, lng })
-              }
-            }
-          } catch (placesError) {
-            console.error('[MAPS] Places API fallback failed:', placesError.message)
-          }
-        }
 
         res.status(400).json({ error: 'Could not extract coordinates from link. Try using a full Google Maps link instead of a shortened one, or enter the address and coordinates manually.' })
       } catch (fetchError) {
@@ -413,7 +385,6 @@ export function setupRoutes(app) {
 
   // ===== ITINERARY ENDPOINTS =====
 
-  // Generate itinerary (public)
   app.post('/api/itinerary/generate', generateItinerary);
 
   // ===== VENUE ENDPOINTS =====
@@ -428,9 +399,9 @@ export function setupRoutes(app) {
   });
 
   // Get all venues for admin (all statuses)
-  app.get('/api/admin/venues', authenticateToken, (req, res) => {
+  app.get('/api/admin/venues', authenticateToken, async (req, res) => {
     try {
-      const rows = db.prepare('SELECT * FROM venues ORDER BY created_at DESC').all();
+      const { rows } = await pool.query('SELECT * FROM venues ORDER BY created_at DESC');
       console.log('Fetched venues:', rows ? rows.length : 0, 'venues');
       res.json(rows || []);
     } catch (err) {
@@ -440,34 +411,34 @@ export function setupRoutes(app) {
   });
 
   // Get published venues with optional filters (public API)
-  app.get('/api/venues', (req, res) => {
+  app.get('/api/venues', async (req, res) => {
     try {
       const { category, lat, lng, radiusMin, radiusMax } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
+      let paramIndex = 1;
 
       if (category) {
-        query += ' AND category = ?';
+        query += ` AND category = $${paramIndex++}`;
         params.push(category);
       }
 
       if (lat && lng) {
-        // Haversine distance formula for accurate distance calculation
-        // radiusMin and radiusMax are in meters, convert to km
         const radiusMinKm = radiusMin ? parseFloat(radiusMin) / 1000 : 0;
         const radiusMaxKm = radiusMax ? parseFloat(radiusMax) / 1000 : 100;
 
         query += ` AND (
           6371 * acos(
-            cos(radians(?)) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians(?)) +
-            sin(radians(?)) * sin(radians(latitude))
+            cos(radians($${paramIndex})) * cos(radians(latitude)) *
+            cos(radians(longitude) - radians($${paramIndex + 1})) +
+            sin(radians($${paramIndex})) * sin(radians(latitude))
           )
-        ) BETWEEN ? AND ?`;
+        ) BETWEEN $${paramIndex + 2} AND $${paramIndex + 3}`;
         params.push(lat, lng, lat, radiusMinKm, radiusMaxKm);
+        paramIndex += 4;
       }
 
-      const rows = db.prepare(query).all(...params);
+      const { rows } = await pool.query(query, params);
       res.json(rows);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -475,124 +446,23 @@ export function setupRoutes(app) {
   });
 
   // Get single venue
-  app.get('/api/venues/:id', (req, res) => {
+  app.get('/api/venues/:id', async (req, res) => {
     try {
-      const row = db.prepare('SELECT * FROM venues WHERE id = ?').get(req.params.id);
-      if (!row) {
+      const { rows } = await pool.query('SELECT * FROM venues WHERE id = $1', [req.params.id]);
+      if (rows.length === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
-      res.json(row);
+      res.json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
   });
 
-  // Search venue by name (admin)
-  app.post('/api/venues/lookup', authenticateToken, async (req, res) => {
-    const { query, placeId } = req.body;
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-
-    if (!query && !placeId) {
-      return res.status(400).json({ error: 'Query required' });
-    }
-
-    if (!apiKey) {
-      return res.status(500).json({ error: 'API key not configured' });
-    }
-
-    try {
-      // Helper function to extract all 7 days of opening hours
-      const getAllHours = (openingHours) => {
-        const hours = {};
-
-        // Initialize all days as CLOSED
-        for (let day = 0; day < 7; day++) {
-          hours[day.toString()] = 'CLOSED';
-        }
-
-        if (!openingHours || !openingHours.periods) {
-          return JSON.stringify(hours);
-        }
-
-        // Convert time from "0900" format to "09:00"
-        const formatTime = (timeStr) => {
-          if (!timeStr || timeStr.length !== 4) return null;
-          return `${timeStr.slice(0, 2)}:${timeStr.slice(2, 4)}`;
-        };
-
-        // Group periods by day and extract hours
-        for (const period of openingHours.periods) {
-          if (period.open && period.open.day !== undefined && period.close) {
-            const day = period.open.day.toString();
-            const openTime = formatTime(period.open.time);
-            const closeTime = formatTime(period.close.time);
-
-            if (openTime && closeTime) {
-              hours[day] = `${openTime}-${closeTime}`;
-            }
-          }
-        }
-
-        return JSON.stringify(hours);
-      };
-
-      // If placeId is provided, fetch details for that specific place
-      if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours&key=${apiKey}`;
-        const detailsResponse = await fetch(detailsUrl);
-        const detailsData = await detailsResponse.json();
-
-        if (!detailsData.result || detailsData.status !== 'OK') {
-          return res.json({ results: [] });
-        }
-
-        const result = detailsData.result;
-        const openingHours = getAllHours(result.opening_hours);
-
-        return res.json({
-          results: [{
-            name: result.name || '',
-            address: result.formatted_address || '',
-            latitude: result.geometry?.location?.lat || null,
-            longitude: result.geometry?.location?.lng || null,
-            website_url: result.website || '',
-            phone: result.formatted_phone_number || '',
-            opening_hours: openingHours
-          }]
-        });
-      }
-
-      // Use Text Search API to find restaurants by name
-      const textSearchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(query)}&type=restaurant&key=${apiKey}`;
-      const searchResponse = await fetch(textSearchUrl);
-      const searchData = await searchResponse.json();
-
-      if (!searchData.results || searchData.results.length === 0) {
-        return res.json({ results: [] });
-      }
-
-      // Return results with place_id for later detail fetching
-      const results = searchData.results.map(place => ({
-        place_id: place.place_id,
-        name: place.name || '',
-        address: place.formatted_address || '',
-        latitude: place.geometry?.location?.lat || null,
-        longitude: place.geometry?.location?.lng || null
-      }));
-
-      res.json({ results });
-    } catch (error) {
-      console.error('Places API error:', error);
-      res.json({ results: [] });
-    }
-  });
-
   // Create venue (admin)
-  app.post('/api/venues', authenticateToken, (req, res) => {
+  app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
       const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
 
-      // Validate required fields
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
       }
@@ -604,7 +474,6 @@ export function setupRoutes(app) {
         return res.status(400).json({ error: 'Invalid latitude or longitude' });
       }
 
-      // Validate rating if provided
       let parsedRating = null;
       if (rating !== undefined && rating !== null && rating !== '') {
         parsedRating = parseFloat(rating);
@@ -614,12 +483,13 @@ export function setupRoutes(app) {
       }
 
       console.log('Creating venue:', name);
-      const result = db.prepare(
+      const { rows } = await pool.query(
         `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null);
-      console.log('Venue created with ID:', result.lastInsertRowid);
-      res.status(201).json({ id: result.lastInsertRowid });
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null]
+      );
+      console.log('Venue created with ID:', rows[0].id);
+      res.status(201).json({ id: rows[0].id });
     } catch (err) {
       console.error('Error inserting venue:', err);
       res.status(500).json({ error: err.message });
@@ -627,7 +497,7 @@ export function setupRoutes(app) {
   });
 
   // Update venue (admin)
-  app.put('/api/venues/:id', authenticateToken, (req, res) => {
+  app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
       const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, opening_hours } = req.body;
 
@@ -642,7 +512,6 @@ export function setupRoutes(app) {
         return res.status(400).json({ error: 'Invalid latitude or longitude' });
       }
 
-      // Validate rating if provided
       let parsedRating = null;
       if (rating !== undefined && rating !== null && rating !== '') {
         parsedRating = parseFloat(rating);
@@ -651,11 +520,12 @@ export function setupRoutes(app) {
         }
       }
 
-      const result = db.prepare(
-        `UPDATE venues SET name=?, category=?, subcategory_id=?, latitude=?, longitude=?, address=?, image_url=?, website_url=?, phone_number=?, reservation_link=?, rating=?, opening_hours=?, updated_at=CURRENT_TIMESTAMP
-         WHERE id = ?`
-      ).run(name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null, req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query(
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, opening_hours=$12, updated_at=NOW()
+         WHERE id = $13`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, opening_hours || null, req.params.id]
+      );
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
       res.json({ id: req.params.id });
@@ -665,10 +535,10 @@ export function setupRoutes(app) {
   });
 
   // Delete venue (admin)
-  app.delete('/api/venues/:id', authenticateToken, (req, res) => {
+  app.delete('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const result = db.prepare('DELETE FROM venues WHERE id = ?').run(req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('DELETE FROM venues WHERE id = $1', [req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
       res.json({ success: true });
@@ -678,14 +548,14 @@ export function setupRoutes(app) {
   });
 
   // Update venue status (admin)
-  app.patch('/api/venues/:id/status', authenticateToken, (req, res) => {
+  app.patch('/api/venues/:id/status', authenticateToken, async (req, res) => {
     try {
       const { status } = req.body;
       if (!['published', 'draft'].includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
       }
-      const result = db.prepare('UPDATE venues SET status=?, updated_at=CURRENT_TIMESTAMP WHERE id=?').run(status, req.params.id);
-      if (result.changes === 0) {
+      const { rowCount } = await pool.query('UPDATE venues SET status=$1, updated_at=NOW() WHERE id=$2', [status, req.params.id]);
+      if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
       res.json({ id: req.params.id, status });
