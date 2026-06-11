@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Phone, MapPin, Star, X, Banknote, Building2, MessageCircle } from 'lucide-react'
 import Map from './Map'
 import type { Venue, Category, VenueComment } from '../types'
@@ -14,6 +14,8 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
   const [expandedMapVenue, setExpandedMapVenue] = useState<number | null>(null)
   const [expandedCommentsVenue, setExpandedCommentsVenue] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
+  const mapContainerRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  const commentsContainerRefs = useRef<Record<number, HTMLDivElement | null>>({})
 
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
@@ -177,8 +179,8 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             </div>
           )}
 
-          {/* Links */}
-          <div className="flex flex-wrap gap-2">
+          {/* Links - Row 1: Call, Directions, Reserve */}
+          <div className="flex flex-wrap gap-2 mb-2">
             {venue.phone_number && (
               <a
                 href={`tel:${venue.phone_number}`}
@@ -186,16 +188,6 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
               >
                 <Phone size={16} />
                 <span className="hidden sm:inline">Call</span>
-              </a>
-            )}
-            {venue.reservation_link && (
-              <a
-                href={venue.reservation_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-colors"
-              >
-                <span>Reserve</span>
               </a>
             )}
             <a
@@ -207,8 +199,29 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
               <MapPin size={16} />
               <span className="hidden sm:inline">Directions</span>
             </a>
+            {venue.reservation_link && (
+              <a
+                href={venue.reservation_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg text-sm font-medium transition-colors"
+              >
+                <span>Reserve</span>
+              </a>
+            )}
+          </div>
+
+          {/* Links - Row 2: View, Comments, Start Here */}
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setExpandedMapVenue(expandedMapVenue === venue.id ? null : venue.id)}
+              onClick={() => {
+                if (expandedMapVenue === venue.id) {
+                  setExpandedMapVenue(null)
+                } else {
+                  setExpandedMapVenue(venue.id)
+                  setTimeout(() => mapContainerRefs.current[venue.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
               <MapPin size={16} />
@@ -217,10 +230,15 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
             {(venueComments[venue.id] || []).length > 0 && (
               <button
                 onClick={() => {
-                  if (expandedCommentsVenue !== venue.id) {
-                    fetchVenueComments(venue.id)
+                  if (expandedCommentsVenue === venue.id) {
+                    setExpandedCommentsVenue(null)
+                  } else {
+                    if (expandedCommentsVenue !== venue.id) {
+                      fetchVenueComments(venue.id)
+                    }
+                    setExpandedCommentsVenue(venue.id)
+                    setTimeout(() => commentsContainerRefs.current[venue.id]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0)
                   }
-                  setExpandedCommentsVenue(expandedCommentsVenue === venue.id ? null : venue.id)
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
@@ -241,7 +259,7 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
 
           {/* Inline Map */}
           {expandedMapVenue === venue.id && userLocation && (
-            <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            <div ref={el => { if (el) mapContainerRefs.current[venue.id] = el }} className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
               <div className="relative h-80 bg-gray-200">
                 <Map
                   venues={[venue]}
@@ -264,7 +282,7 @@ export default function VenueList({ venues, categories = [], userLocation, onSta
 
           {/* Comments Section */}
           {expandedCommentsVenue === venue.id && (
-            <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
+            <div ref={el => { if (el) commentsContainerRefs.current[venue.id] = el }} className="mt-4 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
               <div className="p-4 bg-white border-b border-gray-200">
                 <h4 className="font-semibold text-gray-900 mb-3">Comments ({(venueComments[venue.id] || []).length})</h4>
                 <div className="space-y-2 max-h-60 overflow-y-auto">
