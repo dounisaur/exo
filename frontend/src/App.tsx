@@ -4,7 +4,6 @@ import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
 import ItineraryView from './components/ItineraryView'
 import FilterBar from './components/FilterBar'
-import FilterDropdowns from './components/FilterDropdowns'
 import type { Venue, Category, User, Itinerary } from './types'
 
 function App() {
