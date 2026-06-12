@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import type { Category } from '../types'
 
 interface FilterBarProps {
@@ -30,8 +32,33 @@ export default function FilterBar({
   onRadiusChange,
   onCityChange
 }: FilterBarProps) {
+  const [filtersVisible, setFiltersVisible] = useState(false)
+
   return (
-    <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-10 space-y-3">
+    <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
+      {/* Mobile Filter Toggle Button - only visible on mobile */}
+      <div className="md:hidden p-4 flex justify-between items-center">
+        <span className="text-sm font-medium text-gray-700">Filters</span>
+        <button
+          onClick={() => setFiltersVisible(!filtersVisible)}
+          className="flex items-center gap-1 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          {filtersVisible ? (
+            <>
+              <span className="text-sm font-medium">Hide</span>
+              <ChevronUp size={18} />
+            </>
+          ) : (
+            <>
+              <span className="text-sm font-medium">Show</span>
+              <ChevronDown size={18} />
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Filters Container - hidden on mobile by default, visible on desktop */}
+      <div className={`${filtersVisible ? 'block' : 'hidden'} md:block p-4 space-y-3`}>
       {/* City Filters */}
       {cities.length > 0 && (
         <div className="flex items-center gap-3">
@@ -109,6 +136,7 @@ export default function FilterBar({
             </button>
           ))}
         </div>
+      </div>
       </div>
     </div>
   )
