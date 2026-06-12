@@ -12,7 +12,7 @@ function App() {
   const [venues, setVenues] = useState<Venue[]>([])
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
-  const [radius, setRadius] = useState<{ min: number; max: number }>({ min: 0, max: 100 }) // in km
+  const [radius, setRadius] = useState<{ min: number | null; max: number | null }>({ min: 0, max: 1 }) // in km
   const [selectedCity, setSelectedCity] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
@@ -149,8 +149,10 @@ function App() {
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
-        params.append('radiusMin', radius.min.toString())
-        params.append('radiusMax', radius.max.toString())
+        if (radius.min !== null && radius.max !== null) {
+          params.append('radiusMin', radius.min.toString())
+          params.append('radiusMax', radius.max.toString())
+        }
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues?${params}`)
