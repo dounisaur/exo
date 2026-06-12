@@ -4,15 +4,16 @@ import type { Category } from '../types'
 interface FilterDropdownsProps {
   categories: Category[]
   selectedCategory: string
-  selectedRadius: { min: number; max: number }
+  selectedRadius: { min: number | null; max: number | null }
   selectedCity: string
   cities: string[]
   onCategoryChange: (categorySlug: string) => void
-  onRadiusChange: (radius: { min: number; max: number }) => void
+  onRadiusChange: (radius: { min: number | null; max: number | null }) => void
   onCityChange: (city: string) => void
 }
 
 const RADIUS_OPTIONS = [
+  { label: 'None', min: null, max: null },
   { label: '0 - 1 km', min: 0, max: 1 },
   { label: '1 - 5 km', min: 1, max: 5 },
   { label: '5 - 10 km', min: 5, max: 10 },
@@ -85,15 +86,22 @@ export default function FilterDropdowns({
         <label className="block text-xs font-medium text-gray-700 mb-2">Search Radius</label>
         <div className="relative">
           <select
-            value={`${selectedRadius.min}-${selectedRadius.max}`}
+            value={selectedRadius.min === null ? 'null-null' : `${selectedRadius.min}-${selectedRadius.max}`}
             onChange={(e) => {
-              const [min, max] = e.target.value.split('-').map(Number)
-              onRadiusChange({ min, max })
+              if (e.target.value === 'null-null') {
+                onRadiusChange({ min: null, max: null })
+              } else {
+                const [min, max] = e.target.value.split('-').map(Number)
+                onRadiusChange({ min, max })
+              }
             }}
             className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
           >
             {RADIUS_OPTIONS.map(option => (
-              <option key={`${option.min}-${option.max}`} value={`${option.min}-${option.max}`}>
+              <option
+                key={`${option.min}-${option.max}`}
+                value={option.min === null ? 'null-null' : `${option.min}-${option.max}`}
+              >
                 {option.label}
               </option>
             ))}
