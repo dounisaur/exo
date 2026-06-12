@@ -321,23 +321,9 @@ function App() {
             {loading && <p className="text-xs text-gray-600 mt-2">Loading venues...</p>}
           </div>
 
-          {/* Filters - Desktop */}
-          <div className="hidden md:block">
+          {/* Filters - All devices */}
+          <div>
             <FilterBar
-              categories={categories}
-              selectedCategory={category}
-              selectedRadius={radius}
-              selectedCity={selectedCity}
-              cities={getUniqueCities()}
-              onCategoryChange={setCategory}
-              onRadiusChange={setRadius}
-              onCityChange={setSelectedCity}
-            />
-          </div>
-
-          {/* Filters - Mobile */}
-          <div className="md:hidden">
-            <FilterDropdowns
               categories={categories}
               selectedCategory={category}
               selectedRadius={radius}
