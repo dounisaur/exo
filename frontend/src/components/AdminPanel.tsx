@@ -829,7 +829,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
       {/* Tabs */}
       <div className="border-b border-gray-200 bg-white">
-        <div className="flex">
+        <div className="flex overflow-x-auto md:overflow-x-visible">
           {[
             { id: 'venues', label: 'Venues' },
             { id: 'categories', label: 'Categories' },
@@ -839,7 +839,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as AdminTab)}
-              className={`px-6 py-4 font-medium border-b-2 transition-colors ${
+              className={`px-6 py-4 font-medium border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'text-blue-600 border-blue-600'
                   : 'text-gray-600 border-transparent hover:text-gray-900'
