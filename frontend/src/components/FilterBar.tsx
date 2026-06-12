@@ -55,11 +55,74 @@ export default function FilterBar({
       {/* Filters Container - collapsible on all devices */}
       <div className={`${filtersVisible ? 'block' : 'hidden'} px-4 py-4`}>
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-      {/* City Filters */}
-      {cities.length > 0 && (
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-16">City:</label>
-          <div className="flex flex-wrap gap-2">
+          {/* MOBILE VERSION - Dropdowns */}
+          <div className="md:hidden space-y-3">
+            {/* City Dropdown */}
+            {cities.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <select
+                  value={selectedCity}
+                  onChange={(e) => onCityChange(e.target.value)}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer"
+                >
+                  <option value="">All Cities</option>
+                  {cities.map(city => (
+                    <option key={city} value={city}>{city}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Venue Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Venue</label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => onCategoryChange(e.target.value)}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {categories.map(cat => (
+                  <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Radius Dropdown */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Radius</label>
+              <select
+                value={selectedRadius.min === null ? 'null-null' : `${selectedRadius.min}-${selectedRadius.max}`}
+                onChange={(e) => {
+                  if (e.target.value === 'null-null') {
+                    onRadiusChange({ min: null, max: null })
+                  } else {
+                    const [min, max] = e.target.value.split('-').map(Number)
+                    onRadiusChange({ min, max })
+                  }
+                }}
+                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+              >
+                {RADIUS_OPTIONS.map(option => (
+                  <option
+                    key={`${option.min}-${option.max}`}
+                    value={option.min === null ? 'null-null' : `${option.min}-${option.max}`}
+                  >
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* DESKTOP VERSION - Buttons */}
+          <div className="hidden md:block space-y-3">
+            {/* City Filters */}
+            {cities.length > 0 && (
+              <div className="flex items-center gap-3">
+                <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-16">City:</label>
+                <div className="flex flex-wrap gap-2">
             <button
               onClick={() => onCityChange('')}
               className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
@@ -140,6 +203,8 @@ export default function FilterBar({
           ))}
         </div>
       </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
