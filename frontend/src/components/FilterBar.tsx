@@ -11,6 +11,7 @@ interface FilterBarProps {
   onCategoryChange: (categorySlug: string) => void
   onRadiusChange: (radius: { min: number | null; max: number | null }) => void
   onCityChange: (city: string) => void
+  showDropdownsDirectly?: boolean
 }
 
 const RADIUS_OPTIONS = [
@@ -31,30 +32,33 @@ export default function FilterBar({
   cities,
   onCategoryChange,
   onRadiusChange,
-  onCityChange
+  onCityChange,
+  showDropdownsDirectly = false
 }: FilterBarProps) {
   const [filtersVisible, setFiltersVisible] = useState(false)
 
   return (
     <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
-      {/* Filter Toggle Button - green background, full width */}
-      <div className="px-4 py-2.5">
-        <button
-          onClick={() => setFiltersVisible(!filtersVisible)}
-          className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
-          style={{ backgroundColor: '#22c55e' }}
-        >
-          <span>Filters</span>
-          {filtersVisible ? (
-            <ChevronUp size={20} />
-          ) : (
-            <ChevronDown size={20} />
-          )}
-        </button>
-      </div>
+      {/* Filter Toggle Button - only show when not showDropdownsDirectly */}
+      {!showDropdownsDirectly && (
+        <div className="px-4 py-2.5">
+          <button
+            onClick={() => setFiltersVisible(!filtersVisible)}
+            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
+            style={{ backgroundColor: '#22c55e' }}
+          >
+            <span>Filters</span>
+            {filtersVisible ? (
+              <ChevronUp size={20} />
+            ) : (
+              <ChevronDown size={20} />
+            )}
+          </button>
+        </div>
+      )}
 
-      {/* Filters Container - collapsible on all devices */}
-      <div className={`${filtersVisible ? 'block' : 'hidden'} px-4 py-4`}>
+      {/* Filters Container - show based on visibility or if showDropdownsDirectly */}
+      <div className={`${showDropdownsDirectly || filtersVisible ? 'block' : 'hidden'} px-4 py-4`}>
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
           {/* Dropdowns for all devices */}
           <div className="space-y-3">

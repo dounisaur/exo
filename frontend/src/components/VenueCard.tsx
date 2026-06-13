@@ -7,6 +7,7 @@ interface VenueCardProps {
   isSelected?: boolean
   venueComments?: VenueComment[]
   onSelect?: (venue: Venue) => void
+  mobile?: boolean
 }
 
 export default function VenueCard({
@@ -14,7 +15,8 @@ export default function VenueCard({
   categories,
   isSelected = false,
   venueComments = [],
-  onSelect
+  onSelect,
+  mobile = false
 }: VenueCardProps) {
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
@@ -47,6 +49,52 @@ export default function VenueCard({
     return null
   }
 
+  // Mobile version - design-exact styling
+  if (mobile) {
+    return (
+      <div
+        onClick={() => onSelect?.(venue)}
+        style={{
+          borderRadius: '16px',
+          background: '#fff',
+          border: '1px solid #e7eaf4',
+          padding: '15px',
+          marginBottom: '12px',
+          boxShadow: '0 6px 18px -12px rgba(21, 34, 74, 0.3)',
+          cursor: 'pointer'
+        }}
+      >
+        {/* Name and Rating Row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '7px' }}>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: '#15224a' }}>{venue.name}</span>
+          {venue.rating && (
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#f5841f', whiteSpace: 'nowrap' }}>
+              ★ {venue.rating.toFixed(1)}
+            </span>
+          )}
+        </div>
+
+        {/* Category + Price + Hours + View Link Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: '#6a7191' }}>
+          <span style={{ background: '#eaf1ff', color: '#2563eb', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
+            {getSubcategoryName(venue.subcategory_id) || venue.category}
+          </span>
+          {getPriceDisplay(venue) && (
+            <span style={{ color: '#16a34a', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
+          )}
+          {getPriceDisplay(venue) && (venue.canonical_city || (venue.opening_hours && getTodayHours(venue.opening_hours))) && (
+            <span>·</span>
+          )}
+          {venue.opening_hours && getTodayHours(venue.opening_hours) && (
+            <span>{getTodayHours(venue.opening_hours)}</span>
+          )}
+          <span style={{ marginLeft: 'auto', color: '#1e40af', fontWeight: 600 }}>View ›</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop version - existing behavior
   const cardBg = isSelected ? 'bg-orange-600' : 'bg-white'
   const cardText = isSelected ? 'text-white' : 'text-gray-900'
   const borderClass = isSelected ? 'border-transparent' : 'border-blue-100'
