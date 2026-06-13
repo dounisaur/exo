@@ -31,8 +31,8 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick 
     // Add user location marker
     L.circleMarker([userLocation.lat, userLocation.lng], {
       radius: 8,
-      fillColor: '#3b82f6',
-      color: '#1e40af',
+      fillColor: '#FF2D2D',
+      color: '#CC0000',
       weight: 2,
       opacity: 1,
       fillOpacity: 0.8
@@ -95,16 +95,16 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick 
     })
   }, [venues, selectedVenue])
 
-  // Fit both user location and selected venue in view
+  // Fit all venues and user location in view
   useEffect(() => {
-    if (selectedVenue && mapInstance.current && userLocation) {
+    if (mapInstance.current && venues.length > 0) {
       const bounds = L.latLngBounds([
         [userLocation.lat, userLocation.lng],
-        [selectedVenue.latitude, selectedVenue.longitude]
+        ...venues.map(v => [v.latitude, v.longitude] as [number, number])
       ])
       mapInstance.current.fitBounds(bounds, { padding: [50, 50] })
     }
-  }, [selectedVenue, userLocation])
+  }, [venues, userLocation])
 
   return <div ref={mapRef} className="w-full h-full" />
 }
