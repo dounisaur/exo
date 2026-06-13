@@ -144,11 +144,11 @@ export default function VenueDetailPanel({
         )}
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 mb-6">
+        <div className="flex gap-3 mb-6">
           {venue.phone_number && (
             <a
               href={`tel:${venue.phone_number}`}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
             >
               <Phone size={16} />
               <span>Call</span>
@@ -158,7 +158,7 @@ export default function VenueDetailPanel({
             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address || venue.name)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
           >
             <ArrowUpRight size={16} />
             <span>Directions</span>
@@ -196,7 +196,7 @@ export default function VenueDetailPanel({
 
         {/* Comments Section */}
         {comments.length > 0 && (
-          <div>
+          <div className="mt-8">
             <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
               <MessageCircle size={16} />
               Comments ({comments.length})
