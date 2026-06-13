@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin } from 'lucide-react'
+import { Settings, LogOut, MapPin, ChevronUp, ChevronDown } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -96,7 +96,7 @@ export default function DiscoveryView({
     return (
       <div className="h-screen flex flex-col bg-white">
         {/* Header */}
-        <header className="bg-cobalt text-white p-4 sticky top-0 z-30">
+        <header className="text-white p-4 sticky top-0 z-30" style={{ backgroundColor: '#1e3a8a' }}>
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-lg font-bold">🍴 EXΩ 🍷</h1>
             <nav className="flex items-center gap-2">
@@ -129,6 +129,25 @@ export default function DiscoveryView({
             </nav>
           </div>
         </header>
+
+        {/* Controls - Plan My Itinerary + Filters */}
+        <div className="px-4 py-2.5 bg-white border-b" style={{ borderBottomColor: '#e7eaf4' }}>
+          <button
+            onClick={onGenerateItinerary}
+            className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2 mb-2.5"
+          >
+            <span>Plan My Itinerary</span>
+            <MapPin size={20} />
+          </button>
+          <button
+            onClick={() => setShowFiltersSheet(!showFiltersSheet)}
+            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
+            style={{ backgroundColor: '#6B8E23' }}
+          >
+            <span>Filters</span>
+            {showFiltersSheet ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+          </button>
+        </div>
 
         {/* Map - fills remaining space */}
         <div className="flex-1 relative overflow-hidden">
