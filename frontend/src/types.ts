@@ -16,6 +16,8 @@ export interface Venue {
   price_level?: string
   opening_hours?: string
   status?: 'draft' | 'published'
+  photo_urls?: string[]
+  primary_photo_url?: string
   created_at?: string
   updated_at?: string
 }

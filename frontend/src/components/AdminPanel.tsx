@@ -122,7 +122,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     rating: '',
     price_range: '',
     price_level: '',
-    opening_hours: ''
+    opening_hours: '',
+    photo_urls: [] as string[],
+    primary_photo_url: ''
   })
 
   // Comments state
@@ -386,7 +388,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         latitude: lat,
         longitude: lng,
         rating: formData.rating ? parseFloat(formData.rating) : null,
-        opening_hours: buildOpeningHoursJSON(hoursGrid)
+        opening_hours: buildOpeningHoursJSON(hoursGrid),
+        primary_photo_url: formData.primary_photo_url || null
       }
 
       const method = editingVenueId ? 'PUT' : 'POST'
@@ -431,7 +434,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       rating: '',
       price_range: '',
       price_level: '',
-      opening_hours: ''
+      opening_hours: '',
+      photo_urls: [],
+      primary_photo_url: ''
     })
     setHoursGrid({
       '0': { open: '', close: '', closed: false },
@@ -469,7 +474,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       rating: venue.rating?.toString() || '',
       price_range: venue.price_range || '',
       price_level: (venue as any).price_level || '',
-      opening_hours: venue.opening_hours || ''
+      opening_hours: venue.opening_hours || '',
+      photo_urls: venue.photo_urls || [],
+      primary_photo_url: venue.primary_photo_url || ''
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
     setImagePreview(venue.image_url || '')
@@ -1739,6 +1746,59 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                 )}
               </div>
             </div>
+
+            {/* Google Photos Gallery Section */}
+            {formData.photo_urls && formData.photo_urls.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Google Places Photos</h3>
+                <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
+                  <p className="text-xs text-gray-600 mb-3">Select which photo to use as the main profile picture:</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    {formData.photo_urls.map((photoUrl, index) => (
+                      <label
+                        key={index}
+                        className={`cursor-pointer rounded-lg border-2 overflow-hidden transition-all ${
+                          formData.primary_photo_url === photoUrl
+                            ? 'border-blue-600 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="primary_photo"
+                          checked={formData.primary_photo_url === photoUrl}
+                          onChange={() => setFormData(prev => ({ ...prev, primary_photo_url: photoUrl }))}
+                          className="hidden"
+                        />
+                        <div className="relative">
+                          <img
+                            src={photoUrl}
+                            alt={`Google Place photo ${index + 1}`}
+                            className="w-full h-32 object-cover"
+                            onError={(e) => {
+                              console.error('Failed to load image:', photoUrl)
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%236b7280" font-size="12"%3EFailed to load%3C/text%3E%3C/svg%3E'
+                            }}
+                          />
+                          {formData.primary_photo_url === photoUrl && (
+                            <div className="absolute inset-0 bg-blue-600 bg-opacity-30 flex items-center justify-center">
+                              <div className="bg-blue-600 text-white rounded-full p-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-2 py-1 bg-gray-50 border-t border-gray-200">
+                          <p className="text-xs text-gray-600 font-medium">Photo {index + 1}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Comments Section */}
             <div>
