@@ -72,7 +72,7 @@ export default function VenueCard({
             alt={venue.name}
             style={{
               width: '100%',
-              height: '140px',
+              height: '220px',
               objectFit: 'cover'
             }}
             onError={(e) => {
@@ -133,7 +133,7 @@ export default function VenueCard({
         <img
           src={imageUrl}
           alt={venue.name}
-          className="w-full h-24 object-cover"
+          className="w-full h-56 object-cover"
           onError={(e) => {
             e.currentTarget.style.display = 'none'
           }}
