@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(120,120,120,.26);border-radius:4px}
+  .exo-scroll{scrollbar-width:thin}
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#eef0f3;padding:56px 40px 96px;font-family:'Hanken Grotesk',system-ui,sans-serif;color:#15224a;-webkit-font-smoothing:antialiased">
+
+  <!-- ===== PAGE HEADER ===== -->
+  <div style="max-width:1280px;margin:0 auto 48px">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:#8a93a3;margin-bottom:18px">EXΩ — Cobalt redesign · your real fields</div>
+    <h1 style="font-size:44px;line-height:1.05;letter-spacing:-0.02em;font-weight:700;margin:0 0 18px;max-width:920px;color:#15224a">The Cobalt design, with your data.</h1>
+    <p style="font-size:16.5px;line-height:1.6;color:#54606f;max-width:720px;margin:0">The same Cobalt layout — list + map discovery, a venue detail, and mobile — now populated only with fields that exist in EXΩ: category, price, city, address, hours, rating, Call, Directions, View, comments, Start Here, Plan My Itinerary and Filters. <strong>Call</strong> dials, <strong>Directions</strong> opens maps, and the <strong>About</strong> block is kept as a placeholder.</p>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- DESKTOP — DISCOVERY -->
+  <!-- ============================================================ -->
+  <div style="max-width:1280px;margin:0 auto 22px">
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;color:#9097b3;text-transform:uppercase">Desktop</span>
+      <span style="font-size:14px;color:#6b7384">List + map · 1280 × 820</span>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;height:820px;background:#ffffff;border:1px solid #dfe3ee;border-radius:22px;box-shadow:0 36px 70px -28px rgba(21,34,74,.26);overflow:hidden;display:flex;flex-direction:column;color:#15224a">
+    <!-- top bar -->
+    <div style="height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:#1e3a8a">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🍴</span><span style="font-weight:800;font-size:21px;letter-spacing:.04em;color:#fff">EXΩ</span><span style="font-size:16px">🍷</span></div>
+      <span style="color:#dbe2f5;font-size:14px;font-weight:600">Login</span>
+    </div>
+
+    <div style="flex:1;display:flex;min-height:0">
+      <!-- sidebar -->
+      <div style="width:392px;flex:none;border-right:1px solid #e7eaf4;display:flex;flex-direction:column;min-height:0;background:#fafbff">
+        <div style="padding:18px 18px 14px;flex:none">
+          <div style="background:#4f46e5;color:#fff;text-align:center;padding:13px;border-radius:12px;font-size:15px;font-weight:600;box-shadow:0 12px 24px -14px rgba(79,70,229,.65);margin-bottom:12px">Plan My Itinerary</div>
+          <div style="display:inline-flex;align-items:center;gap:8px;background:#f5841f;color:#fff;padding:9px 16px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 10px 18px -12px rgba(245,132,31,.6)">Filters<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+        </div>
+        <div class="exo-scroll" style="flex:1;overflow-y:auto;padding:4px 14px 18px">
+          <!-- featured (selected) -->
+          <div style="border-radius:16px;background:#f5841f;padding:15px;margin-bottom:9px;box-shadow:0 10px 20px -10px rgba(245,132,31,.55)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px"><span style="font-size:16px;font-weight:700;color:#fff">{{ isandsia.name }}</span><span style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap">★ {{ isandsia.rating }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.92)"><span style="background:rgba(255,255,255,.22);border-radius:100px;padding:3px 10px;font-weight:600">{{ isandsia.cat }}</span><span style="font-weight:700">{{ isandsia.price }}</span><span>·</span><span>{{ isandsia.hours }}</span></div>
+          </div>
+          <!-- other -->
+          <div style="border-radius:16px;background:#fff;border:1px solid #e7eaf4;padding:15px" style-hover="background:#f3f5fc">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px"><span style="font-size:16px;font-weight:700;color:#15224a">{{ manari.name }}</span><span style="font-size:13px;font-weight:700;color:#f5841f;white-space:nowrap">★ {{ manari.rating }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:#6a7191"><span style="background:#eaf1ff;color:#2563eb;border-radius:100px;padding:3px 10px;font-weight:600">{{ manari.cat }}</span><span style="color:#16a34a;font-weight:700">{{ manari.price }}</span><span>·</span><span>{{ manari.hours }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- map -->
+      <div style="flex:1;position:relative;min-width:0;background:#eef1f8;background-image:linear-gradient(rgba(30,58,138,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,58,138,.05) 1px,transparent 1px);background-size:46px 46px">
+        <svg style="position:absolute;inset:0;width:100%;height:100%" preserveAspectRatio="none"><path d="M-20,120 C200,60 360,260 560,210 S820,420 1000,360" stroke="#d6deec" stroke-width="14" fill="none" stroke-linecap="round"/></svg>
+        <div style="position:absolute;left:33%;top:44%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:3">
+          <div style="background:#1e3a8a;color:#fff;font-size:12px;font-weight:600;padding:6px 11px;border-radius:100px;white-space:nowrap;box-shadow:0 6px 16px -4px rgba(21,34,74,.34)">Isandsia · ★4.1</div>
+          <div style="width:18px;height:18px;border-radius:50%;background:#f5841f;border:3px solid #fff;box-shadow:0 4px 12px -2px rgba(245,132,31,.5)"></div>
+        </div>
+        <div style="position:absolute;left:60%;top:32%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:5px;z-index:2">
+          <div style="background:#fff;color:#15224a;font-size:11px;font-weight:600;padding:4px 9px;border-radius:100px;white-space:nowrap;box-shadow:0 5px 12px -4px rgba(21,34,74,.3)">Manári · ★3.2</div>
+          <div style="width:15px;height:15px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+        </div>
+        <div style="position:absolute;left:52%;top:66%;width:13px;height:13px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+        <div style="position:absolute;left:72%;top:58%;width:13px;height:13px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+        <div style="position:absolute;left:26%;top:70%;width:13px;height:13px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+        <div style="position:absolute;left:18px;bottom:18px;display:flex;flex-direction:column;background:#fff;border:1px solid #e0e5f4;border-radius:12px;overflow:hidden;box-shadow:0 6px 16px -6px rgba(21,34,74,.18)">
+          <div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#5d6584;border-bottom:1px solid #eef0f8">+</div>
+          <div style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;color:#5d6584">−</div>
+        </div>
+
+      </div>
+
+      <!-- docked venue detail (third column) -->
+      <div class="exo-scroll" style="width:384px;flex:none;background:#fff;border-left:1px solid #e7eaf4;overflow-y:auto;padding:22px 22px 26px">
+          <h3 style="font-size:22px;font-weight:700;letter-spacing:-0.01em;margin:0 0 9px;color:#15224a">{{ isandsia.name }}</h3>
+          <span style="display:inline-block;background:#eaf1ff;color:#2563eb;border-radius:100px;padding:5px 13px;font-size:12.5px;font-weight:600;margin-bottom:15px">{{ isandsia.cat }}</span>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:8px"><svg width="15" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg><span style="color:#16a34a;font-weight:700">{{ isandsia.price }}</span></div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="4" y="7" width="7" height="13"/><rect x="13" y="3" width="7" height="17"/></svg><span>{{ isandsia.city }}</span></div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>{{ isandsia.address }}</span></div>
+          <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:12px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>{{ isandsia.hours }}</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px"><span style="font-size:17px;letter-spacing:2px;color:#f5b50a">{{ isandsia.filled }}<span style="color:#d8dce5">{{ isandsia.empty }}</span></span><span style="font-size:14px;color:#3f4660;font-weight:600">{{ isandsia.rating }}</span></div>
+          <div style="display:flex;gap:9px;margin-bottom:10px">
+            <a href="{{ isandsia.tel }}" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
+            <a href="{{ isandsia.mapsUrl }}" target="_blank" rel="noopener" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Directions</a>
+          </div>
+          <div style="display:flex;gap:9px;margin-bottom:18px">
+            <div style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 11.5 3a8.38 8.38 0 0 1 8.5 8.5z"/></svg>1</div>
+            <div style="flex:1;text-align:center;background:#4f46e5;color:#fff;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600;white-space:nowrap">Start Here</div>
+          </div>
+          <div style="border-top:1px solid #eef0f6;padding-top:16px;margin-bottom:4px">
+            <h4 style="font-size:13.5px;font-weight:700;color:#15224a;margin:0 0 7px;display:flex;align-items:center;gap:8px">About <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:#9097b3;background:#f1f3fb;border:1px solid #e0e5f4;border-radius:5px;padding:2px 6px">COMING SOON</span></h4>
+            <p style="margin:0 0 16px;font-size:13.5px;line-height:1.6;color:#9097b3;font-style:italic">A short description of this venue will appear here.</p>
+          </div>
+          <div style="border-top:1px solid #eef0f6;padding-top:16px">
+            <h4 style="font-size:14.5px;font-weight:700;color:#15224a;margin:0 0 11px">Comments (1)</h4>
+            <sc-for list="{{ comments }}" as="c" hint-placeholder-count="1">
+              <div style="background:#f6f7fa;border-radius:12px;padding:13px 15px;margin-bottom:9px"><p style="margin:0 0 6px;font-size:13.5px;line-height:1.55;color:#15224a">{{ c.text }}</p><span style="font-size:12px;color:#9097b3">{{ c.date }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- DESKTOP — VENUE DETAIL -->
+  <!-- ============================================================ -->
+  <div style="max-width:1280px;margin:64px auto 22px">
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;color:#9097b3;text-transform:uppercase">Desktop</span>
+      <span style="font-size:14px;color:#6b7384">Venue detail — “View” opens the map</span>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;background:#ffffff;border:1px solid #dfe3ee;border-radius:22px;box-shadow:0 36px 70px -28px rgba(21,34,74,.26);overflow:hidden;color:#15224a">
+    <div style="height:64px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px;background:#1e3a8a">
+      <div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🍴</span><span style="font-weight:800;font-size:21px;letter-spacing:.04em;color:#fff">EXΩ</span><span style="font-size:16px">🍷</span></div>
+      <span style="color:#dbe2f5;font-size:14px;font-weight:600">Login</span>
+    </div>
+    <div style="height:54px;display:flex;align-items:center;padding:0 28px;border-bottom:1px solid #eef0f8">
+      <div style="display:flex;align-items:center;gap:9px;font-size:14px;color:#5d6584;font-weight:500"><svg width="9" height="15" viewBox="0 0 12 20" fill="none"><path d="M10 2L2 10l8 8" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span style="color:#1e40af;font-weight:600">Back to list</span><span style="color:#b3b9cc">/</span><span>{{ isandsia.name }}</span></div>
+    </div>
+
+    <div style="display:flex;gap:30px;padding:28px;align-items:flex-start">
+      <!-- left -->
+      <div style="flex:1.5;min-width:0">
+        <h1 style="font-size:30px;font-weight:700;letter-spacing:-0.02em;margin:0 0 12px;color:#15224a">{{ isandsia.name }}</h1>
+        <span style="display:inline-block;background:#eaf1ff;color:#2563eb;border-radius:100px;padding:6px 14px;font-size:13px;font-weight:600;margin-bottom:18px">{{ isandsia.cat }}</span>
+        <div style="display:flex;align-items:center;gap:9px;font-size:15px;margin-bottom:9px"><svg width="16" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg><span style="color:#16a34a;font-weight:700">{{ isandsia.price }}</span></div>
+        <div style="display:flex;align-items:center;gap:9px;font-size:15px;color:#3f4660;margin-bottom:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="4" y="7" width="7" height="13"/><rect x="13" y="3" width="7" height="17"/></svg><span>{{ isandsia.city }}</span></div>
+        <div style="display:flex;align-items:center;gap:9px;font-size:15px;color:#3f4660;margin-bottom:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>{{ isandsia.address }}</span></div>
+        <div style="display:flex;align-items:center;gap:9px;font-size:15px;color:#3f4660;margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>{{ isandsia.hours }}</span></div>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:22px"><span style="font-size:19px;letter-spacing:2px;color:#f5b50a">{{ isandsia.filled }}<span style="color:#d8dce5">{{ isandsia.empty }}</span></span><span style="font-size:15px;color:#3f4660;font-weight:600">{{ isandsia.rating }}</span></div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:28px">
+          <a href="{{ isandsia.tel }}" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
+          <a href="{{ isandsia.mapsUrl }}" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Directions</a>
+          <div style="display:inline-flex;align-items:center;gap:7px;background:#2563eb;color:#fff;border-radius:10px;padding:11px 18px;font-size:14px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Hide map</div>
+          <div style="background:#4f46e5;color:#fff;border-radius:10px;padding:11px 20px;font-size:14px;font-weight:600;white-space:nowrap">Start Here</div>
+        </div>
+
+        <div style="border-top:1px solid #eef0f6;padding-top:20px;margin-bottom:24px">
+          <h4 style="font-size:15px;font-weight:700;color:#15224a;margin:0 0 8px;display:flex;align-items:center;gap:9px">About <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;color:#9097b3;background:#f1f3fb;border:1px solid #e0e5f4;border-radius:5px;padding:2px 6px">COMING SOON</span></h4>
+          <p style="margin:0;font-size:14.5px;line-height:1.6;color:#9097b3;font-style:italic">A short description of this venue will appear here.</p>
+        </div>
+        <div style="border-top:1px solid #eef0f6;padding-top:20px">
+          <h4 style="font-size:16px;font-weight:700;color:#15224a;margin:0 0 12px">Comments (1)</h4>
+          <sc-for list="{{ comments }}" as="c" hint-placeholder-count="1">
+            <div style="background:#f6f7fa;border-radius:12px;padding:15px 17px;margin-bottom:10px"><p style="margin:0 0 6px;font-size:14px;line-height:1.55;color:#15224a">{{ c.text }}</p><span style="font-size:12.5px;color:#9097b3">{{ c.date }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      <!-- right -->
+      <div style="width:380px;flex:none;display:flex;flex-direction:column;gap:16px">
+        <iframe title="Isandsia map detail" src="https://www.openstreetmap.org/export/embed.html?bbox=23.716%2C37.973%2C23.737%2C37.983&layer=mapnik&marker=37.9779%2C23.7264" style="width:100%;height:280px;border:1px solid #e0e5f4;border-radius:16px;display:block" loading="lazy"></iframe>
+        <div style="border:1px solid #e0e5f4;border-radius:16px;padding:4px 16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid #eef0f8"><span style="font-size:13px;color:#9097b3;font-weight:500">Address</span><span style="font-size:13.5px;color:#15224a;font-weight:600;text-align:right">{{ isandsia.address }}</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #eef0f8"><span style="font-size:13px;color:#9097b3;font-weight:500">Hours</span><span style="font-size:13.5px;color:#15224a;font-weight:600">{{ isandsia.hours }}</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #eef0f8"><span style="font-size:13px;color:#9097b3;font-weight:500">Price</span><span style="font-size:13.5px;color:#16a34a;font-weight:700">{{ isandsia.price }}</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0"><span style="font-size:13px;color:#9097b3;font-weight:500">City</span><span style="font-size:13.5px;color:#15224a;font-weight:600">{{ isandsia.city }}</span></div>
+        </div>
+        <div style="background:#4f46e5;color:#fff;text-align:center;border-radius:12px;padding:14px;font-size:15px;font-weight:600;box-shadow:0 12px 24px -14px rgba(79,70,229,.65)">Start Here</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- MOBILE -->
+  <!-- ============================================================ -->
+  <div style="max-width:1280px;margin:64px auto 24px">
+    <div style="display:flex;align-items:baseline;gap:14px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;color:#9097b3;text-transform:uppercase">Mobile</span>
+      <span style="font-size:14px;color:#6b7384">iOS · list + map and venue detail</span>
+    </div>
+  </div>
+
+  <div style="max-width:1280px;margin:0 auto;display:flex;gap:64px;flex-wrap:wrap;justify-content:center">
+
+    <!-- MOBILE — DISCOVERY -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="position:relative;height:100%;display:flex;flex-direction:column;background:#eef1f8;font-family:'Hanken Grotesk',sans-serif;color:#15224a">
+          <div style="background:#1e3a8a;padding:56px 18px 14px;flex:none">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px">
+              <div style="display:flex;align-items:center;gap:7px"><span style="font-size:16px">🍴</span><span style="font-weight:800;font-size:19px;letter-spacing:.04em;color:#fff">EXΩ</span><span style="font-size:14px">🍷</span></div>
+              <span style="color:#dbe2f5;font-size:14px;font-weight:600">Login</span>
+            </div>
+            <div style="background:#4f46e5;color:#fff;text-align:center;padding:12px;border-radius:11px;font-size:14.5px;font-weight:600;margin-bottom:10px;box-shadow:0 12px 24px -14px rgba(0,0,0,.4)">Plan My Itinerary</div>
+            <div style="display:inline-flex;align-items:center;gap:7px;background:#f5841f;color:#fff;padding:8px 14px;border-radius:10px;font-size:13.5px;font-weight:600">Filters<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></div>
+          </div>
+          <div style="flex:1;position:relative;background:#eef1f8;background-image:linear-gradient(rgba(30,58,138,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(30,58,138,.05) 1px,transparent 1px);background-size:40px 40px">
+            <div style="position:absolute;left:32%;top:24%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:5px;z-index:3"><div style="background:#1e3a8a;color:#fff;font-size:11px;font-weight:600;padding:5px 10px;border-radius:100px;white-space:nowrap;box-shadow:0 6px 14px -4px rgba(21,34,74,.4)">Isandsia · ★4.1</div><div style="width:17px;height:17px;border-radius:50%;background:#f5841f;border:3px solid #fff;box-shadow:0 4px 12px -2px rgba(245,132,31,.55)"></div></div>
+            <div style="position:absolute;left:66%;top:20%;width:14px;height:14px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+            <div style="position:absolute;left:70%;top:40%;width:14px;height:14px;border-radius:50%;background:#1e40af;border:3px solid #fff;box-shadow:0 3px 8px -2px rgba(21,34,74,.3)"></div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:330px;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -12px 34px rgba(21,34,74,.16);padding:10px 16px 30px;display:flex;flex-direction:column">
+            <div style="width:40px;height:5px;border-radius:100px;background:#dfe3ee;margin:0 auto 14px"></div>
+            <h3 style="font-size:18px;font-weight:700;margin:0 0 12px;color:#15224a">2 places</h3>
+            <div style="border-radius:16px;background:#f5841f;padding:14px;margin-bottom:9px;box-shadow:0 10px 20px -10px rgba(245,132,31,.55)">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px"><span style="font-size:15px;font-weight:700;color:#fff">Isandsia</span><span style="font-size:12.5px;font-weight:700;color:#fff;white-space:nowrap">★ 4.1</span></div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.92)"><span style="background:rgba(255,255,255,.22);border-radius:100px;padding:3px 9px;font-weight:600">Gastro Taverna</span><span style="font-weight:700">$$</span><span>·</span><span>13:30–01:00</span></div>
+            </div>
+            <div style="border-radius:16px;background:#fff;border:1px solid #e7eaf4;padding:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px"><span style="font-size:15px;font-weight:700;color:#15224a">Manári Taverna</span><span style="font-size:12.5px;font-weight:700;color:#f5841f;white-space:nowrap">★ 3.2</span></div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;color:#6a7191"><span style="background:#eaf1ff;color:#2563eb;border-radius:100px;padding:3px 9px;font-weight:600">Gastro Taverna</span><span style="color:#16a34a;font-weight:700">$$$</span><span>·</span><span>13:00–00:00</span></div>
+            </div>
+          </div>
+        </div>
+      </x-import>
+      <span style="font-size:13px;color:#6b7384;font-family:'JetBrains Mono',monospace">List + map</span>
+    </div>
+
+    <!-- MOBILE — VENUE DETAIL -->
+    <div style="display:flex;flex-direction:column;align-items:center;gap:16px">
+      <x-import component="IOSDevice" from="./ios-frame.jsx" dark="{{ true }}" hint-size="402px,874px">
+        <div style="height:100%;display:flex;flex-direction:column;background:#f7f8fb;font-family:'Hanken Grotesk',sans-serif;color:#15224a">
+          <div style="background:#1e3a8a;padding:56px 18px 14px;flex:none;display:flex;align-items:center;gap:12px">
+            <svg width="10" height="17" viewBox="0 0 12 20" fill="none"><path d="M10 2L2 10l8 8" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span style="color:#fff;font-size:16px;font-weight:700">{{ isandsia.name }}</span>
+          </div>
+          <div style="flex:1;overflow:auto;padding:18px 16px 40px">
+            <span style="display:inline-block;background:#eaf1ff;color:#2563eb;border-radius:100px;padding:5px 12px;font-size:12px;font-weight:600;margin-bottom:14px">{{ isandsia.cat }}</span>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;margin-bottom:7px"><svg width="14" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="2" y="6" width="20" height="13" rx="2"/><circle cx="12" cy="12.5" r="2.5"/></svg><span style="color:#16a34a;font-weight:700">{{ isandsia.price }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:7px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><rect x="4" y="7" width="7" height="13"/><rect x="13" y="3" width="7" height="17"/></svg><span>{{ isandsia.city }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:7px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><span>{{ isandsia.address }}</span></div>
+            <div style="display:flex;align-items:center;gap:9px;font-size:13.5px;color:#3f4660;margin-bottom:11px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9aa0b2" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg><span>{{ isandsia.hours }}</span></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><span style="font-size:16px;letter-spacing:2px;color:#f5b50a">{{ isandsia.filled }}<span style="color:#d8dce5">{{ isandsia.empty }}</span></span><span style="font-size:13.5px;color:#3f4660;font-weight:600">{{ isandsia.rating }}</span></div>
+            <div style="display:flex;gap:9px;margin-bottom:10px">
+              <a href="{{ isandsia.tel }}" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>Call</a>
+              <a href="{{ isandsia.mapsUrl }}" target="_blank" rel="noopener" style="flex:1;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:7px;background:#eef0f4;color:#15224a;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#15224a" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Directions</a>
+            </div>
+            <div style="display:flex;gap:9px;margin-bottom:18px">
+              <div style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;border-radius:10px;padding:11px 14px;font-size:13.5px;font-weight:600"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7a8.5 8.5 0 0 1-.9-3.8A8.38 8.38 0 0 1 11.5 3a8.38 8.38 0 0 1 8.5 8.5z"/></svg>1</div>
+              <div style="flex:1;text-align:center;background:#4f46e5;color:#fff;border-radius:10px;padding:11px;font-size:13.5px;font-weight:600;white-space:nowrap">Start Here</div>
+            </div>
+            <div style="border-top:1px solid #eef0f6;padding-top:14px;margin-bottom:4px">
+              <h4 style="font-size:13.5px;font-weight:700;color:#15224a;margin:0 0 7px;display:flex;align-items:center;gap:8px">About <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;color:#9097b3;background:#f1f3fb;border:1px solid #e0e5f4;border-radius:5px;padding:2px 6px">COMING SOON</span></h4>
+              <p style="margin:0 0 16px;font-size:13.5px;line-height:1.6;color:#9097b3;font-style:italic">A short description of this venue will appear here.</p>
+            </div>
+            <div style="border-top:1px solid #eef0f6;padding-top:14px;margin-bottom:16px">
+              <iframe title="Isandsia map mobile detail" src="https://www.openstreetmap.org/export/embed.html?bbox=23.716%2C37.973%2C23.737%2C37.983&layer=mapnik&marker=37.9779%2C23.7264" style="width:100%;height:200px;border:1px solid #e0e5f4;border-radius:13px;display:block" loading="lazy"></iframe>
+            </div>
+            <div style="border-top:1px solid #eef0f6;padding-top:14px">
+              <h4 style="font-size:14.5px;font-weight:700;color:#15224a;margin:0 0 11px">Comments (1)</h4>
+              <sc-for list="{{ comments }}" as="c" hint-placeholder-count="1">
+                <div style="background:#f6f7fa;border-radius:12px;padding:13px 15px;margin-bottom:9px"><p style="margin:0 0 6px;font-size:13.5px;line-height:1.55;color:#15224a">{{ c.text }}</p><span style="font-size:12px;color:#9097b3">{{ c.date }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </x-import>
+      <span style="font-size:13px;color:#6b7384;font-family:'JetBrains Mono',monospace">Venue detail</span>
+    </div>
+
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const mk = (v) => {
+      const r = Math.round(parseFloat(v.rating));
+      return {
+        ...v,
+        tel: 'tel:' + v.phone,
+        mapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(v.address),
+        filled: '★'.repeat(r),
+        empty: '★'.repeat(5 - r),
+      };
+    };
+    const isandsia = mk({ name: 'Isandsia', cat: 'Gastro Taverna', price: '$$', city: 'Athina', address: 'Melanthiou 2, Athina 105 54, Greece', hours: '13:30–01:00', rating: '4.1', phone: '+302103210000' });
+    const manari = mk({ name: 'Manári Taverna', cat: 'Gastro Taverna', price: '$$$', city: 'Athina', address: 'Pl. Agion Theodoron 3, Athina 105 61, Greece', hours: '13:00–00:00', rating: '3.2', phone: '+302103211111' });
+    const comments = [
+      { text: 'Excellent food, always packed so book in advance.', date: '12/06/2026' },
+    ];
+    return { isandsia, manari, rest: [manari], comments };
+  }
+}
+</script>
+</body>
+</html>

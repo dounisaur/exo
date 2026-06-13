@@ -2,24 +2,29 @@
 
 @layer theme {
   :root {
-    --color-primary: #2563eb;
-    --color-primary-dark: #1e40af;
-    --color-primary-light: #3b82f6;
-    --color-surface: #f8fafc;
-    --color-surface-hover: #f1f5f9;
-    --color-border: #e2e8f0;
-    --color-text: #0f172a;
-    --color-text-secondary: #475569;
-    --color-text-muted: #64748b;
-    --color-success: #10b981;
-    --color-success-light: #ecfdf5;
-    --color-success-border: #d1fae5;
-    --color-error: #ef4444;
-    --color-error-light: #fef2f2;
-    --color-error-border: #fee2e2;
-    --color-warning: #f59e0b;
-    --color-warning-light: #fffbeb;
-    --color-warning-border: #fef3c7;
+    /* Cobalt Design Tokens */
+    --cobalt: #1e3a8a;
+    --indigo: #4f46e5;
+    --blue: #2563eb;
+    --blue-deep: #1e40af;
+    --orange: #f5841f;
+    --gray-button: #eef0f4;
+    --green: #16a34a;
+    --star-gold: #f5b50a;
+    --star-empty: #d8dce5;
+    --ink: #15224a;
+    --body-text: #3f4660;
+    --body-muted-1: #5d6584;
+    --body-muted-2: #6a7191;
+    --body-muted-3: #9097b3;
+    --category-bg: #eaf1ff;
+    --category-text: #2563eb;
+    --card-border: #e7eaf4;
+    --card-divider: #eef0f6;
+    --app-bg: #eef0f3;
+    --sidebar-bg: #fafbff;
+    --map-bg: #eef1f8;
+    --comment-bg: #f6f7fa;
   }
 }
 
@@ -113,4 +118,15 @@
 
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
+}
+
+/* Leaflet tooltip styling */
+.venue-tooltip {
+  border: 2px solid #f5841f !important;
+  background-color: white !important;
+}
+
+.user-location-tooltip {
+  border: 2px solid #FF2D2D !important;
+  background-color: white !important;
 }
