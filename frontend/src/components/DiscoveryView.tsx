@@ -92,11 +92,11 @@ export default function DiscoveryView({
   }, [])
 
   if (isMobile) {
-    // Mobile Layout: Header + Map (full screen) + Bottom Sheet overlay
+    // Mobile Layout: Header → Controls → Map (full) → Bottom Sheet overlay
     return (
-      <div className="h-screen flex flex-col bg-white">
+      <div className="w-screen h-screen flex flex-col bg-white overflow-hidden">
         {/* Header */}
-        <header className="text-white p-4 sticky top-0 z-30" style={{ backgroundColor: '#1e3a8a' }}>
+        <header className="text-white p-4 flex-shrink-0" style={{ backgroundColor: '#1e3a8a' }}>
           <div className="flex items-center justify-between gap-4">
             <h1 className="text-lg font-bold">🍴 EXΩ 🍷</h1>
             <nav className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export default function DiscoveryView({
         </header>
 
         {/* Controls - Plan My Itinerary + Filters */}
-        <div className="px-4 py-2.5 bg-white border-b" style={{ borderBottomColor: '#e7eaf4' }}>
+        <div className="px-4 py-2.5 bg-white border-b flex-shrink-0" style={{ borderBottomColor: '#e7eaf4' }}>
           <button
             onClick={onGenerateItinerary}
             className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2 mb-2.5"
@@ -149,8 +149,8 @@ export default function DiscoveryView({
           </button>
         </div>
 
-        {/* Map - fills remaining space */}
-        <div className="flex-1 relative overflow-hidden">
+        {/* Map - fills all remaining space */}
+        <div className="flex-1 relative w-full">
           {userLocation && (
             <Map
               venues={venues}
@@ -161,13 +161,13 @@ export default function DiscoveryView({
           )}
         </div>
 
-        {/* Bottom Sheet with Venue List - overlay on top */}
+        {/* Bottom Sheet with Venue List - fixed overlay */}
         <BottomSheet
           isOpen={true}
           title={`${venues.length} place${venues.length !== 1 ? 's' : ''}`}
           onClose={() => {}}
         >
-          <div className="space-y-2">
+          <div className="space-y-2 pb-8">
             {venues.map(venue => (
               <VenueCard
                 key={venue.id}
