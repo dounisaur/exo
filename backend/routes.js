@@ -562,7 +562,7 @@ export function setupRoutes(app) {
     try {
       // If placeId is provided, fetch details for that specific place
       if (placeId) {
-        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours,price_level&key=${apiKey}`;
+        const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,formatted_address,geometry,website,formatted_phone_number,opening_hours,price_level,photos&key=${apiKey}`;
         const detailsResponse = await fetch(detailsUrl);
         const detailsData = await detailsResponse.json();
 
@@ -600,6 +600,19 @@ export function setupRoutes(app) {
           priceRange = '$'.repeat(result.price_level);
         }
 
+        // Fetch photo URLs from photos array
+        let photoUrls = [];
+        if (result.photos && Array.isArray(result.photos)) {
+          for (const photo of result.photos.slice(0, 5)) { // Limit to 5 photos
+            try {
+              const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${apiKey}`;
+              photoUrls.push(photoUrl);
+            } catch (error) {
+              console.error('Error processing photo:', error);
+            }
+          }
+        }
+
         return res.json({
           results: [{
             name: result.name || '',
@@ -610,7 +623,8 @@ export function setupRoutes(app) {
             phone: result.formatted_phone_number || '',
             price_range: priceRange,
             price_level: result.price_level?.toString() || '',
-            opening_hours: openingHours
+            opening_hours: openingHours,
+            photo_urls: photoUrls
           }]
         });
       }
@@ -656,7 +670,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -682,9 +696,9 @@ export function setupRoutes(app) {
 
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null]
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || []]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -697,7 +711,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -722,9 +736,9 @@ export function setupRoutes(app) {
       const canonicalCity = await getCanonicalCity(lat, lng);
 
       const { rowCount } = await pool.query(
-        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, updated_at=NOW()
-         WHERE id = $16`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, req.params.id]
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, photo_urls=$16, updated_at=NOW()
+         WHERE id = $17`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
