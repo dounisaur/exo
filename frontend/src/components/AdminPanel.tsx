@@ -1732,21 +1732,21 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Media</h3>
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                  <label htmlFor="image-upload" className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                   <input
+                    id="image-upload"
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
                   />
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50"
+                  <label
+                    htmlFor="image-upload"
+                    className="block w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50 cursor-pointer text-center"
                   >
                     {imageFile ? `✓ Image selected: ${imageFile.name}` : 'Choose Image'}
-                  </button>
+                  </label>
                 </div>
                 {imagePreview && (
                   <div className="space-y-2">
