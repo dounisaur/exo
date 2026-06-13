@@ -51,6 +51,7 @@ export default function VenueCard({
 
   // Mobile version - design-exact styling
   if (mobile) {
+    const imageUrl = venue.primary_photo_url || venue.image_url
     return (
       <div
         onClick={() => onSelect?.(venue)}
@@ -58,13 +59,31 @@ export default function VenueCard({
           borderRadius: '16px',
           background: '#fff',
           border: '1px solid #e7eaf4',
-          padding: '15px',
+          overflow: 'hidden',
           marginBottom: '12px',
           boxShadow: '0 6px 18px -12px rgba(21, 34, 74, 0.3)',
           cursor: 'pointer'
         }}
       >
-        {/* Name and Rating Row */}
+        {/* Image */}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={venue.name}
+            style={{
+              width: '100%',
+              height: '140px',
+              objectFit: 'cover'
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none'
+            }}
+          />
+        )}
+
+        {/* Content */}
+        <div style={{ padding: '15px' }}>
+          {/* Name and Rating Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '7px' }}>
           <span style={{ fontSize: '16px', fontWeight: 700, color: '#15224a' }}>{venue.name}</span>
           {venue.rating && (
@@ -90,6 +109,7 @@ export default function VenueCard({
           )}
           <span style={{ marginLeft: 'auto', color: '#1e40af', fontWeight: 600 }}>View ›</span>
         </div>
+        </div>
       </div>
     )
   }
@@ -99,14 +119,29 @@ export default function VenueCard({
   const cardText = isSelected ? 'text-white' : 'text-gray-900'
   const borderClass = isSelected ? 'border-transparent' : 'border-blue-100'
   const shadowClass = isSelected ? 'shadow-lg' : 'shadow-sm'
+  const imageUrl = venue.primary_photo_url || venue.image_url
 
   return (
     <div
       onClick={() => onSelect?.(venue)}
-      className={`p-4 rounded-lg cursor-pointer transition-all duration-200 border ${cardBg} ${borderClass} ${shadowClass} ${
+      className={`rounded-lg cursor-pointer transition-all duration-200 border overflow-hidden ${cardBg} ${borderClass} ${shadowClass} ${
         !isSelected ? 'hover:shadow-md' : ''
       }`}
     >
+      {/* Image */}
+      {imageUrl && (
+        <img
+          src={imageUrl}
+          alt={venue.name}
+          className="w-full h-24 object-cover"
+          onError={(e) => {
+            e.currentTarget.style.display = 'none'
+          }}
+        />
+      )}
+
+      {/* Content */}
+      <div className="p-4">
       {/* Name and Rating */}
       <div className="flex justify-between items-start gap-2 mb-2">
         <h3 className={`font-bold text-sm leading-tight flex-1 ${cardText}`}>{venue.name}</h3>
@@ -163,6 +198,7 @@ export default function VenueCard({
           <span>{venueComments.length} comment{venueComments.length !== 1 ? 's' : ''}</span>
         </div>
       )}
+      </div>
     </div>
   )
 }
