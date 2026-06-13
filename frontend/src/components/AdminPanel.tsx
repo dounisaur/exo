@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Plus, Edit2, Eye as EyeIcon, Search, Building2, Trash2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, User, VenueComment } from '../types'
@@ -29,6 +29,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [googleMapsLink, setGoogleMapsLink] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Venue search and filter state
   const [showVenueSearchFilters, setShowVenueSearchFilters] = useState(false)
@@ -453,6 +454,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     })
     setImageFile(null)
     setImagePreview('')
+    if (fileInputRef.current) fileInputRef.current.value = ''
     setLookupQuery('')
     setLookupResults([])
     setGoogleMapsLink('')
@@ -1730,13 +1732,21 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Media</h3>
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
                   <input
+                    ref={fileInputRef}
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="input-field"
+                    className="hidden"
                   />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50"
+                  >
+                    {imageFile ? `✓ Image selected: ${imageFile.name}` : 'Choose Image'}
+                  </button>
                 </div>
                 {imagePreview && (
                   <div className="space-y-2">
@@ -1746,6 +1756,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       onClick={() => {
                         setImagePreview('')
                         setImageFile(null)
+                        if (fileInputRef.current) fileInputRef.current.value = ''
                         setFormData(prev => ({
                           ...prev,
                           image_url: '',
