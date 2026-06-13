@@ -47,7 +47,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
 
@@ -82,8 +82,12 @@ export default function DiscoveryView({
 
   // Handle responsive changes
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
     window.addEventListener('resize', handleResize)
+    // Check on mount in case window object wasn't available initially
+    handleResize()
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
