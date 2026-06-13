@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut } from 'lucide-react'
-import VenueList from './components/VenueList'
 import AdminPanel from './components/AdminPanel'
 import ItineraryView from './components/ItineraryView'
-import FilterBar from './components/FilterBar'
+import DiscoveryView from './components/DiscoveryView'
 import type { Venue, Category, User, Itinerary } from './types'
 
 function App() {
@@ -13,7 +11,6 @@ function App() {
   const [category, setCategory] = useState<string>('')
   const [radius, setRadius] = useState<{ min: number | null; max: number | null }>({ min: 0, max: 1 }) // in km
   const [selectedCity, setSelectedCity] = useState<string>('')
-  const [loading, setLoading] = useState(false)
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -132,16 +129,8 @@ function App() {
     setPage('home')
   }
 
-  const getUniqueCities = (): string[] => {
-    const citySet = new Set<string>()
-    venues.forEach(venue => {
-      if (venue.canonical_city) citySet.add(venue.canonical_city)
-    })
-    return Array.from(citySet).sort()
-  }
 
   const fetchVenues = async () => {
-    setLoading(true)
     try {
       const params = new URLSearchParams()
       if (category) params.append('category', category)
@@ -165,8 +154,6 @@ function App() {
     } catch (error) {
       console.error('Error fetching venues:', error)
       setVenues([])
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -271,88 +258,34 @@ function App() {
         </div>
       )}
 
-      {/* Home - List View */}
+      {/* Home - Discovery View with 3-column layout */}
       {page === 'home' && (
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <header className="bg-white border-b border-gray-200 p-4 sticky top-0 z-20">
-            <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold text-gray-900">🍴 EXΩ 🍷</h1>
-              <nav className="flex items-center gap-2">
-                {!authToken && (
-                  <button
-                    onClick={() => setPage('login')}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    Login
-                  </button>
-                )}
-                {authToken && (
-                  <>
-                    <button
-                      onClick={() => setPage('admin')}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
-                    >
-                      <Settings size={18} />
-                      <span className="hidden sm:inline">Dashboard</span>
-                    </button>
-                    <button
-                      onClick={handleLogout}
-                      className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      <LogOut size={18} />
-                      <span className="hidden sm:inline">Logout</span>
-                    </button>
-                  </>
-                )}
-              </nav>
-            </div>
-          </header>
-
-          {/* Plan My Itinerary Button */}
-          <div className="bg-white border-b border-gray-200 p-4 sticky top-16 z-20">
-            <button
-              onClick={() => generateItinerary()}
-              className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-            >
-              Plan My Itinerary
-            </button>
-            {loading && <p className="text-xs text-gray-600 mt-2">Loading venues...</p>}
-          </div>
-
-          {/* Filters - All devices */}
-          <div>
-            <FilterBar
-              categories={categories}
-              selectedCategory={category}
-              selectedRadius={radius}
-              selectedCity={selectedCity}
-              cities={getUniqueCities()}
-              onCategoryChange={setCategory}
-              onRadiusChange={setRadius}
-              onCityChange={setSelectedCity}
-            />
-          </div>
-
-          {/* Venues List */}
-          <div className="flex-1 overflow-y-auto">
-            <VenueList
-              venues={venues.filter(venue => {
-                if (selectedCity && !venue.canonical_city) return false
-                if (selectedCity) {
-                  return venue.canonical_city === selectedCity
-                }
-                return true
-              })}
-              categories={categories}
-              userLocation={userLocation || undefined}
-              onStartHere={(venue) => {
-                setItineraryStartVenueName(venue.name)
-                generateItinerary({ startVenueId: venue.id })
-              }}
-            />
-          </div>
-        </div>
+        <DiscoveryView
+          venues={venues.filter(venue => {
+            if (selectedCity && !venue.canonical_city) return false
+            if (selectedCity) {
+              return venue.canonical_city === selectedCity
+            }
+            return true
+          })}
+          categories={categories}
+          userLocation={userLocation || undefined}
+          onStartHere={(venue) => {
+            setItineraryStartVenueName(venue.name)
+            generateItinerary({ startVenueId: venue.id })
+          }}
+          onGenerateItinerary={() => generateItinerary()}
+          authToken={authToken}
+          onLogin={() => setPage('login')}
+          onLogout={handleLogout}
+          onAdmin={() => setPage('admin')}
+          selectedCity={selectedCity}
+          onCityChange={setSelectedCity}
+          selectedCategory={category}
+          onCategoryChange={setCategory}
+          selectedRadius={radius}
+          onRadiusChange={setRadius}
+        />
       )}
 
       {/* Admin */}

@@ -63,8 +63,8 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick 
     // Add venue markers
     venues.forEach((venue) => {
       const isSelected = selectedVenue?.id === venue.id
-      const fillColor = isSelected ? '#ff3333' : '#a78bfa'
-      const borderColor = isSelected ? '#991b1b' : '#6d28d9'
+      const fillColor = isSelected ? '#f5841f' : '#2563eb' // Cobalt: orange for selected, blue for others
+      const borderColor = isSelected ? '#f5841f' : '#1e40af' // Deep blue border
       const marker = L.circleMarker([venue.latitude, venue.longitude], {
         radius: isSelected ? 10 : 8,
         fillColor: fillColor,
