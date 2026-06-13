@@ -410,7 +410,7 @@ export default function MobileVenueSheet({
                   position: 'absolute',
                   top: '20px',
                   right: '12px',
-                  zIndex: 10,
+                  zIndex: 9999,
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
@@ -419,7 +419,8 @@ export default function MobileVenueSheet({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
                 }}
               >
                 <Maximize2 size={16} color="#fff" strokeWidth={2} />
