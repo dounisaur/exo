@@ -38,7 +38,7 @@ export default function FilterBar({
   return (
     <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
       {/* Filter Toggle Button - olive green background, full width */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-2.5">
         <button
           onClick={() => setFiltersVisible(!filtersVisible)}
           className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"

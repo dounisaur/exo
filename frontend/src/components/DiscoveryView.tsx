@@ -231,17 +231,17 @@ export default function DiscoveryView({
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
           {/* Sidebar header */}
-          <div className="px-4 py-4 bg-white">
+          <div className="px-4 py-2.5 bg-white">
             <button
               onClick={onGenerateItinerary}
-              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
             >
               Plan My Itinerary
             </button>
           </div>
 
           {/* Filters */}
-          <div className="pb-0" style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
+          <div style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
             <FilterBar
               categories={categories}
               selectedCategory={selectedCategory || ''}
