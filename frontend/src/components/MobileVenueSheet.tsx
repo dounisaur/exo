@@ -21,9 +21,18 @@ export default function MobileVenueSheet({
   onStartHere
 }: MobileVenueSheetProps) {
   const [expandedMap, setExpandedMap] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
   const commentsRef = useRef<HTMLDivElement>(null)
 
   if (!venue) return null
+
+  const handleCloseSheet = () => {
+    setIsClosing(true)
+    // Wait for animation to complete before calling onClose
+    setTimeout(() => {
+      onClose()
+    }, 400)
+  }
 
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
@@ -70,7 +79,7 @@ export default function MobileVenueSheet({
     <>
       {/* Scrim Overlay */}
       <div
-        onClick={onClose}
+        onClick={handleCloseSheet}
         style={{
           position: 'fixed',
           inset: 0,
@@ -84,6 +93,7 @@ export default function MobileVenueSheet({
 
       {/* Slide-up Sheet */}
       <div
+        className={isClosing ? 'animate-slide-down-mobile' : 'animate-slide-up-mobile'}
         style={{
           position: 'fixed',
           left: 0,
@@ -95,9 +105,7 @@ export default function MobileVenueSheet({
           boxShadow: '0 -16px 44px rgba(21, 34, 74, 0.32)',
           zIndex: 6,
           display: 'flex',
-          flexDirection: 'column',
-          transform: 'translateY(0)',
-          transition: 'transform 0.42s cubic-bezier(0.32, 0.72, 0, 1)'
+          flexDirection: 'column'
         }}
       >
         {/* Drag Handle */}
@@ -128,7 +136,7 @@ export default function MobileVenueSheet({
             {venue.name}
           </span>
           <button
-            onClick={onClose}
+            onClick={handleCloseSheet}
             style={{
               width: '32px',
               height: '32px',
