@@ -3,6 +3,7 @@ import { Settings, LogOut, MapPin } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
+import VenueDetailPage from './VenueDetailPage'
 import FilterBar from './FilterBar'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, VenueComment } from '../types'
@@ -47,6 +48,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
+  const [showDetailPage, setShowDetailPage] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
@@ -73,6 +75,12 @@ export default function DiscoveryView({
 
   const handleVenueSelect = (venue: Venue) => {
     setSelectedVenueId(venue.id)
+    setShowDetailPage(true)
+  }
+
+  const handleBackToList = () => {
+    setShowDetailPage(false)
+    setSelectedVenueId(null)
   }
 
   const handleStartHere = (venue: Venue) => {
@@ -288,8 +296,21 @@ export default function DiscoveryView({
           )}
         </div>
 
-        {/* Right: Detail Panel (only show when venue selected) */}
-        {selectedVenue && (
+        {/* Right: Detail Panel or Detail Page */}
+        {showDetailPage && selectedVenue ? (
+          // Detail Page - slides in from right
+          <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-300 ease-out" style={{ width: '384px', transform: 'translateX(0)' }}>
+            <VenueDetailPage
+              venue={selectedVenue}
+              categories={categories}
+              userLocation={userLocation}
+              comments={venueComments[selectedVenue.id] || []}
+              onBack={handleBackToList}
+              onStartHere={handleStartHere}
+            />
+          </div>
+        ) : selectedVenue ? (
+          // Detail Panel - shows when hovering over venue
           <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200" style={{ width: '384px' }}>
             <VenueDetailPanel
               venue={selectedVenue}
@@ -300,7 +321,7 @@ export default function DiscoveryView({
               isEmbedded={true}
             />
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   )
