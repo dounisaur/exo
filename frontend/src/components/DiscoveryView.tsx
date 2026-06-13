@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut } from 'lucide-react'
+import { Settings, LogOut, MapPin } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -234,9 +234,10 @@ export default function DiscoveryView({
           <div className="px-4 py-2.5 bg-white">
             <button
               onClick={onGenerateItinerary}
-              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center"
+              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2"
             >
-              Plan My Itinerary
+              <span>Plan My Itinerary</span>
+              <MapPin size={20} />
             </button>
           </div>
 
