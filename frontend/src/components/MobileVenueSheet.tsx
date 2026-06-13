@@ -404,13 +404,21 @@ export default function MobileVenueSheet({
           {/* Map */}
           {venue.latitude && venue.longitude && userLocation && (
             <div style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px', marginBottom: '16px', position: 'relative' }}>
+              <div style={{ height: '200px', borderRadius: '13px', border: '1px solid #e0e5f4', overflow: 'hidden' }}>
+                <Map
+                  venues={[venue]}
+                  userLocation={userLocation}
+                  selectedVenue={venue}
+                  onVenueClick={() => {}}
+                />
+              </div>
               <button
                 onClick={() => setExpandedMap(true)}
                 style={{
                   position: 'absolute',
-                  top: '20px',
+                  top: '26px',
                   right: '12px',
-                  zIndex: 9999,
+                  zIndex: 50,
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
@@ -420,19 +428,12 @@ export default function MobileVenueSheet({
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                  pointerEvents: 'auto'
                 }}
               >
                 <Maximize2 size={16} color="#fff" strokeWidth={2} />
               </button>
-              <div style={{ height: '200px', borderRadius: '13px', overflow: 'hidden', border: '1px solid #e0e5f4' }}>
-                <Map
-                  venues={[venue]}
-                  userLocation={userLocation}
-                  selectedVenue={venue}
-                  onVenueClick={() => {}}
-                />
-              </div>
             </div>
           )}
 
