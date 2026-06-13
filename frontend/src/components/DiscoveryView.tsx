@@ -48,6 +48,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showDetailPage, setShowDetailPage] = useState(false)
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
@@ -81,8 +82,13 @@ export default function DiscoveryView({
   }
 
   const handleBackToList = () => {
-    setShowDetailPage(false)
-    setSelectedVenueId(null)
+    setIsAnimatingOut(true)
+    // Wait for animation to complete before unmounting
+    setTimeout(() => {
+      setShowDetailPage(false)
+      setIsAnimatingOut(false)
+      setSelectedVenueId(null)
+    }, 400)
   }
 
   const handleStartHere = (venue: Venue) => {
@@ -303,9 +309,7 @@ export default function DiscoveryView({
 
 
       {/* Layout: 3-Column or Detail Page */}
-      {showDetailPage && selectedVenue ? (
-        // Detail Page replaces map + right panel
-        <div className="flex flex-1 overflow-hidden gap-0">
+      <div className="flex flex-1 overflow-hidden gap-0">
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
           {/* Sidebar header */}
@@ -354,8 +358,12 @@ export default function DiscoveryView({
           </div>
         </div>
 
-          {/* Detail Page - full width */}
-          <div className="flex-1 overflow-hidden transition-all duration-300 ease-out">
+        {/* Center: Map and Right: Detail Panel (toggles based on showDetailPage) */}
+        {(showDetailPage || isAnimatingOut) && selectedVenue ? (
+          // Detail Page - full width with slide-in/out animation
+          <div className="flex-1 overflow-hidden" style={{
+            animation: isAnimatingOut ? 'slideOutToRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards' : 'slideInFromRight 0.4s cubic-bezier(0.32, 0.72, 0, 1) forwards'
+          }}>
             <VenueDetailPage
               venue={selectedVenue}
               categories={categories}
@@ -365,7 +373,37 @@ export default function DiscoveryView({
               onStartHere={handleStartHere}
             />
           </div>
-        </div>
+        ) : (
+          // Standard 3-Column Layout
+          <>
+            {/* Center: Map */}
+            <div className="relative flex-1 transition-all duration-200" style={{ backgroundColor: '#eef1f8', borderRightColor: selectedVenue ? '#e7eaf4' : 'transparent', borderRightWidth: '1px' }}>
+              {userLocation && (
+                <Map
+                  venues={venues}
+                  userLocation={userLocation}
+                  selectedVenue={selectedVenue}
+                  onVenueClick={handleVenueSelect}
+                />
+              )}
+            </div>
+
+            {/* Right: Detail Panel */}
+            {selectedVenue && (
+              <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200" style={{ width: '384px' }}>
+                <VenueDetailPanel
+                  venue={selectedVenue}
+                  categories={categories}
+                  userLocation={userLocation}
+                  comments={venueComments[selectedVenue.id] || []}
+                  onStartHere={handleStartHere}
+                  isEmbedded={true}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
       ) : (
         // Standard 3-Column Layout
         <div className="flex flex-1 overflow-hidden gap-0">
