@@ -393,7 +393,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         longitude: lng,
         rating: formData.rating ? parseFloat(formData.rating) : null,
         opening_hours: buildOpeningHoursJSON(hoursGrid),
-        primary_photo_url: formData.primary_photo_url || null
+        primary_photo_url: formData.primary_photo_url === 'UPLOADED_IMAGE' ? imageUrl : formData.primary_photo_url || null
       }
 
       const method = editingVenueId ? 'PUT' : 'POST'
@@ -464,6 +464,12 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   }
 
   const editVenue = (venue: Venue) => {
+    // Determine primary_photo_url: if it matches image_url, use 'UPLOADED_IMAGE' marker
+    let primaryPhotoUrl = venue.primary_photo_url || ''
+    if (venue.image_url && venue.primary_photo_url === venue.image_url) {
+      primaryPhotoUrl = 'UPLOADED_IMAGE'
+    }
+
     setFormData({
       name: venue.name,
       category: venue.category,
@@ -480,7 +486,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       price_level: (venue as any).price_level || '',
       opening_hours: venue.opening_hours || '',
       photo_urls: venue.photo_urls || [],
-      primary_photo_url: venue.primary_photo_url || ''
+      primary_photo_url: primaryPhotoUrl
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
     setImagePreview(venue.image_url || '')
@@ -1740,7 +1746,11 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       onClick={() => {
                         setImagePreview('')
                         setImageFile(null)
-                        setFormData(prev => ({ ...prev, image_url: '' }))
+                        setFormData(prev => ({
+                          ...prev,
+                          image_url: '',
+                          primary_photo_url: prev.primary_photo_url === 'UPLOADED_IMAGE' ? '' : prev.primary_photo_url
+                        }))
                       }}
                       className="w-full px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg text-sm font-medium transition-colors"
                     >
@@ -1751,14 +1761,53 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               </div>
             </div>
 
-            {/* Google Photos Gallery Section */}
-            {formData.photo_urls && formData.photo_urls.length > 0 && (
+            {/* Profile Photo Selector */}
+            {(imagePreview || (formData.photo_urls && formData.photo_urls.length > 0)) && (
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Google Places Photos</h3>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Select Profile Photo</h3>
                 <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
-                  <p className="text-xs text-gray-600 mb-3">Select which photo to use as the main profile picture:</p>
+                  <p className="text-xs text-gray-600 mb-3">Choose which photo appears on the venue card:</p>
                   <div className="grid grid-cols-2 gap-3">
-                    {formData.photo_urls.map((photoUrl, index) => (
+                    {/* Uploaded Image */}
+                    {imagePreview && (
+                      <label
+                        className={`cursor-pointer rounded-lg border-2 overflow-hidden transition-all ${
+                          formData.primary_photo_url === 'UPLOADED_IMAGE'
+                            ? 'border-blue-600 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="primary_photo"
+                          checked={formData.primary_photo_url === 'UPLOADED_IMAGE'}
+                          onChange={() => setFormData(prev => ({ ...prev, primary_photo_url: 'UPLOADED_IMAGE' }))}
+                          className="hidden"
+                        />
+                        <div className="relative">
+                          <img
+                            src={imagePreview}
+                            alt="Uploaded image"
+                            className="w-full h-32 object-cover"
+                          />
+                          {formData.primary_photo_url === 'UPLOADED_IMAGE' && (
+                            <div className="absolute inset-0 bg-blue-600 bg-opacity-30 flex items-center justify-center">
+                              <div className="bg-blue-600 text-white rounded-full p-2">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        <div className="px-2 py-1 bg-green-50 border-t border-green-200">
+                          <p className="text-xs text-green-700 font-medium">Uploaded</p>
+                        </div>
+                      </label>
+                    )}
+
+                    {/* Google Places Photos */}
+                    {formData.photo_urls && formData.photo_urls.map((photoUrl, index) => (
                       <label
                         key={index}
                         className={`cursor-pointer rounded-lg border-2 overflow-hidden transition-all ${
@@ -1795,7 +1844,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           )}
                         </div>
                         <div className="px-2 py-1 bg-gray-50 border-t border-gray-200">
-                          <p className="text-xs text-gray-600 font-medium">Photo {index + 1}</p>
+                          <p className="text-xs text-gray-600 font-medium">Google {index + 1}</p>
                         </div>
                       </label>
                     ))}
