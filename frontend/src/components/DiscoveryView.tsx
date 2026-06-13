@@ -3,6 +3,7 @@ import { Settings, LogOut, MapPin, ChevronUp, ChevronDown } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
+import VenueDetailPage from './VenueDetailPage'
 import FilterBar from './FilterBar'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, VenueComment } from '../types'
@@ -47,6 +48,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
+  const [showDetailPage, setShowDetailPage] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
@@ -73,6 +75,12 @@ export default function DiscoveryView({
 
   const handleVenueSelect = (venue: Venue) => {
     setSelectedVenueId(venue.id)
+    setShowDetailPage(true)
+  }
+
+  const handleBackToList = () => {
+    setShowDetailPage(false)
+    setSelectedVenueId(null)
   }
 
   const handleStartHere = (venue: Venue) => {
@@ -248,8 +256,10 @@ export default function DiscoveryView({
       </header>
 
 
-      {/* 3-Column Layout (map expands when no venue selected) */}
-      <div className="flex flex-1 overflow-hidden gap-0">
+      {/* Layout: 3-Column or Detail Page */}
+      {showDetailPage && selectedVenue ? (
+        // Detail Page replaces map + right panel
+        <div className="flex flex-1 overflow-hidden gap-0">
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
           {/* Sidebar header */}
@@ -298,32 +308,96 @@ export default function DiscoveryView({
           </div>
         </div>
 
-        {/* Center: Map (expands when no venue selected) */}
-        <div className="relative flex-1 transition-all duration-200" style={{ backgroundColor: '#eef1f8', borderRightColor: selectedVenue ? '#e7eaf4' : 'transparent', borderRightWidth: '1px' }}>
-          {userLocation && (
-            <Map
-              venues={venues}
-              userLocation={userLocation}
-              selectedVenue={selectedVenue}
-              onVenueClick={handleVenueSelect}
-            />
-          )}
-        </div>
-
-        {/* Right: Detail Panel (only show when venue selected) */}
-        {selectedVenue && (
-          <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200" style={{ width: '384px' }}>
-            <VenueDetailPanel
+          {/* Detail Page - full width */}
+          <div className="flex-1 overflow-hidden transition-all duration-300 ease-out">
+            <VenueDetailPage
               venue={selectedVenue}
               categories={categories}
               userLocation={userLocation}
               comments={venueComments[selectedVenue.id] || []}
+              onBack={handleBackToList}
               onStartHere={handleStartHere}
-              isEmbedded={true}
             />
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        // Standard 3-Column Layout
+        <div className="flex flex-1 overflow-hidden gap-0">
+          {/* Left: Sidebar (same as above) */}
+          <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
+            {/* Sidebar header */}
+            <div className="px-4 py-2.5 bg-white">
+              <button
+                onClick={onGenerateItinerary}
+                className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2"
+              >
+                <span>Plan My Itinerary</span>
+                <MapPin size={20} />
+              </button>
+            </div>
+
+            {/* Filters */}
+            <div style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
+              <FilterBar
+                categories={categories}
+                selectedCategory={selectedCategory || ''}
+                selectedRadius={selectedRadius || { min: 0, max: 1 }}
+                selectedCity={selectedCity || ''}
+                cities={allCities}
+                onCategoryChange={onCategoryChange || (() => {})}
+                onRadiusChange={onRadiusChange || (() => {})}
+                onCityChange={onCityChange || (() => {})}
+              />
+            </div>
+
+            {/* Scrollable venue list */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {venues.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-500">
+                  <p>No venues found</p>
+                </div>
+              ) : (
+                venues.map(venue => (
+                  <VenueCard
+                    key={venue.id}
+                    venue={venue}
+                    categories={categories}
+                    isSelected={selectedVenueId === venue.id}
+                    venueComments={venueComments[venue.id] || []}
+                    onSelect={handleVenueSelect}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Center: Map */}
+          <div className="relative flex-1 transition-all duration-200" style={{ backgroundColor: '#eef1f8', borderRightColor: selectedVenue ? '#e7eaf4' : 'transparent', borderRightWidth: '1px' }}>
+            {userLocation && (
+              <Map
+                venues={venues}
+                userLocation={userLocation}
+                selectedVenue={selectedVenue}
+                onVenueClick={handleVenueSelect}
+              />
+            )}
+          </div>
+
+          {/* Right: Detail Panel */}
+          {selectedVenue && (
+            <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200" style={{ width: '384px' }}>
+              <VenueDetailPanel
+                venue={selectedVenue}
+                categories={categories}
+                userLocation={userLocation}
+                comments={venueComments[selectedVenue.id] || []}
+                onStartHere={handleStartHere}
+                isEmbedded={true}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
