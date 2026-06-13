@@ -54,7 +54,7 @@ export default function VenueDetailPage({
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full w-full flex flex-col bg-white overflow-hidden">
       {/* Header */}
       <header className="text-white p-4 flex-shrink-0" style={{ backgroundColor: '#1e3a8a' }}>
         <div className="flex items-center justify-between gap-4">
@@ -74,9 +74,9 @@ export default function VenueDetailPage({
       </header>
 
       {/* Content - Two Column Layout */}
-      <div className="flex-1 overflow-hidden flex gap-7 p-7">
+      <div className="flex-1 overflow-hidden flex gap-7 p-7 min-h-0">
         {/* Left Column */}
-        <div className="flex-1 overflow-y-auto pr-4">
+        <div className="flex-1 overflow-y-auto pr-4 min-w-0">
           {/* Name */}
           <h1 className="text-3xl font-bold text-gray-900 mb-3">{venue.name}</h1>
 
