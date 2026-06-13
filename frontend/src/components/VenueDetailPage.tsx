@@ -1,4 +1,4 @@
-import { ArrowLeft, Phone, MapPin, Clock, Building2, Wallet, MessageCircle, ArrowUpRight } from 'lucide-react'
+import { ArrowLeft, Phone, MapPin, Clock, Building2, Wallet, MessageCircle, ArrowUpRight, ChevronDown, Maximize2, Minimize2 } from 'lucide-react'
 import { useState } from 'react'
 import Map from './Map'
 import type { Venue, Category, VenueComment } from '../types'
@@ -20,7 +20,8 @@ export default function VenueDetailPage({
   onBack,
   onStartHere
 }: VenueDetailPageProps) {
-  const [showMap, setShowMap] = useState(false)
+  const [showComments, setShowComments] = useState(false)
+  const [expandedMap, setExpandedMap] = useState(false)
 
   const getSubcategoryName = (subcategoryId?: number) => {
     if (!subcategoryId || categories.length === 0) return null
@@ -55,23 +56,21 @@ export default function VenueDetailPage({
 
   return (
     <div className="h-full w-full flex flex-col bg-white overflow-hidden">
-      {/* Header */}
-      <header className="text-white p-4 flex-shrink-0" style={{ backgroundColor: '#1e3a8a' }}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={onBack}
-              className="flex items-center gap-2 text-sm font-medium hover:opacity-80 transition-opacity"
-            >
-              <ArrowLeft size={20} />
-              <span>Back to list</span>
-            </button>
-            <span className="text-sm font-medium opacity-60">/</span>
-            <span className="text-sm font-medium">{venue.name}</span>
-          </div>
-          <span className="text-sm font-medium">Login</span>
+      {/* Breadcrumb */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '0 28px', height: '54px', borderBottom: '1px solid #eef0f8', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '9px', fontSize: '14px', color: '#5d6584', fontWeight: '500' }}>
+          <button
+            onClick={onBack}
+            style={{ display: 'flex', alignItems: 'center', gap: '9px', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: '#1e40af', fontWeight: '600', fontSize: '14px' }}
+            className="hover:opacity-70 transition-opacity"
+          >
+            <ArrowLeft size={15} />
+            <span>Back to Map View</span>
+          </button>
+          <span style={{ color: '#b3b9cc' }}>/</span>
+          <span style={{ color: '#5d6584' }}>{venue.name}</span>
         </div>
-      </header>
+      </div>
 
       {/* Content - Two Column Layout */}
       <div className="flex-1 overflow-hidden flex gap-7 p-7 min-h-0">
@@ -88,85 +87,65 @@ export default function VenueDetailPage({
           </div>
 
           {/* Info Rows */}
-          <div className="space-y-2 mb-6">
+          <div className="mb-6">
             {getPriceDisplay(venue) && (
-              <div className="flex items-center gap-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid #eef0f8' }}>
                 <Wallet size={18} className="text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-green-600 font-medium">{getPriceDisplay(venue)}</span>
+                <span style={{ fontSize: '15px', color: '#22c55e', fontWeight: '700' }}>{getPriceDisplay(venue)}</span>
               </div>
             )}
             {venue.canonical_city && (
-              <div className="flex items-center gap-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid #eef0f8' }}>
                 <Building2 size={18} className="text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-700">{venue.canonical_city}</span>
+                <span style={{ fontSize: '15px', color: '#3f4660' }}>{venue.canonical_city}</span>
               </div>
             )}
             {venue.address && (
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
-                <span className="text-sm text-gray-700">{venue.address}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid #eef0f8' }}>
+                <MapPin size={18} className="text-gray-400 flex-shrink-0" />
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '15px', color: '#1e40af', textDecoration: 'none', cursor: 'pointer' }}
+                  className="hover:underline transition-colors"
+                >
+                  {venue.address}
+                </a>
               </div>
             )}
             {venue.opening_hours && getTodayHours(venue.opening_hours) && (
-              <div className="flex items-center gap-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid #eef0f8' }}>
                 <Clock size={18} className="text-gray-400 flex-shrink-0" />
-                <span className="text-sm text-gray-700">{getTodayHours(venue.opening_hours)}</span>
+                <span style={{ fontSize: '15px', color: '#3f4660' }}>{getTodayHours(venue.opening_hours)}</span>
               </div>
             )}
           </div>
 
           {/* Rating */}
           {venue.rating && (
-            <div className="flex items-center gap-2 mb-6">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingBottom: '16px', marginBottom: '16px', borderBottom: '1px solid #eef0f8' }}>
               <div className="flex gap-1">
                 {[...Array(5)].map((_, i) => {
                   const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
                   return (
                     <div key={i} className="relative">
-                      <span className="text-xl text-gray-300">★</span>
+                      <span style={{ fontSize: '17px', color: '#d8dce5' }}>★</span>
                       <div
-                        className="absolute top-0 left-0 overflow-hidden text-yellow-500"
+                        className="absolute top-0 left-0 overflow-hidden"
                         style={{ width: `${fillPercentage * 100}%` }}
                       >
-                        <span className="text-xl">★</span>
+                        <span style={{ fontSize: '17px', color: '#f5b50a' }}>★</span>
                       </div>
                     </div>
                   )
                 })}
               </div>
-              <span className="text-sm font-semibold text-gray-700 ml-2">
+              <span style={{ fontSize: '15px', color: '#3f4660', fontWeight: '600' }}>
                 {venue.rating.toFixed(1)}
               </span>
             </div>
           )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-3 mb-6">
-            {venue.phone_number && (
-              <a
-                href={`tel:${venue.phone_number}`}
-                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-              >
-                <Phone size={16} />
-                <span>Call</span>
-              </a>
-            )}
-            <a
-              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address || venue.name)}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
-            >
-              <ArrowUpRight size={16} />
-              <span>Directions</span>
-            </a>
-            <button
-              onClick={() => setShowMap(!showMap)}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-            >
-              {showMap ? 'Hide' : 'View'} map
-            </button>
-          </div>
 
           {/* About */}
           <div className="mb-6 pb-6 border-b border-blue-100">
@@ -177,20 +156,28 @@ export default function VenueDetailPage({
           {/* Comments */}
           {comments.length > 0 && (
             <div className="mt-8">
-              <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <MessageCircle size={16} />
-                Comments ({comments.length})
-              </h4>
-              <div className="space-y-2">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="p-3 bg-gray-50 rounded-lg border border-blue-100">
-                    <p className="text-sm text-gray-700">{comment.content}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {new Date(comment.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <button
+                onClick={() => setShowComments(!showComments)}
+                className="w-full flex items-center justify-between mb-3 hover:opacity-70 transition-opacity"
+              >
+                <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                  <MessageCircle size={16} />
+                  Comments ({comments.length})
+                </h4>
+                <ChevronDown size={18} className={`text-gray-600 transition-transform ${showComments ? 'rotate-180' : ''}`} />
+              </button>
+              {showComments && (
+                <div className="space-y-2">
+                  {comments.map((comment) => (
+                    <div key={comment.id} className="p-3 bg-gray-50 rounded-lg border border-blue-100">
+                      <p className="text-sm text-gray-700">{comment.content}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {new Date(comment.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -198,8 +185,37 @@ export default function VenueDetailPage({
         {/* Right Column */}
         <div className="w-96 flex flex-col gap-6 flex-shrink-0">
           {/* Map */}
-          {userLocation && venue.latitude && venue.longitude && (
+          {expandedMap && userLocation && venue.latitude && venue.longitude && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 1000, backgroundColor: 'white', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '16px', borderBottom: '1px solid #e0e5f4' }}>
+                <button
+                  onClick={() => setExpandedMap(false)}
+                  style={{ background: '#22c55e', border: 'none', cursor: 'pointer', padding: '8px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <Minimize2 size={24} color="white" />
+                </button>
+              </div>
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <Map
+                  venues={[venue]}
+                  userLocation={userLocation}
+                  selectedVenue={venue}
+                  onVenueClick={() => {}}
+                />
+              </div>
+            </div>
+          )}
+
+          {!expandedMap && userLocation && venue.latitude && venue.longitude && (
             <div className="relative h-64 bg-gray-200 rounded-lg overflow-hidden border border-blue-100">
+              <button
+                onClick={() => setExpandedMap(true)}
+                style={{ position: 'absolute', top: '12px', right: '12px', zIndex: 9999, background: '#22c55e', border: 'none', padding: '8px', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.3)' }}
+                className="hover:opacity-80 transition-opacity"
+              >
+                <Maximize2 size={20} color="white" />
+              </button>
               <Map
                 venues={[venue]}
                 userLocation={userLocation}
@@ -209,28 +225,26 @@ export default function VenueDetailPage({
             </div>
           )}
 
-          {/* Info Card */}
-          <div className="border border-blue-100 rounded-lg p-6 space-y-4">
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1">Address</p>
-              <p className="text-sm text-gray-900">{venue.address}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-gray-500 mb-1">Hours</p>
-              <p className="text-sm text-gray-900">{getTodayHours(venue.opening_hours) || 'Closed today'}</p>
-            </div>
-            {getPriceDisplay(venue) && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">Price</p>
-                <p className="text-sm text-green-600 font-medium">{getPriceDisplay(venue)}</p>
-              </div>
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            {venue.phone_number && (
+              <a
+                href={`tel:${venue.phone_number}`}
+                className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 rounded-lg text-sm font-medium text-white transition-colors"
+              >
+                <Phone size={16} />
+                <span>Call</span>
+              </a>
             )}
-            {venue.canonical_city && (
-              <div>
-                <p className="text-xs font-medium text-gray-500 mb-1">City</p>
-                <p className="text-sm text-gray-900">{venue.canonical_city}</p>
-              </div>
-            )}
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address || venue.name)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm font-medium text-white transition-colors"
+            >
+              <ArrowUpRight size={16} />
+              <span>Directions</span>
+            </a>
           </div>
 
           {/* Start Here Button */}
