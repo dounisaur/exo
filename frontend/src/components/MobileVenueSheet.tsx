@@ -1,4 +1,5 @@
-import { X, Wallet, Building2, MapPin, Clock, Phone, MessageCircle } from 'lucide-react'
+import { X, Wallet, Building2, MapPin, Clock, Phone, MessageCircle, Maximize2, Minimize2 } from 'lucide-react'
+import { useState, useRef } from 'react'
 import type { Venue, Category, VenueComment } from '../types'
 
 interface MobileVenueSheetProps {
@@ -16,6 +17,9 @@ export default function MobileVenueSheet({
   onClose,
   onStartHere
 }: MobileVenueSheetProps) {
+  const [expandedMap, setExpandedMap] = useState(false)
+  const commentsRef = useRef<HTMLDivElement>(null)
+
   if (!venue) return null
 
   const getSubcategoryName = (subcategoryId?: number) => {
@@ -47,6 +51,12 @@ export default function MobileVenueSheet({
     }
     if (venue.price_range) return venue.price_range
     return null
+  }
+
+  const scrollToComments = () => {
+    if (commentsRef.current) {
+      commentsRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   const rating = venue.rating ? Math.round(venue.rating) : 0
@@ -303,7 +313,8 @@ export default function MobileVenueSheet({
           {/* Comment Chip + Start Here Button Row */}
           <div style={{ display: 'flex', gap: '9px', marginBottom: '18px' }}>
             {comments.length > 0 && (
-              <div
+              <button
+                onClick={scrollToComments}
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -314,12 +325,14 @@ export default function MobileVenueSheet({
                   padding: '11px 14px',
                   fontSize: '13.5px',
                   fontWeight: 600,
-                  flexShrink: 0
+                  flexShrink: 0,
+                  border: 'none',
+                  cursor: 'pointer'
                 }}
               >
                 <MessageCircle size={13} color="#fff" strokeWidth={2} />
                 {comments.length}
-              </div>
+              </button>
             )}
             {onStartHere && (
               <button
@@ -387,7 +400,27 @@ export default function MobileVenueSheet({
 
           {/* Map */}
           {venue.latitude && venue.longitude && (
-            <div style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px', marginBottom: '16px' }}>
+            <div style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px', marginBottom: '16px', position: 'relative' }}>
+              <button
+                onClick={() => setExpandedMap(true)}
+                style={{
+                  position: 'absolute',
+                  top: '20px',
+                  right: '12px',
+                  zIndex: 10,
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <Maximize2 size={16} color="#fff" strokeWidth={2} />
+              </button>
               <iframe
                 title="Venue map mobile"
                 src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.01},${venue.latitude - 0.01},${venue.longitude + 0.01},${venue.latitude + 0.01}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
@@ -405,7 +438,7 @@ export default function MobileVenueSheet({
 
           {/* Comments Section */}
           {comments.length > 0 && (
-            <div style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px' }}>
+            <div ref={commentsRef} style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px' }}>
               <h4 style={{ fontSize: '14.5px', fontWeight: 700, color: '#15224a', margin: '0 0 11px' }}>
                 Comments ({comments.length})
               </h4>
@@ -438,6 +471,73 @@ export default function MobileVenueSheet({
           )}
         </div>
       </div>
+
+      {/* Fullscreen Map Overlay */}
+      {expandedMap && venue.latitude && venue.longitude && (
+        <>
+          {/* Overlay Background */}
+          <div
+            onClick={() => setExpandedMap(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: '#000',
+              zIndex: 7,
+              opacity: 0.5
+            }}
+          />
+
+          {/* Fullscreen Map Container */}
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 8,
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            {/* Close Button */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                padding: '12px',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)'
+              }}
+            >
+              <button
+                onClick={() => setExpandedMap(false)}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  border: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <Minimize2 size={20} color="#fff" strokeWidth={2} />
+              </button>
+            </div>
+
+            {/* Map */}
+            <iframe
+              title="Venue map mobile expanded"
+              src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.02},${venue.latitude - 0.02},${venue.longitude + 0.02},${venue.latitude + 0.02}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
+              style={{
+                flex: 1,
+                border: 'none',
+                width: '100%'
+              }}
+              loading="lazy"
+            />
+          </div>
+        </>
+      )}
     </>
   )
 }
