@@ -43,7 +43,7 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick 
         permanent: true,
         direction: 'top',
         offset: [0, -20],
-        className: 'venue-tooltip'
+        className: 'user-location-tooltip'
       })
   }, [])
 
@@ -64,7 +64,7 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick 
     venues.forEach((venue) => {
       const isSelected = selectedVenue?.id === venue.id
       const fillColor = isSelected ? '#f5841f' : '#2563eb' // Cobalt: orange for selected, blue for others
-      const borderColor = isSelected ? '#cc5500' : '#1e40af' // Dark orange border for selected, deep blue for others
+      const borderColor = isSelected ? '#f5841f' : '#1e40af' // Orange border for selected, deep blue for others
       const marker = L.circleMarker([venue.latitude, venue.longitude], {
         radius: isSelected ? 10 : 8,
         fillColor: fillColor,

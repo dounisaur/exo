@@ -119,3 +119,14 @@
 .animate-slide-in {
   animation: slideIn 0.3s ease-out;
 }
+
+/* Leaflet tooltip styling */
+.venue-tooltip {
+  border: 2px solid #f5841f !important;
+  background-color: white !important;
+}
+
+.user-location-tooltip {
+  border: 2px solid #FF2D2D !important;
+  background-color: white !important;
+}
