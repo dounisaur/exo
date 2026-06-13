@@ -88,9 +88,9 @@ export default function DiscoveryView({
   }, [])
 
   if (isMobile) {
-    // Mobile Layout: Header → Controls → Map → Bottom Sheet
+    // Mobile Layout: Header + Map (full screen) + Bottom Sheet overlay
     return (
-      <div className="flex flex-col h-screen bg-white">
+      <div className="h-screen flex flex-col bg-white">
         {/* Header */}
         <header className="bg-cobalt text-white p-4 sticky top-0 z-30">
           <div className="flex items-center justify-between gap-4">
@@ -126,9 +126,8 @@ export default function DiscoveryView({
           </div>
         </header>
 
-
-        {/* Map */}
-        <div className="flex-1 relative">
+        {/* Map - fills remaining space */}
+        <div className="flex-1 relative overflow-hidden">
           {userLocation && (
             <Map
               venues={venues}
@@ -139,13 +138,13 @@ export default function DiscoveryView({
           )}
         </div>
 
-        {/* Bottom Sheet with Venue List */}
+        {/* Bottom Sheet with Venue List - overlay on top */}
         <BottomSheet
           isOpen={true}
           title={`${venues.length} place${venues.length !== 1 ? 's' : ''}`}
           onClose={() => {}}
         >
-          <div className="space-y-2 p-4">
+          <div className="space-y-2">
             {venues.map(venue => (
               <VenueCard
                 key={venue.id}
