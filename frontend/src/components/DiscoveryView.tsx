@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, ChevronDown } from 'lucide-react'
+import { Settings, LogOut } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -12,6 +12,7 @@ interface DiscoveryViewProps {
   categories: Category[]
   userLocation?: { lat: number; lng: number }
   onStartHere?: (venue: Venue) => void
+  onGenerateItinerary?: () => void
   authToken?: string | null
   onLogin?: () => void
   onLogout?: () => void
@@ -29,6 +30,7 @@ export default function DiscoveryView({
   categories,
   userLocation,
   onStartHere,
+  onGenerateItinerary,
   authToken,
   onLogin,
   onLogout,
@@ -43,7 +45,6 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
-  const [showSidebarFilters, setShowSidebarFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
@@ -224,37 +225,35 @@ export default function DiscoveryView({
       </header>
 
 
-      {/* 3-Column Layout */}
+      {/* 3-Column Layout (map expands when no venue selected) */}
       <div className="flex flex-1 overflow-hidden gap-0">
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
-          {/* Sidebar header with filters */}
+          {/* Sidebar header */}
           <div className="p-4 bg-white" style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
-            <button
-              onClick={() => setShowSidebarFilters(!showSidebarFilters)}
-              className="w-full px-3 py-2 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#6B8E23' }}
-            >
-              <span>Filters</span>
-              <ChevronDown size={14} style={{ transform: showSidebarFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
-            </button>
+            <div className="mb-3">
+              <button
+                onClick={onGenerateItinerary}
+                className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Plan My Itinerary
+              </button>
+            </div>
           </div>
 
-          {/* Filters Section */}
-          {showSidebarFilters && (
-            <div className="p-4 bg-white border-b" style={{ borderBottomColor: '#e7eaf4' }}>
-              <FilterBar
-                categories={categories}
-                selectedCategory={selectedCategory || ''}
-                selectedRadius={selectedRadius || { min: 0, max: 1 }}
-                selectedCity={selectedCity || ''}
-                cities={cities}
-                onCategoryChange={onCategoryChange || (() => {})}
-                onRadiusChange={onRadiusChange || (() => {})}
-                onCityChange={onCityChange || (() => {})}
-              />
-            </div>
-          )}
+          {/* Filters */}
+          <div style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
+            <FilterBar
+              categories={categories}
+              selectedCategory={selectedCategory || ''}
+              selectedRadius={selectedRadius || { min: 0, max: 1 }}
+              selectedCity={selectedCity || ''}
+              cities={cities}
+              onCategoryChange={onCategoryChange || (() => {})}
+              onRadiusChange={onRadiusChange || (() => {})}
+              onCityChange={onCityChange || (() => {})}
+            />
+          </div>
 
           {/* Scrollable venue list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
@@ -277,8 +276,8 @@ export default function DiscoveryView({
           </div>
         </div>
 
-        {/* Center: Map */}
-        <div className="flex-1 relative" style={{ backgroundColor: '#eef1f8', borderRightColor: '#e7eaf4', borderRightWidth: '1px' }}>
+        {/* Center: Map (expands when no venue selected) */}
+        <div className="relative flex-1 transition-all duration-200" style={{ backgroundColor: '#eef1f8', borderRightColor: selectedVenue ? '#e7eaf4' : 'transparent', borderRightWidth: '1px' }}>
           {userLocation && (
             <Map
               venues={venues}
@@ -289,9 +288,9 @@ export default function DiscoveryView({
           )}
         </div>
 
-        {/* Right: Detail Panel */}
-        <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col" style={{ width: '384px' }}>
-          {selectedVenue ? (
+        {/* Right: Detail Panel (only show when venue selected) */}
+        {selectedVenue && (
+          <div className="bg-white flex-shrink-0 overflow-hidden flex flex-col transition-all duration-200" style={{ width: '384px' }}>
             <VenueDetailPanel
               venue={selectedVenue}
               categories={categories}
@@ -300,12 +299,8 @@ export default function DiscoveryView({
               onStartHere={handleStartHere}
               isEmbedded={true}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full text-gray-500 p-4 text-center">
-              <p>Select a venue to view details</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -37,11 +37,12 @@ export default function FilterBar({
 
   return (
     <div className="bg-white border-b border-gray-200 sticky top-16 z-10">
-      {/* Filter Toggle Button - orange and narrower */}
+      {/* Filter Toggle Button - olive green background */}
       <div className="px-4 py-4">
         <button
           onClick={() => setFiltersVisible(!filtersVisible)}
-          className="w-auto px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
+          className="w-auto px-8 py-3 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
+          style={{ backgroundColor: '#6B8E23' }}
         >
           <span>Filters</span>
           {filtersVisible ? (
@@ -55,12 +56,12 @@ export default function FilterBar({
       {/* Filters Container - collapsible on all devices */}
       <div className={`${filtersVisible ? 'block' : 'hidden'} px-4 py-4`}>
         <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
-          {/* MOBILE VERSION - Dropdowns */}
-          <div className="md:hidden space-y-3">
+          {/* Dropdowns for all devices */}
+          <div className="space-y-3">
             {/* City Dropdown */}
             {cities.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
+                <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
                 <select
                   value={selectedCity}
                   onChange={(e) => onCityChange(e.target.value)}
@@ -76,7 +77,7 @@ export default function FilterBar({
 
             {/* Venue Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Venue</label>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Venue</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => onCategoryChange(e.target.value)}
@@ -91,7 +92,7 @@ export default function FilterBar({
 
             {/* Radius Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Radius</label>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
               <select
                 value={selectedRadius.min === null ? 'null-null' : `${selectedRadius.min}-${selectedRadius.max}`}
                 onChange={(e) => {
@@ -113,95 +114,6 @@ export default function FilterBar({
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-
-          {/* DESKTOP VERSION - Buttons */}
-          <div className="hidden md:block space-y-3">
-            {/* City Filters */}
-            {cities.length > 0 && (
-              <div className="flex items-center gap-3">
-                <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-16">City:</label>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => onCityChange('')}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      selectedCity === ''
-                        ? 'bg-purple-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    All
-                  </button>
-                  {cities.map(city => (
-                    <button
-                      key={city}
-                      onClick={() => onCityChange(city)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        selectedCity === city
-                          ? 'bg-purple-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {city}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Category Filters */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-16">Venue:</label>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onCategoryChange('')}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === ''
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }`}
-                >
-                  All
-                </button>
-                {categories.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => onCategoryChange(cat.slug)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                      selectedCategory === cat.slug
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Radius Filter */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 whitespace-nowrap w-16">Radius:</label>
-              <div className="flex flex-wrap gap-2">
-                {RADIUS_OPTIONS.map(option => (
-                  <button
-                    key={`${option.min}-${option.max}`}
-                    onClick={() => onRadiusChange({ min: option.min, max: option.max })}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                      (option.min === null && option.max === null)
-                        ? selectedRadius.min === null && selectedRadius.max === null
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        : selectedRadius.min === option.min && selectedRadius.max === option.max
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
