@@ -10,6 +10,7 @@ import type { Venue, Category, VenueComment } from '../types'
 interface DiscoveryViewProps {
   venues: Venue[]
   categories: Category[]
+  allCities: string[]
   userLocation?: { lat: number; lng: number }
   onStartHere?: (venue: Venue) => void
   onGenerateItinerary?: () => void
@@ -28,6 +29,7 @@ interface DiscoveryViewProps {
 export default function DiscoveryView({
   venues,
   categories,
+  allCities,
   userLocation,
   onStartHere,
   onGenerateItinerary,
@@ -77,7 +79,6 @@ export default function DiscoveryView({
     onStartHere?.(venue)
   }
 
-  const cities = Array.from(new Set(venues.map(v => v.canonical_city).filter(Boolean) as string[]))
 
   // Handle responsive changes
   useEffect(() => {
@@ -171,7 +172,7 @@ export default function DiscoveryView({
                 selectedCategory={selectedCategory || ''}
                 selectedRadius={selectedRadius || { min: 0, max: 1 }}
                 selectedCity={selectedCity || ''}
-                cities={cities}
+                cities={allCities}
                 onCategoryChange={onCategoryChange || (() => {})}
                 onRadiusChange={onRadiusChange || (() => {})}
                 onCityChange={onCityChange || (() => {})}
@@ -248,7 +249,7 @@ export default function DiscoveryView({
               selectedCategory={selectedCategory || ''}
               selectedRadius={selectedRadius || { min: 0, max: 1 }}
               selectedCity={selectedCity || ''}
-              cities={cities}
+              cities={allCities}
               onCategoryChange={onCategoryChange || (() => {})}
               onRadiusChange={onRadiusChange || (() => {})}
               onCityChange={onCityChange || (() => {})}

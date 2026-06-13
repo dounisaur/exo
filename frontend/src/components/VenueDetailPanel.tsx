@@ -173,10 +173,11 @@ export default function VenueDetailPanel({
 
         {/* Map Toggle */}
         {userLocation && venue.latitude && venue.longitude && (
-          <div className="mb-6">
+          <div className={showMap ? 'mb-6' : ''}>
             <button
               onClick={() => setShowMap(!showMap)}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors mb-3"
+              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              style={{ marginBottom: showMap ? '12px' : '0' }}
             >
               {showMap ? 'Hide Map' : 'View Map'}
             </button>

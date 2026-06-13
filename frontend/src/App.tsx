@@ -189,6 +189,14 @@ function App() {
     }
   }
 
+  const getAllCities = (): string[] => {
+    const citySet = new Set<string>()
+    venues.forEach(venue => {
+      if (venue.canonical_city) citySet.add(venue.canonical_city)
+    })
+    return Array.from(citySet).sort()
+  }
+
   useEffect(() => {
     if (userLocation) {
       fetchVenues()
@@ -269,6 +277,7 @@ function App() {
             return true
           })}
           categories={categories}
+          allCities={getAllCities()}
           userLocation={userLocation || undefined}
           onStartHere={(venue) => {
             setItineraryStartVenueName(venue.name)
