@@ -4,7 +4,6 @@ import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
 import FilterBar from './FilterBar'
-import BottomSheet from './BottomSheet'
 import MobileVenueSheet from './MobileVenueSheet'
 import type { Venue, Category, VenueComment } from '../types'
 
@@ -47,7 +46,6 @@ export default function DiscoveryView({
 }: DiscoveryViewProps) {
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
-  const [showFiltersSheet, setShowFiltersSheet] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
