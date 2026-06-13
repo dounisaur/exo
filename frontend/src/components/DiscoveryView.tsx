@@ -251,6 +251,7 @@ export default function DiscoveryView({
             venue={selectedVenue}
             categories={categories}
             comments={venueComments[selectedVenue.id] || []}
+            userLocation={userLocation}
             onClose={() => setSelectedVenueId(null)}
             onStartHere={handleStartHere}
           />

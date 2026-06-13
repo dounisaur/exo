@@ -1,11 +1,13 @@
 import { X, Wallet, Building2, MapPin, Clock, Phone, MessageCircle, Maximize2, Minimize2 } from 'lucide-react'
 import { useState, useRef } from 'react'
+import Map from './Map'
 import type { Venue, Category, VenueComment } from '../types'
 
 interface MobileVenueSheetProps {
   venue: Venue | null
   categories: Category[]
   comments?: VenueComment[]
+  userLocation?: { lat: number; lng: number }
   onClose: () => void
   onStartHere?: (venue: Venue) => void
 }
@@ -14,6 +16,7 @@ export default function MobileVenueSheet({
   venue,
   categories,
   comments = [],
+  userLocation,
   onClose,
   onStartHere
 }: MobileVenueSheetProps) {
@@ -399,7 +402,7 @@ export default function MobileVenueSheet({
           </div>
 
           {/* Map */}
-          {venue.latitude && venue.longitude && (
+          {venue.latitude && venue.longitude && userLocation && (
             <div style={{ borderTop: '1px solid #eef0f6', paddingTop: '14px', marginBottom: '16px', position: 'relative' }}>
               <button
                 onClick={() => setExpandedMap(true)}
@@ -421,18 +424,14 @@ export default function MobileVenueSheet({
               >
                 <Maximize2 size={16} color="#fff" strokeWidth={2} />
               </button>
-              <iframe
-                title="Venue map mobile"
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.01},${venue.latitude - 0.01},${venue.longitude + 0.01},${venue.latitude + 0.01}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
-                style={{
-                  width: '100%',
-                  height: '200px',
-                  border: '1px solid #e0e5f4',
-                  borderRadius: '13px',
-                  display: 'block'
-                }}
-                loading="lazy"
-              />
+              <div style={{ height: '200px', borderRadius: '13px', overflow: 'hidden', border: '1px solid #e0e5f4' }}>
+                <Map
+                  venues={[venue]}
+                  userLocation={userLocation}
+                  selectedVenue={venue}
+                  onVenueClick={() => {}}
+                />
+              </div>
             </div>
           )}
 
@@ -473,7 +472,7 @@ export default function MobileVenueSheet({
       </div>
 
       {/* Fullscreen Map Overlay */}
-      {expandedMap && venue.latitude && venue.longitude && (
+      {expandedMap && venue.latitude && venue.longitude && userLocation && (
         <>
           {/* Overlay Background */}
           <div
@@ -503,7 +502,8 @@ export default function MobileVenueSheet({
                 display: 'flex',
                 justifyContent: 'flex-end',
                 padding: '12px',
-                backgroundColor: 'rgba(0, 0, 0, 0.7)'
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                zIndex: 9
               }}
             >
               <button
@@ -525,16 +525,14 @@ export default function MobileVenueSheet({
             </div>
 
             {/* Map */}
-            <iframe
-              title="Venue map mobile expanded"
-              src={`https://www.openstreetmap.org/export/embed.html?bbox=${venue.longitude - 0.02},${venue.latitude - 0.02},${venue.longitude + 0.02},${venue.latitude + 0.02}&layer=mapnik&marker=${venue.latitude},${venue.longitude}`}
-              style={{
-                flex: 1,
-                border: 'none',
-                width: '100%'
-              }}
-              loading="lazy"
-            />
+            <div style={{ flex: 1, width: '100%', height: '100%' }}>
+              <Map
+                venues={[venue]}
+                userLocation={userLocation}
+                selectedVenue={venue}
+                onVenueClick={() => {}}
+              />
+            </div>
           </div>
         </>
       )}
