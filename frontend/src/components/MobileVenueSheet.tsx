@@ -426,7 +426,7 @@ export default function MobileVenueSheet({
                   position: 'absolute',
                   top: '26px',
                   right: '12px',
-                  zIndex: 50,
+                  zIndex: 10000,
                   width: '32px',
                   height: '32px',
                   borderRadius: '50%',
