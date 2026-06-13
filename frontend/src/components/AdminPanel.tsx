@@ -1732,13 +1732,23 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Media</h3>
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Image
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{
+                        display: 'block',
+                        visibility: 'visible',
+                        width: '100%',
+                        marginTop: '8px',
+                        padding: '8px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </label>
                 </div>
                 {imagePreview && (
                   <div className="space-y-2">
