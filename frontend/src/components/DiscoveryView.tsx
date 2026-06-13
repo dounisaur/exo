@@ -234,7 +234,7 @@ export default function DiscoveryView({
           <div className="px-4 pt-4 pb-3 bg-white">
             <button
               onClick={onGenerateItinerary}
-              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
             >
               Plan My Itinerary
             </button>
