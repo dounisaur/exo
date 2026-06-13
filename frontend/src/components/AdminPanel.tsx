@@ -1738,18 +1738,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    className="absolute w-0 h-0 opacity-0 pointer-events-none"
+                    className="input-field"
                   />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      console.log('Button clicked, ref:', fileInputRef.current)
-                      fileInputRef.current?.click()
-                    }}
-                    className="w-full px-4 py-2 border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg text-sm font-medium text-gray-700 hover:text-blue-600 transition-colors bg-gray-50 hover:bg-blue-50 cursor-pointer"
-                  >
-                    {imageFile ? `✓ Image selected: ${imageFile.name}` : 'Choose Image'}
-                  </button>
                 </div>
                 {imagePreview && (
                   <div className="space-y-2">
