@@ -1738,14 +1738,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     type="file"
                     accept="image/*"
                     onChange={handleImageChange}
-                    onClick={(e) => {
-                      console.log('File input clicked:', e)
-                    }}
-                    style={{
-                      pointerEvents: 'auto',
-                      cursor: 'pointer'
-                    }}
-                    className="input-field"
                   />
                 </div>
                 {imagePreview && (
