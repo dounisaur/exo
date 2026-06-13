@@ -104,9 +104,13 @@ export default function VenueCard({
         )}
       </div>
 
-      {/* Actions (desktop detail) - only for selected in compact view */}
-      {isSelected && venueComments.length > 0 && (
-        <div className="flex items-center gap-1 text-xs text-orange-100 mt-2 pt-2 border-t border-orange-500 border-opacity-30">
+      {/* Comments - show for both selected and unselected */}
+      {venueComments.length > 0 && (
+        <div className={`flex items-center gap-1 text-xs mt-2 pt-2 ${
+          isSelected
+            ? 'text-orange-100 border-t border-orange-500 border-opacity-30'
+            : 'text-gray-600 border-t border-gray-200'
+        }`}>
           <MessageCircle size={14} />
           <span>{venueComments.length} comment{venueComments.length !== 1 ? 's' : ''}</span>
         </div>
