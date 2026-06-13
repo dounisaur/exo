@@ -231,7 +231,7 @@ export default function DiscoveryView({
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
           {/* Sidebar header */}
-          <div className="px-4 pt-4 pb-3 bg-white">
+          <div className="px-4 py-4 bg-white">
             <button
               onClick={onGenerateItinerary}
               className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
