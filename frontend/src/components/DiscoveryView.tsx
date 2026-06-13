@@ -5,6 +5,7 @@ import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
 import FilterBar from './FilterBar'
 import BottomSheet from './BottomSheet'
+import MobileVenueSheet from './MobileVenueSheet'
 import type { Venue, Category, VenueComment } from '../types'
 
 interface DiscoveryViewProps {
@@ -47,6 +48,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
@@ -92,7 +94,7 @@ export default function DiscoveryView({
   }, [])
 
   if (isMobile) {
-    // Mobile Layout: Header → Controls → Map (full) → Bottom Sheet overlay
+    // Mobile Layout: Header → Scrollable list (Plan My Itinerary + Filters + Venues) → Detail sheet overlay
     return (
       <div className="w-screen h-screen flex flex-col bg-white overflow-hidden">
         {/* Header */}
@@ -130,77 +132,120 @@ export default function DiscoveryView({
           </div>
         </header>
 
-        {/* Controls - Plan My Itinerary + Filters */}
-        <div className="px-4 py-2.5 bg-white border-b flex-shrink-0" style={{ borderBottomColor: '#e7eaf4' }}>
+        {/* Scrollable Main Content */}
+        <div className="flex-1 overflow-y-auto px-4 py-4">
+          {/* Plan My Itinerary Button */}
           <button
             onClick={onGenerateItinerary}
-            className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2 mb-2.5"
+            className="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2 mb-2.5"
+            style={{ backgroundColor: '#4f46e5' }}
           >
             <span>Plan My Itinerary</span>
             <MapPin size={20} />
           </button>
+
+          {/* Filters Button */}
           <button
-            onClick={() => setShowFiltersSheet(!showFiltersSheet)}
-            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
-            style={{ backgroundColor: '#6B8E23' }}
+            onClick={() => setShowMobileFilters(!showMobileFilters)}
+            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors mb-4"
+            style={{ backgroundColor: '#f5841f' }}
           >
             <span>Filters</span>
-            {showFiltersSheet ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+            {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
           </button>
-        </div>
 
-        {/* Map - fills all remaining space */}
-        <div className="flex-1 relative w-full">
-          {userLocation && (
-            <Map
-              venues={venues}
-              userLocation={userLocation}
-              selectedVenue={selectedVenue}
-              onVenueClick={handleVenueSelect}
-            />
-          )}
-        </div>
+          {/* Inline Filter Dropdowns */}
+          {showMobileFilters && (
+            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 mb-4">
+              {/* City Dropdown */}
+              {allCities.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
+                  <select
+                    value={selectedCity || ''}
+                    onChange={(e) => onCityChange?.(e.target.value)}
+                    className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer"
+                  >
+                    <option value="">All Cities</option>
+                    {allCities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
-        {/* Bottom Sheet with Venue List - fixed overlay */}
-        <BottomSheet
-          isOpen={true}
-          title={`${venues.length} place${venues.length !== 1 ? 's' : ''}`}
-          onClose={() => {}}
-        >
-          <div className="space-y-2 pb-8">
-            {venues.map(venue => (
-              <VenueCard
-                key={venue.id}
-                venue={venue}
-                categories={categories}
-                isSelected={selectedVenueId === venue.id}
-                venueComments={venueComments[venue.id] || []}
-                onSelect={handleVenueSelect}
-              />
-            ))}
-          </div>
-        </BottomSheet>
+              {/* Category Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Venue</label>
+                <select
+                  value={selectedCategory || ''}
+                  onChange={(e) => onCategoryChange?.(e.target.value)}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.slug}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
 
-        {/* Filters Sheet */}
-        {showFiltersSheet && (
-          <BottomSheet
-            isOpen={showFiltersSheet}
-            title="Filters"
-            onClose={() => setShowFiltersSheet(false)}
-          >
-            <div className="p-4">
-              <FilterBar
-                categories={categories}
-                selectedCategory={selectedCategory || ''}
-                selectedRadius={selectedRadius || { min: 0, max: 1 }}
-                selectedCity={selectedCity || ''}
-                cities={allCities}
-                onCategoryChange={onCategoryChange || (() => {})}
-                onRadiusChange={onRadiusChange || (() => {})}
-                onCityChange={onCityChange || (() => {})}
-              />
+              {/* Radius Dropdown */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
+                <select
+                  value={selectedRadius?.min === null ? 'null-null' : `${selectedRadius?.min}-${selectedRadius?.max}`}
+                  onChange={(e) => {
+                    if (e.target.value === 'null-null') {
+                      onRadiusChange?.({ min: null, max: null })
+                    } else {
+                      const [min, max] = e.target.value.split('-').map(Number)
+                      onRadiusChange?.({ min, max })
+                    }
+                  }}
+                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                >
+                  <option value="null-null">None</option>
+                  <option value="0-1">0 - 1 km</option>
+                  <option value="1-5">1 - 5 km</option>
+                  <option value="5-10">5 - 10 km</option>
+                  <option value="10-20">10 - 20 km</option>
+                  <option value="20-50">20 - 50 km</option>
+                  <option value="50-100">50 - 100 km</option>
+                </select>
+              </div>
             </div>
-          </BottomSheet>
+          )}
+
+          {/* Venue Cards */}
+          <div>
+            {venues.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-gray-500">
+                <p>No venues found</p>
+              </div>
+            ) : (
+              venues.map(venue => (
+                <VenueCard
+                  key={venue.id}
+                  venue={venue}
+                  categories={categories}
+                  venueComments={venueComments[venue.id] || []}
+                  onSelect={handleVenueSelect}
+                  mobile={true}
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Venue Detail Sheet */}
+        {selectedVenue && (
+          <MobileVenueSheet
+            venue={selectedVenue}
+            categories={categories}
+            comments={venueComments[selectedVenue.id] || []}
+            onClose={() => setSelectedVenueId(null)}
+            onStartHere={handleStartHere}
+          />
         )}
       </div>
     )
