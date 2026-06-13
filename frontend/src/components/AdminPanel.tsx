@@ -243,7 +243,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             phone_number: fullResult.phone || '',
             price_range: fullResult.price_range || '',
             price_level: fullResult.price_level || '',
-            opening_hours: fullResult.opening_hours || ''
+            opening_hours: fullResult.opening_hours || '',
+            photo_urls: fullResult.photo_urls || [],
+            primary_photo_url: fullResult.photo_urls?.[0] || ''
           }))
           setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
         }
@@ -271,7 +273,9 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         phone_number: result.phone || '',
         price_range: result.price_range || '',
         price_level: result.price_level || '',
-        opening_hours: result.opening_hours || ''
+        opening_hours: result.opening_hours || '',
+        photo_urls: result.photo_urls || [],
+        primary_photo_url: result.photo_urls?.[0] || ''
       }))
       setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
     }
