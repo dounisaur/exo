@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Edit2, Eye as EyeIcon, Search, Building2, Trash2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
 import type { Venue, Category, User, VenueComment } from '../types'
@@ -29,7 +29,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string>('')
   const [googleMapsLink, setGoogleMapsLink] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Venue search and filter state
   const [showVenueSearchFilters, setShowVenueSearchFilters] = useState(false)
@@ -454,7 +453,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     })
     setImageFile(null)
     setImagePreview('')
-    if (fileInputRef.current) fileInputRef.current.value = ''
     setLookupQuery('')
     setLookupResults([])
     setGoogleMapsLink('')
@@ -1732,23 +1730,13 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
               <h3 className="text-sm font-semibold text-gray-700 mb-3 px-1">Media</h3>
               <div className="space-y-3 bg-white rounded-lg p-4 border border-gray-200">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Image
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      style={{
-                        display: 'block',
-                        visibility: 'visible',
-                        width: '100%',
-                        marginTop: '8px',
-                        padding: '8px',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="input-field"
+                  />
                 </div>
                 {imagePreview && (
                   <div className="space-y-2">
@@ -1758,7 +1746,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                       onClick={() => {
                         setImagePreview('')
                         setImageFile(null)
-                        if (fileInputRef.current) fileInputRef.current.value = ''
                         setFormData(prev => ({
                           ...prev,
                           image_url: '',
