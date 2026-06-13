@@ -274,7 +274,6 @@ function App() {
             setItineraryStartVenueName(venue.name)
             generateItinerary({ startVenueId: venue.id })
           }}
-          onGenerateItinerary={() => generateItinerary()}
           authToken={authToken}
           onLogin={() => setPage('login')}
           onLogout={handleLogout}

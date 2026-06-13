@@ -12,7 +12,6 @@ interface DiscoveryViewProps {
   categories: Category[]
   userLocation?: { lat: number; lng: number }
   onStartHere?: (venue: Venue) => void
-  onGenerateItinerary?: () => void
   authToken?: string | null
   onLogin?: () => void
   onLogout?: () => void
@@ -30,7 +29,6 @@ export default function DiscoveryView({
   categories,
   userLocation,
   onStartHere,
-  onGenerateItinerary,
   authToken,
   onLogin,
   onLogout,
@@ -45,6 +43,7 @@ export default function DiscoveryView({
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showFiltersSheet, setShowFiltersSheet] = useState(false)
+  const [showSidebarFilters, setShowSidebarFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
@@ -125,22 +124,6 @@ export default function DiscoveryView({
           </div>
         </header>
 
-        {/* Controls */}
-        <div className="bg-white border-b border-blue-100 p-4 flex gap-2">
-          <button
-            onClick={onGenerateItinerary}
-            className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Plan My Itinerary
-          </button>
-          <button
-            onClick={() => setShowFiltersSheet(true)}
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <span>Filters</span>
-            <ChevronDown size={16} />
-          </button>
-        </div>
 
         {/* Map */}
         <div className="flex-1 relative">
@@ -240,25 +223,6 @@ export default function DiscoveryView({
         </div>
       </header>
 
-      {/* Controls Bar */}
-      <div className="bg-white border-b border-blue-100 p-4 sticky top-16 z-20">
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={onGenerateItinerary}
-            className="flex-1 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            Plan My Itinerary
-          </button>
-          <button
-            className="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-            disabled
-            title="Use sidebar filters"
-          >
-            <span>Filters</span>
-            <ChevronDown size={16} />
-          </button>
-        </div>
-      </div>
 
       {/* 3-Column Layout */}
       <div className="flex flex-1 overflow-hidden gap-0">
@@ -266,19 +230,31 @@ export default function DiscoveryView({
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
           {/* Sidebar header with filters */}
           <div className="p-4 bg-white" style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
-            <div className="mb-3">
-              <button
-                onClick={onGenerateItinerary}
-                className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                Plan My Itinerary
-              </button>
-            </div>
-            <button className="w-full px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2">
+            <button
+              onClick={() => setShowSidebarFilters(!showSidebarFilters)}
+              className="w-full px-3 py-2 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#6B8E23' }}
+            >
               <span>Filters</span>
-              <ChevronDown size={14} />
+              <ChevronDown size={14} style={{ transform: showSidebarFilters ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
             </button>
           </div>
+
+          {/* Filters Section */}
+          {showSidebarFilters && (
+            <div className="p-4 bg-white border-b" style={{ borderBottomColor: '#e7eaf4' }}>
+              <FilterBar
+                categories={categories}
+                selectedCategory={selectedCategory || ''}
+                selectedRadius={selectedRadius || { min: 0, max: 1 }}
+                selectedCity={selectedCity || ''}
+                cities={cities}
+                onCategoryChange={onCategoryChange || (() => {})}
+                onRadiusChange={onRadiusChange || (() => {})}
+                onCityChange={onCityChange || (() => {})}
+              />
+            </div>
+          )}
 
           {/* Scrollable venue list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
