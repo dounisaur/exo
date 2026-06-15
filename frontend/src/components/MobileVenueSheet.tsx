@@ -302,6 +302,7 @@ export default function MobileVenueSheet({
               href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address || venue.name)}`}
               target="_blank"
               rel="noopener"
+              className="transition-all duration-200 hover:shadow-md"
               style={{
                 flex: 1,
                 textDecoration: 'none',
