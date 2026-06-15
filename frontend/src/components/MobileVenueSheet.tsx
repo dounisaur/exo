@@ -129,10 +129,10 @@ export default function MobileVenueSheet({
             justifyContent: 'space-between',
             padding: '6px 18px 12px',
             flexShrink: 0,
-            borderBottom: '1px solid var(--border)'
+            background: 'var(--ink)'
           }}
         >
-          <span style={{ fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>
+          <span style={{ fontSize: '19px', fontWeight: 700, color: 'white' }}>
             {venue.name}
           </span>
           <button
