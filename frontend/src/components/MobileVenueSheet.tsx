@@ -424,8 +424,8 @@ export default function MobileVenueSheet({
                 onClick={() => setExpandedMap(true)}
                 style={{
                   position: 'absolute',
-                  top: '12px',
-                  right: '12px',
+                  top: '17px',
+                  right: '17px',
                   zIndex: 10000,
                   width: '32px',
                   height: '32px',
