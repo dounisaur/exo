@@ -52,15 +52,19 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     const price = getPriceDisplay(venue)
 
     let content = `<div style="font-family: 'Schibsted Grotesk, sans-serif'; color: var(--ink);">`
-    content += `<div style="font-weight: 700; font-size: 14px; margin-bottom: 3px;">${venue.name}</div>`
+
+    // Header row with name and rating
+    content += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">`
+    content += `<div style="font-weight: 700; font-size: 14px;">${venue.name}</div>`
+    if (venue.rating) {
+      content += `<span style="color: var(--honey); font-size: 12px;">★ ${venue.rating.toFixed(1)}</span>`
+    }
+    content += `</div>`
 
     // Info row with separators
     const infoItems = []
     if (subcategory) {
       infoItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
-    }
-    if (venue.rating) {
-      infoItems.push(`<span style="color: var(--honey);">★ ${venue.rating.toFixed(1)}</span>`)
     }
     if (price) {
       infoItems.push(`<span style="color: var(--sage); font-weight: 600;">${price}</span>`)
