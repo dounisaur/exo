@@ -51,7 +51,7 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     const hours = getTodayHours(venue.opening_hours)
     const price = getPriceDisplay(venue)
 
-    let content = `<div style="font-family: 'Schibsted Grotesk, sans-serif'; color: var(--ink);">`
+    let content = `<div style="font-family: 'Schibsted Grotesk, sans-serif'; color: var(--ink); min-width: 140px;">`
 
     // Header row with name and rating
     content += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">`
