@@ -62,18 +62,11 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     content += `</div>`
 
     // Info row with separators
-    const leftItems = []
-    if (subcategory) {
-      leftItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
-    }
-    if (price) {
-      leftItems.push(`<span style="color: var(--sage); font-weight: 600;">${price}</span>`)
-    }
-
-    if (leftItems.length > 0 || hours) {
+    if (subcategory || price || hours) {
       content += `<div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">`
-      if (leftItems.length > 0) {
-        content += `<div>${leftItems.join(' <span style="color: var(--border);">·</span> ')}</div>`
+      content += `<span style="color: var(--muted);">${subcategory || ''}</span>`
+      if (price) {
+        content += `<span style="color: var(--sage); font-weight: 600;">${price}</span>`
       }
       if (hours) {
         content += `<span style="color: var(--muted);">${hours}</span>`
