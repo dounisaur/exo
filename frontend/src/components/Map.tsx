@@ -64,12 +64,12 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     // Info row with separators
     if (subcategory || price || hours) {
       content += `<div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">`
-      content += `<span style="color: var(--muted);">${subcategory || ''}</span>`
+      content += `<span style="color: var(--muted); font-weight: 600;">${subcategory || ''}</span>`
       if (price) {
         content += `<span style="color: var(--sage); font-weight: 600;">${price}</span>`
       }
       if (hours) {
-        content += `<span style="color: var(--muted);">${hours}</span>`
+        content += `<span style="color: var(--muted); font-weight: 600;">${hours}</span>`
       }
       content += `</div>`
     }
