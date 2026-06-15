@@ -85,21 +85,21 @@ export default function VenueCard({
         <div style={{ padding: '15px' }}>
           {/* Name and Rating Row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '7px' }}>
-          <span style={{ fontSize: '16px', fontWeight: 700, color: '#15224a' }}>{venue.name}</span>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ink)' }}>{venue.name}</span>
           {venue.rating && (
-            <span style={{ fontSize: '13px', fontWeight: 700, color: '#f5841f', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--honey)', whiteSpace: 'nowrap' }}>
               ★ {venue.rating.toFixed(1)}
             </span>
           )}
         </div>
 
         {/* Category + Price + Hours + View Link Row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: '#6a7191' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--muted)' }}>
           <span style={{ background: 'var(--terracotta-tint)', color: 'var(--terracotta-press)', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
             {getSubcategoryName(venue.subcategory_id) || venue.category}
           </span>
           {getPriceDisplay(venue) && (
-            <span style={{ color: '#16a34a', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
+            <span style={{ color: 'var(--sage)', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
           )}
           {getPriceDisplay(venue) && (venue.canonical_city || (venue.opening_hours && getTodayHours(venue.opening_hours))) && (
             <span>·</span>
@@ -107,7 +107,7 @@ export default function VenueCard({
           {venue.opening_hours && getTodayHours(venue.opening_hours) && (
             <span>{getTodayHours(venue.opening_hours)}</span>
           )}
-          <span style={{ marginLeft: 'auto', color: '#1e40af', fontWeight: 600 }}>View ›</span>
+          <span style={{ marginLeft: 'auto', color: 'var(--terracotta)', fontWeight: 600 }}>View ›</span>
         </div>
         </div>
       </div>
@@ -116,7 +116,8 @@ export default function VenueCard({
 
   // Desktop version - existing behavior
   const cardBg = isSelected ? 'var(--terracotta)' : 'var(--surface)'
-  const cardText = isSelected ? 'text-white' : 'text-gray-900'
+  const cardText = isSelected ? 'text-white' : ''
+  const cardTextColor = isSelected ? 'white' : 'var(--ink)'
   const borderStyle = isSelected ? 'border-transparent' : '1px solid var(--border)'
   const shadowStyle = isSelected ? '0 16px 34px -22px rgba(74, 56, 36, 0.4)' : '0 16px 34px -22px rgba(74, 56, 36, 0.4)'
   const imageUrl = venue.primary_photo_url || venue.image_url
@@ -145,10 +146,10 @@ export default function VenueCard({
       <div className="p-4">
       {/* Name and Rating */}
       <div className="flex justify-between items-start gap-2 mb-2">
-        <h3 className={`font-bold text-sm leading-tight flex-1 ${cardText}`}>{venue.name}</h3>
+        <h3 className="font-bold text-sm leading-tight flex-1" style={{ color: cardTextColor }}>{venue.name}</h3>
         {venue.rating && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <span className={`text-xs font-semibold ${isSelected ? 'text-yellow-300' : 'text-yellow-500'}`}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '600', color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--honey)' }}>
               ★ {venue.rating.toFixed(1)}
             </span>
           </div>
@@ -169,11 +170,11 @@ export default function VenueCard({
       </div>
 
       {/* Info Row: Price · City · Hours */}
-      <div className={`flex flex-wrap gap-2 text-xs mb-3 ${isSelected ? 'text-orange-100' : 'text-gray-600'}`}>
+      <div className="flex flex-wrap gap-2 text-xs mb-3" style={{ color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--muted)' }}>
         {getPriceDisplay(venue) && (
           <div className="flex items-center gap-1">
             <Wallet size={14} className="flex-shrink-0" />
-            <span className={isSelected ? '' : 'text-green-600'}>{getPriceDisplay(venue)}</span>
+            <span style={{ color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--sage)', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
           </div>
         )}
         {venue.canonical_city && (
@@ -192,11 +193,10 @@ export default function VenueCard({
 
       {/* Comments - show for both selected and unselected */}
       {venueComments.length > 0 && (
-        <div className={`flex items-center gap-1 text-xs mt-2 pt-2 ${
-          isSelected
-            ? 'text-orange-100 border-t border-orange-500 border-opacity-30'
-            : 'text-gray-600 border-t border-gray-200'
-        }`}>
+        <div className="flex items-center gap-1 text-xs mt-2 pt-2" style={{
+          color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--muted)',
+          borderTop: `1px solid ${isSelected ? 'rgba(255, 255, 255, 0.2)' : 'var(--border)'}`
+        }}>
           <MessageCircle size={14} />
           <span>{venueComments.length} comment{venueComments.length !== 1 ? 's' : ''}</span>
         </div>
