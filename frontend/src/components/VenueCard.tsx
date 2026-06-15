@@ -93,19 +93,32 @@ export default function VenueCard({
           )}
         </div>
 
-        {/* Category + Price + Hours + View Link Row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--muted)' }}>
-          <span style={{ background: 'var(--sage)', color: 'white', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
+        {/* Category Pill Row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ background: 'var(--sage)', color: 'white', borderRadius: '100px', padding: '3px 10px', fontWeight: 600, fontSize: '12.5px' }}>
             {getSubcategoryName(venue.subcategory_id) || venue.category}
           </span>
+        </div>
+
+        {/* Info Row with Icons: Price, City, Hours, View Link */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--muted)' }}>
           {getPriceDisplay(venue) && (
-            <span style={{ color: 'var(--sage)', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--sage)', fontWeight: 700 }}>
+              <Wallet size={14} color="var(--muted)" strokeWidth={2} />
+              <span>{getPriceDisplay(venue)}</span>
+            </div>
           )}
-          {getPriceDisplay(venue) && (venue.canonical_city || (venue.opening_hours && getTodayHours(venue.opening_hours))) && (
-            <span>·</span>
+          {venue.canonical_city && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Building2 size={14} color="var(--muted)" strokeWidth={2} />
+              <span>{venue.canonical_city}</span>
+            </div>
           )}
           {venue.opening_hours && getTodayHours(venue.opening_hours) && (
-            <span>{getTodayHours(venue.opening_hours)}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={14} color="var(--muted)" strokeWidth={2} />
+              <span>{getTodayHours(venue.opening_hours)}</span>
+            </div>
           )}
           <span style={{ marginLeft: 'auto', color: 'var(--terracotta)', fontWeight: 600 }}>View ›</span>
         </div>
