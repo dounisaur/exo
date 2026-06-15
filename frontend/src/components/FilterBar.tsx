@@ -59,17 +59,18 @@ export default function FilterBar({
 
       {/* Filters Container - show based on visibility or if showDropdownsDirectly */}
       <div className={`${showDropdownsDirectly || filtersVisible ? 'block' : 'hidden'} px-4 py-4`}>
-        <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3">
+        <div className="rounded-lg p-4 space-y-3" style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}>
           {/* Dropdowns for all devices */}
           <div className="space-y-3">
             {/* City Dropdown */}
             {cities.length > 0 && (
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
+                <label className="block text-sm font-medium mb-2" style={{ color: 'var(--ink)' }}>City</label>
                 <select
                   value={selectedCity}
                   onChange={(e) => onCityChange(e.target.value)}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer"
+                  className="w-full appearance-none rounded-lg px-3 py-2 text-sm focus:outline-none cursor-pointer"
+                  style={{ background: 'var(--canvas)', border: '1px solid var(--border)', color: 'var(--ink)' }}
                 >
                   <option value="">All Cities</option>
                   {cities.map(city => (
@@ -81,11 +82,12 @@ export default function FilterBar({
 
             {/* Venue Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Venue</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--ink)' }}>Venue</label>
               <select
                 value={selectedCategory}
                 onChange={(e) => onCategoryChange(e.target.value)}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+                className="w-full appearance-none rounded-lg px-3 py-2 text-sm focus:outline-none cursor-pointer"
+                style={{ background: 'var(--canvas)', border: '1px solid var(--border)', color: 'var(--ink)' }}
               >
                 <option value="">All Categories</option>
                 {categories.map(cat => (
@@ -96,7 +98,7 @@ export default function FilterBar({
 
             {/* Radius Dropdown */}
             <div>
-              <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--ink)' }}>Radius</label>
               <select
                 value={selectedRadius.min === null ? 'null-null' : `${selectedRadius.min}-${selectedRadius.max}`}
                 onChange={(e) => {
@@ -107,7 +109,8 @@ export default function FilterBar({
                     onRadiusChange({ min, max })
                   }
                 }}
-                className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
+                className="w-full appearance-none rounded-lg px-3 py-2 text-sm focus:outline-none cursor-pointer"
+                style={{ background: 'var(--canvas)', border: '1px solid var(--border)', color: 'var(--ink)' }}
               >
                 {RADIUS_OPTIONS.map(option => (
                   <option
