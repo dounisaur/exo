@@ -138,11 +138,11 @@ export default function MobileVenueSheet({
           <button
             onClick={handleCloseSheet}
             style={{
-              width: '32px',
-              height: '32px',
+              width: '40px',
+              height: '40px',
               flexShrink: 0,
               borderRadius: '50%',
-              background: 'var(--surface)',
+              background: 'var(--terracotta)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -151,7 +151,7 @@ export default function MobileVenueSheet({
               padding: 0
             }}
           >
-            <X size={13} color="var(--muted)" strokeWidth={2.5} />
+            <X size={20} color="white" strokeWidth={2.5} />
           </button>
         </div>
 
