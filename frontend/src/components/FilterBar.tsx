@@ -44,8 +44,8 @@ export default function FilterBar({
         <div className="px-4 py-2.5">
           <button
             onClick={() => setFiltersVisible(!filtersVisible)}
-            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors"
-            style={{ backgroundColor: '#22c55e' }}
+            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors hover:opacity-90"
+            style={{ backgroundColor: '#6f8f6a' }}
           >
             <span>Filters</span>
             {filtersVisible ? (

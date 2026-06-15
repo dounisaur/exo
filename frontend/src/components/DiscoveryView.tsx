@@ -165,7 +165,7 @@ export default function DiscoveryView({
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors mb-4 hover:opacity-90"
-            style={{ backgroundColor: 'var(--sage)' }}
+            style={{ backgroundColor: '#6f8f6a' }}
           >
             <span>Filters</span>
             {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
