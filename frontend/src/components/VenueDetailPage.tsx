@@ -81,7 +81,7 @@ export default function VenueDetailPage({
 
           {/* Category Pill */}
           <div className="mb-4">
-            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium" style={{ background: 'var(--terracotta-tint)', color: 'var(--terracotta-press)' }}>
+            <span className="inline-block px-3 py-1 rounded-full text-sm font-medium" style={{ background: 'var(--sage)', color: 'white' }}>
               {getSubcategoryName(venue.subcategory_id) || venue.category}
             </span>
           </div>
