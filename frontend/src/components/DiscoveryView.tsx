@@ -114,10 +114,10 @@ export default function DiscoveryView({
         {/* Header */}
         <header className="p-4 flex-shrink-0" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
           <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-1">
-              <UtensilsCrossed size={24} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
-              <h1 className="text-lg font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
-              <Wine size={24} style={{ color: 'var(--terracotta)', marginLeft: '-2px' }} strokeWidth={1.5} />
+            <div className="flex items-center gap-0" style={{ letterSpacing: '-4px' }}>
+              <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '20px', color: 'var(--ink-on-dark)' }}>E</span>
+              <UtensilsCrossed size={24} style={{ color: 'var(--sage)', marginTop: '2px' }} strokeWidth={1.5} />
+              <Wine size={24} style={{ color: 'var(--terracotta)', marginTop: '2px' }} strokeWidth={1.5} />
             </div>
             <nav className="flex items-center gap-2">
               {!authToken && (
@@ -282,10 +282,10 @@ export default function DiscoveryView({
         style={{ backgroundColor: 'var(--ink)', height: '64px' }}
       >
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-1">
-            <UtensilsCrossed size={28} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
-            <h1 className="text-xl font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
-            <Wine size={28} style={{ color: 'var(--terracotta)', marginLeft: '-2px' }} strokeWidth={1.5} />
+          <div className="flex items-center gap-0" style={{ letterSpacing: '-4px' }}>
+            <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '28px', color: 'var(--ink-on-dark)' }}>E</span>
+            <UtensilsCrossed size={32} style={{ color: 'var(--sage)', marginTop: '2px' }} strokeWidth={1.5} />
+            <Wine size={32} style={{ color: 'var(--terracotta)', marginTop: '2px' }} strokeWidth={1.5} />
           </div>
           <nav className="flex items-center gap-2">
             {!authToken && (
