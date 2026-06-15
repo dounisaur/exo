@@ -1788,7 +1788,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           <img
                             src={imagePreview}
                             alt="Uploaded image"
-                            className="w-full h-32 object-cover"
+                            className="w-full aspect-square object-cover"
                           />
                           {formData.primary_photo_url === 'UPLOADED_IMAGE' && (
                             <div className="absolute inset-0 bg-blue-600 bg-opacity-30 flex items-center justify-center">
@@ -1827,7 +1827,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                           <img
                             src={photoUrl}
                             alt={`Google Place photo ${index + 1}`}
-                            className="w-full h-32 object-cover"
+                            className="w-full aspect-square object-cover"
                             onError={(e) => {
                               console.error('Failed to load image:', photoUrl)
                               e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect fill="%23f3f4f6" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%236b7280" font-size="12"%3EFailed to load%3C/text%3E%3C/svg%3E'
