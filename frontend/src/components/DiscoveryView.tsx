@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed, Wine } from 'lucide-react'
+import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -118,7 +118,6 @@ export default function DiscoveryView({
               <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '20px', color: 'var(--ink-on-dark)' }}>E</span>
               <UtensilsCrossed size={24} style={{ color: 'var(--sage)', marginTop: '1px' }} strokeWidth={1.5} />
               <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '20px', color: 'var(--ink-on-dark)' }}>Ω</span>
-              <Wine size={24} style={{ color: 'var(--terracotta)', marginLeft: '-2px', marginTop: '1px' }} strokeWidth={1.5} />
             </div>
             <nav className="flex items-center gap-2">
               {!authToken && (
@@ -287,7 +286,6 @@ export default function DiscoveryView({
             <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '28px', color: 'var(--ink-on-dark)' }}>E</span>
             <UtensilsCrossed size={32} style={{ color: 'var(--sage)', marginTop: '2px' }} strokeWidth={1.5} />
             <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '28px', color: 'var(--ink-on-dark)' }}>Ω</span>
-            <Wine size={32} style={{ color: 'var(--terracotta)', marginLeft: '-2px', marginTop: '2px' }} strokeWidth={1.5} />
           </div>
           <nav className="flex items-center gap-2">
             {!authToken && (
