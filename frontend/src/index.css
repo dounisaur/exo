@@ -1,30 +1,50 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
 
 @layer theme {
   :root {
-    /* Cobalt Design Tokens */
-    --cobalt: #1e3a8a;
-    --indigo: #4f46e5;
-    --blue: #2563eb;
-    --blue-deep: #1e40af;
-    --orange: #f5841f;
-    --gray-button: #eef0f4;
-    --green: #16a34a;
-    --star-gold: #f5b50a;
-    --star-empty: #d8dce5;
-    --ink: #15224a;
-    --body-text: #3f4660;
-    --body-muted-1: #5d6584;
-    --body-muted-2: #6a7191;
-    --body-muted-3: #9097b3;
-    --category-bg: #eaf1ff;
-    --category-text: #2563eb;
-    --card-border: #e7eaf4;
-    --card-divider: #eef0f6;
-    --app-bg: #eef0f3;
-    --sidebar-bg: #fafbff;
-    --map-bg: #eef1f8;
-    --comment-bg: #f6f7fa;
+    /* Warm Editorial Design Tokens */
+    --canvas: #faf4ea;
+    --surface: #fbf7f0;
+    --ink: #2a2520;
+    --ink-on-dark: #faf4ea;
+    --text: #5b5750;
+    --muted: #8a7f70;
+    --muted-2: #9a8d7b;
+    --mono-label: #a4937a;
+    --border: #ece0cd;
+    --border-strong: #d8c8b1;
+    --border-map: #e4d6c1;
+    --terracotta: #c75b3f;
+    --terracotta-press: #b34e34;
+    --terracotta-tint: rgba(199, 91, 63, 0.1);
+    --honey: #dba23f;
+    --honey-text: #bb7e22;
+    --star-empty: #e7dcc9;
+    --sage: #6f8f6a;
+    --nav-muted: #b39d80;
+
+    /* Legacy token mappings for compatibility */
+    --cobalt: #2a2520;
+    --indigo: #c75b3f;
+    --blue: #c75b3f;
+    --blue-deep: #b34e34;
+    --orange: #c75b3f;
+    --gray-button: #fbf7f0;
+    --green: #6f8f6a;
+    --star-gold: #dba23f;
+    --body-text: #5b5750;
+    --body-muted-1: #8a7f70;
+    --body-muted-2: #9a8d7b;
+    --body-muted-3: #a4937a;
+    --category-bg: rgba(199, 91, 63, 0.1);
+    --category-text: #b34e34;
+    --card-border: #ece0cd;
+    --card-divider: #ece0cd;
+    --app-bg: #faf4ea;
+    --sidebar-bg: #faf4ea;
+    --map-bg: #fbf7f0;
+    --comment-bg: #fbf7f0;
   }
 }
 

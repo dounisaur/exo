@@ -148,7 +148,8 @@ export default function VenueDetailPanel({
           {venue.phone_number && (
             <a
               href={`tel:${venue.phone_number}`}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-[13px] text-sm font-medium transition-colors hover:opacity-90"
+              style={{ background: 'var(--sage)', color: 'white', fontSize: '15.5px', fontWeight: 600, boxShadow: '0 12px 22px -14px rgba(111, 143, 106, 0.8)' }}
             >
               <Phone size={16} />
               <span>Call</span>
@@ -158,7 +159,8 @@ export default function VenueDetailPanel({
             href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address || venue.name)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors"
+            className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-[13px] text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: 'var(--surface)', color: 'var(--ink)', fontSize: '15.5px', fontWeight: 600, border: '1px solid var(--border-strong)' }}
           >
             <ArrowUpRight size={16} />
             <span>Directions</span>
@@ -217,10 +219,11 @@ export default function VenueDetailPanel({
 
       {/* Start Here Button (sticky footer) */}
       {onStartHere && (
-        <div className="border-t border-blue-100 p-4 bg-white">
+        <div className="border-t p-4 bg-white" style={{ borderColor: 'var(--border)' }}>
           <button
             onClick={() => onStartHere(venue)}
-            className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors"
+            className="w-full px-4 py-2 text-white rounded-[13px] text-sm font-medium transition-colors hover:opacity-90"
+            style={{ background: 'var(--terracotta)', fontSize: '15.5px', fontWeight: 600, boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)' }}
           >
             Start Here
           </button>

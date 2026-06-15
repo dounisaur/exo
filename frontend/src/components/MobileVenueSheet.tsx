@@ -285,12 +285,13 @@ export default function MobileVenueSheet({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '7px',
-                  background: '#16a34a',
+                  background: 'var(--sage)',
                   color: 'white',
-                  borderRadius: '10px',
+                  borderRadius: '13px',
                   padding: '11px',
-                  fontSize: '13.5px',
-                  fontWeight: 600
+                  fontSize: '15.5px',
+                  fontWeight: 600,
+                  boxShadow: '0 12px 22px -14px rgba(111, 143, 106, 0.8)'
                 }}
               >
                 <Phone size={14} color="white" strokeWidth={2} />
@@ -308,15 +309,16 @@ export default function MobileVenueSheet({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '7px',
-                background: '#2563eb',
-                color: 'white',
-                borderRadius: '10px',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
+                borderRadius: '13px',
                 padding: '11px',
-                fontSize: '13.5px',
-                fontWeight: 600
+                fontSize: '15.5px',
+                fontWeight: 600,
+                border: '1px solid var(--border-strong)'
               }}
             >
-              <MapPin size={13} color="white" strokeWidth={2} />
+              <MapPin size={13} color="var(--ink)" strokeWidth={2} />
               Directions
             </a>
           </div>
@@ -351,15 +353,16 @@ export default function MobileVenueSheet({
                 style={{
                   flex: 1,
                   textAlign: 'center',
-                  background: '#4f46e5',
+                  background: 'var(--terracotta)',
                   color: '#fff',
-                  borderRadius: '10px',
+                  borderRadius: '13px',
                   padding: '11px',
-                  fontSize: '13.5px',
+                  fontSize: '15.5px',
                   fontWeight: 600,
                   whiteSpace: 'nowrap',
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)'
                 }}
               >
                 Start Here

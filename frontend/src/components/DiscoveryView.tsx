@@ -154,8 +154,8 @@ export default function DiscoveryView({
           {/* Plan My Itinerary Button */}
           <button
             onClick={onGenerateItinerary}
-            className="w-full px-4 py-2.5 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2 mb-2.5"
-            style={{ backgroundColor: '#4f46e5' }}
+            className="w-full px-4 py-2.5 text-white rounded-[13px] font-medium font-600 transition-colors flex items-center justify-between gap-2 mb-2.5"
+            style={{ backgroundColor: 'var(--terracotta)', boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)', fontSize: '15.5px' }}
           >
             <span>Plan My Itinerary</span>
             <MapPin size={20} />
@@ -322,7 +322,8 @@ export default function DiscoveryView({
           <div className="px-4 py-2.5 bg-white">
             <button
               onClick={onGenerateItinerary}
-              className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-between gap-2"
+              className="w-full px-4 py-2.5 text-white rounded-[13px] font-medium transition-colors flex items-center justify-between gap-2 hover:opacity-90"
+              style={{ backgroundColor: 'var(--terracotta)', boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)', fontSize: '15.5px', fontWeight: 600 }}
             >
               <span>Plan My Itinerary</span>
               <MapPin size={20} />
