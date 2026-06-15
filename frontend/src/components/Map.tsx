@@ -51,23 +51,26 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     const hours = getTodayHours(venue.opening_hours)
     const price = getPriceDisplay(venue)
 
-    let content = `<div style="text-align: left; font-family: 'Schibsted Grotesk, sans-serif'; color: var(--ink);">`
-    content += `<div style="font-weight: 700; font-size: 14px; margin-bottom: 6px;">${venue.name}</div>`
+    let content = `<div style="font-family: 'Schibsted Grotesk, sans-serif'; color: var(--ink);">`
+    content += `<div style="font-weight: 700; font-size: 14px; margin-bottom: 3px;">${venue.name}</div>`
 
+    // Info row with separators
+    const infoItems = []
     if (subcategory) {
-      content += `<div style="font-size: 12px; color: var(--muted); margin-bottom: 4px;">${subcategory}</div>`
+      infoItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
     }
-
     if (venue.rating) {
-      content += `<div style="font-size: 12px; color: var(--honey); margin-bottom: 4px;">★ ${venue.rating.toFixed(1)}</div>`
+      infoItems.push(`<span style="color: var(--honey);">★ ${venue.rating.toFixed(1)}</span>`)
     }
-
     if (price) {
-      content += `<div style="font-size: 12px; color: var(--sage); font-weight: 600; margin-bottom: 4px;">${price}</div>`
+      infoItems.push(`<span style="color: var(--sage); font-weight: 600;">${price}</span>`)
+    }
+    if (hours) {
+      infoItems.push(`<span style="color: var(--muted);">${hours}</span>`)
     }
 
-    if (hours) {
-      content += `<div style="font-size: 12px; color: var(--muted);">${hours}</div>`
+    if (infoItems.length > 0) {
+      content += `<div style="font-size: 11px;">${infoItems.join(' <span style="color: var(--border);">·</span> ')}</div>`
     }
 
     content += `</div>`
