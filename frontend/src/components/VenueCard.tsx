@@ -95,7 +95,7 @@ export default function VenueCard({
 
         {/* Category + Price + Hours + View Link Row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: 'var(--muted)' }}>
-          <span style={{ background: 'var(--terracotta-tint)', color: 'var(--terracotta-press)', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
+          <span style={{ background: 'rgba(111, 143, 106, 0.15)', color: 'var(--sage)', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
             {getSubcategoryName(venue.subcategory_id) || venue.category}
           </span>
           {getPriceDisplay(venue) && (
@@ -161,8 +161,8 @@ export default function VenueCard({
         <span
           className="inline-block px-2 py-1 rounded-full text-xs font-medium"
           style={{
-            background: isSelected ? 'rgba(199, 91, 63, 0.2)' : 'var(--terracotta-tint)',
-            color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--terracotta-press)'
+            background: isSelected ? 'var(--sage)' : 'rgba(111, 143, 106, 0.15)',
+            color: isSelected ? 'white' : 'var(--sage)'
           }}
         >
           {getSubcategoryName(venue.subcategory_id) || venue.category}
