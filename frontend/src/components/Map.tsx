@@ -62,19 +62,23 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
     content += `</div>`
 
     // Info row with separators
-    const infoItems = []
+    const leftItems = []
     if (subcategory) {
-      infoItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
+      leftItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
     }
     if (price) {
-      infoItems.push(`<span style="color: var(--sage); font-weight: 600;">${price}</span>`)
-    }
-    if (hours) {
-      infoItems.push(`<span style="color: var(--muted);">${hours}</span>`)
+      leftItems.push(`<span style="color: var(--sage); font-weight: 600;">${price}</span>`)
     }
 
-    if (infoItems.length > 0) {
-      content += `<div style="font-size: 11px;">${infoItems.join(' <span style="color: var(--border);">·</span> ')}</div>`
+    if (leftItems.length > 0 || hours) {
+      content += `<div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px;">`
+      if (leftItems.length > 0) {
+        content += `<div>${leftItems.join(' <span style="color: var(--border);">·</span> ')}</div>`
+      }
+      if (hours) {
+        content += `<span style="color: var(--muted);">${hours}</span>`
+      }
+      content += `</div>`
     }
 
     content += `</div>`
