@@ -237,7 +237,7 @@ export default function DiscoveryView({
           <div>
             {venues.length === 0 ? (
               <div className="flex items-center justify-center py-8 text-gray-500">
-                <p>No venues found</p>
+                <p>Venues Loading...</p>
               </div>
             ) : (
               venues.map(venue => (
@@ -348,7 +348,7 @@ export default function DiscoveryView({
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {venues.length === 0 ? (
               <div className="flex items-center justify-center h-full text-gray-500">
-                <p>No venues found</p>
+                <p>Venues Loading...</p>
               </div>
             ) : (
               venues.map(venue => (
