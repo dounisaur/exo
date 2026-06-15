@@ -425,6 +425,7 @@ export default function MobileVenueSheet({
                   userLocation={userLocation}
                   selectedVenue={venue}
                   onVenueClick={() => {}}
+                  categories={categories}
                 />
               </div>
               <button
@@ -548,6 +549,7 @@ export default function MobileVenueSheet({
                 userLocation={userLocation}
                 selectedVenue={venue}
                 onVenueClick={() => {}}
+                categories={categories}
               />
             </div>
           </div>

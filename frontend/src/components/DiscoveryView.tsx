@@ -399,6 +399,7 @@ export default function DiscoveryView({
                   userLocation={userLocation}
                   selectedVenue={selectedVenue}
                   onVenueClick={handleVenueSelect}
+                  categories={categories}
                 />
               )}
             </div>

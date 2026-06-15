@@ -202,6 +202,7 @@ export default function VenueDetailPage({
                   userLocation={userLocation}
                   selectedVenue={venue}
                   onVenueClick={() => {}}
+                  categories={categories}
                 />
               </div>
             </div>
@@ -221,6 +222,7 @@ export default function VenueDetailPage({
                 userLocation={userLocation}
                 selectedVenue={venue}
                 onVenueClick={() => {}}
+                categories={categories}
               />
             </div>
           )}

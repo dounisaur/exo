@@ -191,6 +191,7 @@ export default function VenueDetailPanel({
                   userLocation={userLocation}
                   selectedVenue={venue}
                   onVenueClick={() => {}}
+                  categories={categories}
                 />
               </div>
             )}
