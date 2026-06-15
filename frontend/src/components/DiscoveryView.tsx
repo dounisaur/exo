@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, Wine, UtensilsCrossed } from 'lucide-react'
+import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -117,7 +117,6 @@ export default function DiscoveryView({
             <div className="flex items-center gap-0" style={{ letterSpacing: '-4px' }}>
               <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '20px', color: 'var(--ink-on-dark)' }}>E</span>
               <UtensilsCrossed size={24} style={{ color: 'var(--sage)', marginTop: '2px' }} strokeWidth={1.5} />
-              <Wine size={24} style={{ color: 'var(--terracotta)', marginTop: '2px' }} strokeWidth={1.5} />
             </div>
             <nav className="flex items-center gap-2">
               {!authToken && (
@@ -285,7 +284,6 @@ export default function DiscoveryView({
           <div className="flex items-center gap-0" style={{ letterSpacing: '-4px' }}>
             <span style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, fontSize: '28px', color: 'var(--ink-on-dark)' }}>E</span>
             <UtensilsCrossed size={32} style={{ color: 'var(--sage)', marginTop: '2px' }} strokeWidth={1.5} />
-            <Wine size={32} style={{ color: 'var(--terracotta)', marginTop: '2px' }} strokeWidth={1.5} />
           </div>
           <nav className="flex items-center gap-2">
             {!authToken && (
