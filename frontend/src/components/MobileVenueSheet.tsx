@@ -83,7 +83,7 @@ export default function MobileVenueSheet({
         style={{
           position: 'fixed',
           inset: 0,
-          background: 'rgba(21, 34, 74, 0.45)',
+          background: 'rgba(42, 37, 32, 0.45)',
           opacity: 1,
           pointerEvents: 'auto',
           transition: 'opacity 0.3s',
@@ -100,9 +100,9 @@ export default function MobileVenueSheet({
           right: 0,
           bottom: 0,
           top: '84px',
-          background: '#fff',
+          background: 'var(--canvas)',
           borderRadius: '24px 24px 0 0',
-          boxShadow: '0 -16px 44px rgba(21, 34, 74, 0.32)',
+          boxShadow: '0 -16px 44px rgba(42, 37, 32, 0.2)',
           zIndex: 6,
           display: 'flex',
           flexDirection: 'column'
@@ -115,7 +115,7 @@ export default function MobileVenueSheet({
               width: '42px',
               height: '5px',
               borderRadius: '100px',
-              background: '#dfe3ee',
+              background: 'var(--border)',
               margin: '0 auto'
             }}
           />
