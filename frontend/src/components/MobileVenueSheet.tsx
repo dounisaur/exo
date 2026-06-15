@@ -129,10 +129,10 @@ export default function MobileVenueSheet({
             justifyContent: 'space-between',
             padding: '6px 18px 12px',
             flexShrink: 0,
-            borderBottom: '1px solid #f1f3f8'
+            borderBottom: '1px solid var(--border)'
           }}
         >
-          <span style={{ fontSize: '19px', fontWeight: 700, color: '#15224a' }}>
+          <span style={{ fontSize: '19px', fontWeight: 700, color: 'var(--ink)' }}>
             {venue.name}
           </span>
           <button
@@ -142,7 +142,7 @@ export default function MobileVenueSheet({
               height: '32px',
               flexShrink: 0,
               borderRadius: '50%',
-              background: '#eef0f4',
+              background: 'var(--surface)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -151,7 +151,7 @@ export default function MobileVenueSheet({
               padding: 0
             }}
           >
-            <X size={13} color="#5d6584" strokeWidth={2.5} />
+            <X size={13} color="var(--muted)" strokeWidth={2.5} />
           </button>
         </div>
 
@@ -161,8 +161,8 @@ export default function MobileVenueSheet({
           <span
             style={{
               display: 'inline-block',
-              background: '#eaf1ff',
-              color: '#2563eb',
+              background: 'var(--terracotta-tint)',
+              color: 'var(--terracotta-press)',
               borderRadius: '100px',
               padding: '5px 12px',
               fontSize: '12px',
@@ -184,8 +184,8 @@ export default function MobileVenueSheet({
                 marginBottom: '7px'
               }}
             >
-              <Wallet size={14} color="#9aa0b2" strokeWidth={2} style={{ flexShrink: 0 }} />
-              <span style={{ color: '#16a34a', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
+              <Wallet size={14} color="var(--muted)" strokeWidth={2} style={{ flexShrink: 0 }} />
+              <span style={{ color: 'var(--sage)', fontWeight: 700 }}>{getPriceDisplay(venue)}</span>
             </div>
           )}
 
@@ -197,11 +197,11 @@ export default function MobileVenueSheet({
                 alignItems: 'center',
                 gap: '9px',
                 fontSize: '13.5px',
-                color: '#3f4660',
+                color: 'var(--text)',
                 marginBottom: '7px'
               }}
             >
-              <Building2 size={13} color="#9aa0b2" strokeWidth={2} style={{ flexShrink: 0 }} />
+              <Building2 size={13} color="var(--muted)" strokeWidth={2} style={{ flexShrink: 0 }} />
               <span>{venue.canonical_city}</span>
             </div>
           )}
@@ -214,16 +214,16 @@ export default function MobileVenueSheet({
                 alignItems: 'center',
                 gap: '9px',
                 fontSize: '13.5px',
-                color: '#3f4660',
+                color: 'var(--text)',
                 marginBottom: '7px'
               }}
             >
-              <MapPin size={13} color="#9aa0b2" strokeWidth={2} style={{ flexShrink: 0 }} />
+              <MapPin size={13} color="var(--muted)" strokeWidth={2} style={{ flexShrink: 0 }} />
               <a
                 href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`}
                 target="_blank"
                 rel="noopener"
-                style={{ color: '#3f4660', textDecoration: 'none' }}
+                style={{ color: 'var(--text)', textDecoration: 'none' }}
               >
                 {venue.address}
               </a>
@@ -238,11 +238,11 @@ export default function MobileVenueSheet({
                 alignItems: 'center',
                 gap: '9px',
                 fontSize: '13.5px',
-                color: '#3f4660',
+                color: 'var(--text)',
                 marginBottom: '11px'
               }}
             >
-              <Clock size={13} color="#9aa0b2" strokeWidth={2} style={{ flexShrink: 0 }} />
+              <Clock size={13} color="var(--muted)" strokeWidth={2} style={{ flexShrink: 0 }} />
               <span>{getTodayHours(venue.opening_hours)}</span>
             </div>
           )}
@@ -261,13 +261,13 @@ export default function MobileVenueSheet({
                 style={{
                   fontSize: '16px',
                   letterSpacing: '2px',
-                  color: '#f5b50a'
+                  color: 'var(--honey)'
                 }}
               >
                 {filledStars}
-                <span style={{ color: '#d8dce5' }}>{emptyStars}</span>
+                <span style={{ color: 'var(--star-empty)' }}>{emptyStars}</span>
               </span>
-              <span style={{ fontSize: '13.5px', color: '#3f4660', fontWeight: 600 }}>
+              <span style={{ fontSize: '13.5px', color: 'var(--honey-text)', fontWeight: 600 }}>
                 {venue.rating.toFixed(1)}
               </span>
             </div>

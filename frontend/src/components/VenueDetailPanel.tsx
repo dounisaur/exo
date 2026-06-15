@@ -64,16 +64,17 @@ export default function VenueDetailPanel({
   }
 
   return (
-    <div className={`bg-white flex flex-col h-full ${isEmbedded ? 'border-l border-blue-100' : ''}`}>
+    <div className={`bg-white flex flex-col h-full`} style={{ borderLeft: isEmbedded ? `1px solid var(--border)` : 'none' }}>
       {/* Close button for modal */}
       {!isEmbedded && onClose && (
-        <div className="flex items-center justify-between p-4 border-b border-blue-100">
-          <h2 className="text-lg font-bold text-gray-900">Details</h2>
+        <div className="flex items-center justify-between p-4" style={{ borderBottom: `1px solid var(--border)` }}>
+          <h2 className="text-lg font-bold" style={{ color: 'var(--ink)' }}>Details</h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 rounded-lg transition-colors hover:opacity-80"
+            style={{ background: 'var(--surface)' }}
           >
-            <X size={20} className="text-gray-600" />
+            <X size={20} style={{ color: 'var(--muted)' }} />
           </button>
         </div>
       )}
@@ -81,11 +82,11 @@ export default function VenueDetailPanel({
       {/* Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
         {/* Venue Name */}
-        <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-3">{venue.name}</h3>
+        <h3 className="text-xl md:text-2xl font-bold mb-3" style={{ color: 'var(--ink)' }}>{venue.name}</h3>
 
         {/* Category Pill */}
         <div className="mb-4">
-          <span className="inline-block px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+          <span className="inline-block px-3 py-1 rounded-full text-sm font-medium" style={{ background: 'var(--terracotta-tint)', color: 'var(--terracotta-press)' }}>
             {getSubcategoryName(venue.subcategory_id) || venue.category}
           </span>
         </div>
@@ -94,26 +95,26 @@ export default function VenueDetailPanel({
         <div className="space-y-3 mb-6">
           {getPriceDisplay(venue) && (
             <div className="flex items-center gap-3">
-              <Wallet size={18} className="text-gray-400 flex-shrink-0" />
-              <span className="text-sm text-green-600 font-medium">{getPriceDisplay(venue)}</span>
+              <Wallet size={18} style={{ color: 'var(--muted)' }} className="flex-shrink-0" />
+              <span className="text-sm font-medium" style={{ color: 'var(--sage)' }}>{getPriceDisplay(venue)}</span>
             </div>
           )}
           {venue.canonical_city && (
             <div className="flex items-center gap-3">
-              <Building2 size={18} className="text-gray-400 flex-shrink-0" />
-              <span className="text-sm text-gray-700">{venue.canonical_city}</span>
+              <Building2 size={18} style={{ color: 'var(--muted)' }} className="flex-shrink-0" />
+              <span className="text-sm" style={{ color: 'var(--text)' }}>{venue.canonical_city}</span>
             </div>
           )}
           {venue.address && (
             <div className="flex items-start gap-3">
-              <MapPin size={18} className="text-gray-400 flex-shrink-0 mt-0.5" />
-              <span className="text-sm text-gray-700">{venue.address}</span>
+              <MapPin size={18} style={{ color: 'var(--muted)' }} className="flex-shrink-0 mt-0.5" />
+              <span className="text-sm" style={{ color: 'var(--text)' }}>{venue.address}</span>
             </div>
           )}
           {venue.opening_hours && getTodayHours(venue.opening_hours) && (
             <div className="flex items-center gap-3">
-              <Clock size={18} className="text-gray-400 flex-shrink-0" />
-              <span className="text-sm text-gray-700">{getTodayHours(venue.opening_hours)}</span>
+              <Clock size={18} style={{ color: 'var(--muted)' }} className="flex-shrink-0" />
+              <span className="text-sm" style={{ color: 'var(--text)' }}>{getTodayHours(venue.opening_hours)}</span>
             </div>
           )}
         </div>
@@ -126,10 +127,10 @@ export default function VenueDetailPanel({
                 const fillPercentage = Math.min(Math.max((venue.rating || 0) - i, 0), 1)
                 return (
                   <div key={i} className="relative">
-                    <span className="text-xl text-gray-300">★</span>
+                    <span className="text-xl" style={{ color: 'var(--star-empty)' }}>★</span>
                     <div
-                      className="absolute top-0 left-0 overflow-hidden text-yellow-500"
-                      style={{ width: `${fillPercentage * 100}%` }}
+                      className="absolute top-0 left-0 overflow-hidden"
+                      style={{ width: `${fillPercentage * 100}%`, color: 'var(--honey)' }}
                     >
                       <span className="text-xl">★</span>
                     </div>
@@ -137,7 +138,7 @@ export default function VenueDetailPanel({
                 )
               })}
             </div>
-            <span className="text-sm font-semibold text-gray-700 ml-2">
+            <span className="text-sm font-semibold ml-2" style={{ color: 'var(--honey-text)' }}>
               {venue.rating.toFixed(1)}
             </span>
           </div>
@@ -168,9 +169,9 @@ export default function VenueDetailPanel({
         </div>
 
         {/* About Section */}
-        <div className="mb-6 pb-6 border-b border-blue-100">
-          <h4 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-widest">About</h4>
-          <p className="text-sm text-gray-600 italic">Coming soon</p>
+        <div className="mb-6 pb-6" style={{ borderBottom: `1px solid var(--border)` }}>
+          <h4 className="text-sm font-bold mb-2 uppercase tracking-widest" style={{ color: 'var(--ink)' }}>About</h4>
+          <p className="text-sm italic" style={{ color: 'var(--muted)' }}>Coming soon</p>
         </div>
 
         {/* Map Toggle */}
@@ -178,13 +179,13 @@ export default function VenueDetailPanel({
           <div className={showMap ? 'mb-6' : ''}>
             <button
               onClick={() => setShowMap(!showMap)}
-              className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-              style={{ marginBottom: showMap ? '12px' : '0' }}
+              className="w-full px-4 py-2 text-white rounded-lg text-sm font-medium transition-colors hover:opacity-90"
+              style={{ background: 'var(--terracotta)', marginBottom: showMap ? '12px' : '0', boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)' }}
             >
               {showMap ? 'Hide Map' : 'View Map'}
             </button>
             {showMap && (
-              <div className="relative h-64 bg-gray-200 rounded-lg overflow-hidden border border-blue-100">
+              <div className="relative h-64 rounded-lg overflow-hidden" style={{ background: 'var(--canvas)', border: `1px solid var(--border)` }}>
                 <Map
                   venues={[venue]}
                   userLocation={userLocation}
@@ -199,15 +200,15 @@ export default function VenueDetailPanel({
         {/* Comments Section */}
         {comments.length > 0 && (
           <div className="mt-8">
-            <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+            <h4 className="font-bold mb-3 flex items-center gap-2" style={{ color: 'var(--ink)' }}>
               <MessageCircle size={16} />
               Comments ({comments.length})
             </h4>
             <div className="space-y-2">
               {comments.map((comment) => (
-                <div key={comment.id} className="p-3 bg-gray-50 rounded-lg border border-blue-100">
-                  <p className="text-sm text-gray-700">{comment.content}</p>
-                  <p className="text-xs text-gray-500 mt-2">
+                <div key={comment.id} className="p-3 rounded-lg" style={{ background: 'var(--surface)', border: `1px solid var(--border)` }}>
+                  <p className="text-sm" style={{ color: 'var(--text)' }}>{comment.content}</p>
+                  <p className="text-xs mt-2" style={{ color: 'var(--muted)' }}>
                     {new Date(comment.created_at).toLocaleDateString()}
                   </p>
                 </div>
