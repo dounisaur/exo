@@ -285,15 +285,15 @@ export default function MobileVenueSheet({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '7px',
-                  background: '#f3f4f6',
-                  color: '#374151',
+                  background: '#16a34a',
+                  color: 'white',
                   borderRadius: '10px',
                   padding: '11px',
                   fontSize: '13.5px',
                   fontWeight: 600
                 }}
               >
-                <Phone size={14} color="#374151" strokeWidth={2} />
+                <Phone size={14} color="white" strokeWidth={2} />
                 Call
               </a>
             )}
@@ -308,15 +308,15 @@ export default function MobileVenueSheet({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '7px',
-                background: '#f3f4f6',
-                color: '#374151',
+                background: '#2563eb',
+                color: 'white',
                 borderRadius: '10px',
                 padding: '11px',
                 fontSize: '13.5px',
                 fontWeight: 600
               }}
             >
-              <MapPin size={13} color="#374151" strokeWidth={2} />
+              <MapPin size={13} color="white" strokeWidth={2} />
               Directions
             </a>
           </div>
