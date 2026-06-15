@@ -112,14 +112,15 @@ export default function DiscoveryView({
     return (
       <div className="w-screen h-screen flex flex-col bg-white overflow-hidden">
         {/* Header */}
-        <header className="text-white p-4 flex-shrink-0" style={{ backgroundColor: '#1e3a8a' }}>
+        <header className="p-4 flex-shrink-0" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-lg font-bold">🍴 EXΩ 🍷</h1>
+            <h1 className="text-lg font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>🍴 EXΩ 🍷</h1>
             <nav className="flex items-center gap-2">
               {!authToken && (
                 <button
                   onClick={onLogin}
                   className="px-3 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: 'var(--ink-on-dark)' }}
                 >
                   Login
                 </button>
@@ -130,6 +131,7 @@ export default function DiscoveryView({
                     onClick={onAdmin}
                     className="p-2 hover:opacity-80 transition-opacity"
                     title="Admin"
+                    style={{ color: 'var(--nav-muted)' }}
                   >
                     <Settings size={18} />
                   </button>
@@ -137,6 +139,7 @@ export default function DiscoveryView({
                     onClick={onLogout}
                     className="p-2 hover:opacity-80 transition-opacity"
                     title="Logout"
+                    style={{ color: 'var(--nav-muted)' }}
                   >
                     <LogOut size={18} />
                   </button>
@@ -271,16 +274,17 @@ export default function DiscoveryView({
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <header
-        className="text-white p-4 sticky top-0 z-30"
-        style={{ backgroundColor: '#1e3a8a' }}
+        className="p-4 sticky top-0 z-30"
+        style={{ backgroundColor: 'var(--ink)', height: '64px' }}
       >
         <div className="flex items-center justify-between gap-4">
-          <h1 className="text-xl font-bold">🍴 EXΩ 🍷</h1>
+          <h1 className="text-xl font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>🍴 EXΩ 🍷</h1>
           <nav className="flex items-center gap-2">
             {!authToken && (
               <button
                 onClick={onLogin}
                 className="px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--ink-on-dark)' }}
               >
                 Login
               </button>
@@ -290,6 +294,7 @@ export default function DiscoveryView({
                 <button
                   onClick={onAdmin}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: 'var(--nav-muted)' }}
                 >
                   <Settings size={18} />
                   <span>Admin</span>
@@ -297,6 +302,7 @@ export default function DiscoveryView({
                 <button
                   onClick={onLogout}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
+                  style={{ color: 'var(--nav-muted)' }}
                 >
                   <LogOut size={18} />
                   <span>Logout</span>
