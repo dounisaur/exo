@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin, ChevronUp, ChevronDown } from 'lucide-react'
+import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed, Wine } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -114,7 +114,11 @@ export default function DiscoveryView({
         {/* Header */}
         <header className="p-4 flex-shrink-0" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
           <div className="flex items-center justify-between gap-4">
-            <h1 className="text-lg font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>🍴 EXΩ 🍷</h1>
+            <div className="flex items-center gap-1">
+              <UtensilsCrossed size={24} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
+              <h1 className="text-lg font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
+              <Wine size={24} style={{ color: 'var(--terracotta)', marginLeft: '-2px' }} strokeWidth={1.5} />
+            </div>
             <nav className="flex items-center gap-2">
               {!authToken && (
                 <button
@@ -278,7 +282,11 @@ export default function DiscoveryView({
         style={{ backgroundColor: 'var(--ink)', height: '64px' }}
       >
         <div className="flex items-center justify-between gap-4">
-            <h1 className="text-xl font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>🍴 EXΩ 🍷</h1>
+            <div className="flex items-center gap-2">
+              <UtensilsCrossed size={32} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
+              <h1 className="text-xl font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
+              <Wine size={32} style={{ color: 'var(--terracotta)', marginLeft: '-4px' }} strokeWidth={1.5} />
+            </div>
           <nav className="flex items-center gap-2">
             {!authToken && (
               <button
