@@ -333,16 +333,19 @@ export default function MobileVenueSheet({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: '#2563eb',
+                  background: 'var(--terracotta)',
                   color: '#fff',
-                  borderRadius: '10px',
+                  borderRadius: '13px',
                   padding: '11px 14px',
                   fontSize: '13.5px',
                   fontWeight: 600,
                   flexShrink: 0,
                   border: 'none',
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 16px -8px rgba(199, 91, 63, 0.5)',
+                  transition: 'all 0.2s'
                 }}
+                className="hover:opacity-90"
               >
                 <MessageCircle size={13} color="#fff" strokeWidth={2} />
                 {comments.length}
