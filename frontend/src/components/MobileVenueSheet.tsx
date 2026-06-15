@@ -161,8 +161,8 @@ export default function MobileVenueSheet({
           <span
             style={{
               display: 'inline-block',
-              background: 'var(--terracotta-tint)',
-              color: 'var(--terracotta-press)',
+              background: 'var(--sage)',
+              color: 'white',
               borderRadius: '100px',
               padding: '5px 12px',
               fontSize: '12px',
