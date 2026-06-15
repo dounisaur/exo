@@ -11,18 +11,9 @@ interface MapProps {
   categories?: Category[]
 }
 
-export default function Map({ venues, userLocation, selectedVenue, onVenueClick, categories = [] }: MapProps) {
+export default function Map({ venues, userLocation, selectedVenue, onVenueClick }: MapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
-
-  const getSubcategoryName = (subcategoryId?: number) => {
-    if (!subcategoryId || categories.length === 0) return null
-    for (const category of categories) {
-      const subcategory = category.subcategories.find(s => s.id === subcategoryId)
-      if (subcategory) return subcategory.name
-    }
-    return null
-  }
 
   const getTodayHours = (openingHours?: string): string | null => {
     if (!openingHours) return null
@@ -47,7 +38,7 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
   }
 
   const createTooltipContent = (venue: Venue): string => {
-    const subcategory = getSubcategoryName(venue.subcategory_id) || venue.category
+    const category = venue.category
     const hours = getTodayHours(venue.opening_hours)
     const price = getPriceDisplay(venue)
 
@@ -56,8 +47,8 @@ export default function Map({ venues, userLocation, selectedVenue, onVenueClick,
 
     // Info row with separators
     const infoItems = []
-    if (subcategory) {
-      infoItems.push(`<span style="color: var(--muted);">${subcategory}</span>`)
+    if (category) {
+      infoItems.push(`<span style="color: var(--muted);">${category}</span>`)
     }
     if (venue.rating) {
       infoItems.push(`<span style="color: var(--honey);">★ ${venue.rating.toFixed(1)}</span>`)
