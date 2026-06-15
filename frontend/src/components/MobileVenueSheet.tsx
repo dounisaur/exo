@@ -109,7 +109,7 @@ export default function MobileVenueSheet({
         }}
       >
         {/* Drag Handle */}
-        <div style={{ padding: '9px 0 3px', flexShrink: 0, background: 'var(--ink)' }}>
+        <div style={{ padding: '9px 0 3px', flexShrink: 0, background: 'var(--ink)', borderRadius: '24px 24px 0 0' }}>
           <div
             style={{
               width: '42px',
