@@ -333,7 +333,7 @@ export default function MobileVenueSheet({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '6px',
-                  background: 'var(--terracotta)',
+                  background: 'var(--sage)',
                   color: '#fff',
                   borderRadius: '13px',
                   padding: '11px 14px',
@@ -342,7 +342,7 @@ export default function MobileVenueSheet({
                   flexShrink: 0,
                   border: 'none',
                   cursor: 'pointer',
-                  boxShadow: '0 8px 16px -8px rgba(199, 91, 63, 0.5)',
+                  boxShadow: '0 12px 22px -14px rgba(111, 143, 106, 0.8)',
                   transition: 'all 0.2s'
                 }}
                 className="hover:opacity-90"
