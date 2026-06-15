@@ -57,11 +57,11 @@ export default function VenueCard({
         onClick={() => onSelect?.(venue)}
         style={{
           borderRadius: '16px',
-          background: '#fff',
-          border: '1px solid #e7eaf4',
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
           overflow: 'hidden',
           marginBottom: '12px',
-          boxShadow: '0 6px 18px -12px rgba(21, 34, 74, 0.3)',
+          boxShadow: '0 16px 34px -22px rgba(74, 56, 36, 0.4)',
           cursor: 'pointer'
         }}
       >
@@ -95,7 +95,7 @@ export default function VenueCard({
 
         {/* Category + Price + Hours + View Link Row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontSize: '12.5px', color: '#6a7191' }}>
-          <span style={{ background: '#eaf1ff', color: '#2563eb', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
+          <span style={{ background: 'var(--terracotta-tint)', color: 'var(--terracotta-press)', borderRadius: '100px', padding: '3px 10px', fontWeight: 600 }}>
             {getSubcategoryName(venue.subcategory_id) || venue.category}
           </span>
           {getPriceDisplay(venue) && (
@@ -115,18 +115,19 @@ export default function VenueCard({
   }
 
   // Desktop version - existing behavior
-  const cardBg = isSelected ? 'bg-orange-600' : 'bg-white'
+  const cardBg = isSelected ? 'var(--terracotta)' : 'var(--surface)'
   const cardText = isSelected ? 'text-white' : 'text-gray-900'
-  const borderClass = isSelected ? 'border-transparent' : 'border-blue-100'
-  const shadowClass = isSelected ? 'shadow-lg' : 'shadow-sm'
+  const borderStyle = isSelected ? 'border-transparent' : '1px solid var(--border)'
+  const shadowStyle = isSelected ? '0 16px 34px -22px rgba(74, 56, 36, 0.4)' : '0 16px 34px -22px rgba(74, 56, 36, 0.4)'
   const imageUrl = venue.primary_photo_url || venue.image_url
 
   return (
     <div
       onClick={() => onSelect?.(venue)}
-      className={`rounded-lg cursor-pointer transition-all duration-200 border overflow-hidden ${cardBg} ${borderClass} ${shadowClass} ${
-        !isSelected ? 'hover:shadow-md' : ''
+      className={`rounded-[16px] cursor-pointer transition-all duration-200 overflow-hidden ${cardText} ${
+        !isSelected ? 'hover:opacity-90' : ''
       }`}
+      style={{ background: cardBg, border: borderStyle, boxShadow: shadowStyle }}
     >
       {/* Image */}
       {imageUrl && (
@@ -157,9 +158,11 @@ export default function VenueCard({
       {/* Category Pill */}
       <div className="mb-2">
         <span
-          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-            isSelected ? 'bg-orange-500 bg-opacity-30 text-orange-100' : 'bg-blue-100 text-blue-700'
-          }`}
+          className="inline-block px-2 py-1 rounded-full text-xs font-medium"
+          style={{
+            background: isSelected ? 'rgba(199, 91, 63, 0.2)' : 'var(--terracotta-tint)',
+            color: isSelected ? 'rgba(255, 255, 255, 0.8)' : 'var(--terracotta-press)'
+          }}
         >
           {getSubcategoryName(venue.subcategory_id) || venue.category}
         </span>
