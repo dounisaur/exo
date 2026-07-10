@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed, Wine } from 'lucide-react'
+import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed, Wine, Sliders, LogIn } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
@@ -51,6 +51,7 @@ export default function DiscoveryView({
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
+  const [openHeaderDropdown, setOpenHeaderDropdown] = useState<'filter' | 'login' | null>(null)
 
   const selectedVenue = venues.find(v => v.id === selectedVenueId) || null
 
@@ -112,72 +113,61 @@ export default function DiscoveryView({
     return (
       <div className="w-screen h-screen flex flex-col bg-white overflow-hidden">
         {/* Header */}
-        <header className="p-4 flex-shrink-0" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
+        <header className="p-4 flex-shrink-0 relative" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-1">
               <UtensilsCrossed size={24} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
               <h1 className="text-lg font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
               <Wine size={24} style={{ color: 'var(--terracotta)', marginLeft: '-2px' }} strokeWidth={1.5} />
             </div>
-            <nav className="flex items-center gap-2">
+            <nav className="flex items-center gap-1">
+              {/* Filter Icon */}
+              <button
+                onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'filter' ? null : 'filter')}
+                className="p-2 hover:opacity-80 transition-opacity"
+                title="Filters"
+                style={{ color: 'var(--nav-muted)' }}
+              >
+                <Sliders size={20} />
+              </button>
+
+              {/* Plan My Itinerary Icon */}
+              <button
+                onClick={onGenerateItinerary}
+                className="p-2 hover:opacity-80 transition-opacity"
+                title="Plan My Itinerary"
+                style={{ color: 'var(--terracotta)' }}
+              >
+                <MapPin size={20} />
+              </button>
+
+              {/* Login/Admin Icon */}
               {!authToken && (
                 <button
                   onClick={onLogin}
-                  className="px-3 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
-                  style={{ color: 'var(--ink-on-dark)' }}
+                  className="p-2 hover:opacity-80 transition-opacity"
+                  title="Login"
+                  style={{ color: 'var(--nav-muted)' }}
                 >
-                  Login
+                  <LogIn size={20} />
                 </button>
               )}
               {authToken && (
-                <>
-                  <button
-                    onClick={onAdmin}
-                    className="p-2 hover:opacity-80 transition-opacity"
-                    title="Admin"
-                    style={{ color: 'var(--nav-muted)' }}
-                  >
-                    <Settings size={18} />
-                  </button>
-                  <button
-                    onClick={onLogout}
-                    className="p-2 hover:opacity-80 transition-opacity"
-                    title="Logout"
-                    style={{ color: 'var(--nav-muted)' }}
-                  >
-                    <LogOut size={18} />
-                  </button>
-                </>
+                <button
+                  onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'login' ? null : 'login')}
+                  className="p-2 hover:opacity-80 transition-opacity"
+                  title="Account"
+                  style={{ color: 'var(--nav-muted)' }}
+                >
+                  <Settings size={20} />
+                </button>
               )}
             </nav>
           </div>
-        </header>
 
-        {/* Scrollable Main Content */}
-        <div className="flex-1 overflow-y-auto px-4 py-4">
-          {/* Plan My Itinerary Button */}
-          <button
-            onClick={onGenerateItinerary}
-            className="w-full px-4 py-2.5 text-white rounded-[13px] font-medium font-600 transition-colors flex items-center justify-between gap-2 mb-2.5"
-            style={{ backgroundColor: 'var(--terracotta)', boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)', fontSize: '15.5px' }}
-          >
-            <span>Plan My Itinerary</span>
-            <MapPin size={20} />
-          </button>
-
-          {/* Filters Button */}
-          <button
-            onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="w-full px-4 py-2.5 text-white font-medium rounded-lg flex items-center justify-between gap-2 transition-colors mb-4 hover:opacity-90"
-            style={{ backgroundColor: '#6f8f6a' }}
-          >
-            <span>Filters</span>
-            {showMobileFilters ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-          </button>
-
-          {/* Inline Filter Dropdowns */}
-          {showMobileFilters && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-3 mb-4">
+          {/* Filter Dropdown */}
+          {openHeaderDropdown === 'filter' && (
+            <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-4 space-y-3 z-50" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
               {/* City Dropdown */}
               {allCities.length > 0 && (
                 <div>
@@ -237,6 +227,38 @@ export default function DiscoveryView({
             </div>
           )}
 
+          {/* Login Dropdown */}
+          {openHeaderDropdown === 'login' && authToken && (
+            <div className="absolute top-full right-0 bg-white border-b border-gray-200 p-3 space-y-2 z-50" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', minWidth: '120px' }}>
+              <button
+                onClick={() => {
+                  onAdmin?.()
+                  setOpenHeaderDropdown(null)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              >
+                <Settings size={16} />
+                <span>Admin</span>
+              </button>
+              <button
+                onClick={() => {
+                  onLogout?.()
+                  setOpenHeaderDropdown(null)
+                }}
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
+              >
+                <LogOut size={16} />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+        </header>
+
+        {/* Scrollable Main Content */}
+        <div
+          className="flex-1 overflow-y-auto px-4 py-4"
+          onScroll={() => openHeaderDropdown && setOpenHeaderDropdown(null)}
+        >
           {/* Venue Cards */}
           <div>
             {venues.length === 0 ? (
