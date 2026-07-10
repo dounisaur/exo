@@ -300,7 +300,7 @@ export default function DiscoveryView({
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <header
-        className="p-4 sticky top-0 z-30"
+        className="p-4 sticky top-0 z-30 relative"
         style={{ backgroundColor: 'var(--ink)', height: '64px' }}
       >
         <div className="flex items-center justify-between gap-4">
@@ -309,7 +309,27 @@ export default function DiscoveryView({
               <h1 className="text-xl font-bold" style={{ fontFamily: 'Schibsted Grotesk, sans-serif', fontWeight: 800, color: 'var(--ink-on-dark)' }}>EXΩ</h1>
               <Wine size={32} style={{ color: 'var(--terracotta)', marginLeft: '-4px' }} strokeWidth={1.5} />
             </div>
-          <nav className="flex items-center gap-2">
+          <nav className="flex items-center gap-1 relative">
+            {/* Filter Icon */}
+            <button
+              onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'filter' ? null : 'filter')}
+              className="p-2 hover:opacity-80 transition-opacity"
+              title="Filters"
+              style={{ color: 'var(--nav-muted)' }}
+            >
+              <Sliders size={20} />
+            </button>
+
+            {/* Plan My Itinerary Icon */}
+            <button
+              onClick={onGenerateItinerary}
+              className="p-2 hover:opacity-80 transition-opacity"
+              title="Plan My Itinerary"
+              style={{ color: 'var(--terracotta)' }}
+            >
+              <MapPin size={20} />
+            </button>
+
             {!authToken && (
               <button
                 onClick={onLogin}
@@ -320,27 +340,43 @@ export default function DiscoveryView({
               </button>
             )}
             {authToken && (
-              <>
-                <button
-                  onClick={onAdmin}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
-                  style={{ color: 'var(--nav-muted)' }}
-                >
-                  <Settings size={18} />
-                  <span>Admin</span>
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium hover:opacity-80 transition-opacity"
-                  style={{ color: 'var(--nav-muted)' }}
-                >
-                  <LogOut size={18} />
-                  <span>Logout</span>
-                </button>
-              </>
+              <button
+                onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'login' ? null : 'login')}
+                className="p-2 hover:opacity-80 transition-opacity"
+                title="Account"
+                style={{ color: 'var(--nav-muted)' }}
+              >
+                <Settings size={20} />
+              </button>
             )}
           </nav>
         </div>
+
+        {/* Login Dropdown */}
+        {openHeaderDropdown === 'login' && authToken && (
+          <div className="absolute top-full right-4 bg-white border border-gray-200 rounded-lg p-2 space-y-1 z-50" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', minWidth: '140px' }}>
+            <button
+              onClick={() => {
+                onAdmin?.()
+                setOpenHeaderDropdown(null)
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            >
+              <Settings size={16} />
+              <span>Admin</span>
+            </button>
+            <button
+              onClick={() => {
+                onLogout?.()
+                setOpenHeaderDropdown(null)
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            >
+              <LogOut size={16} />
+              <span>Logout</span>
+            </button>
+          </div>
+        )}
       </header>
 
 
@@ -348,18 +384,6 @@ export default function DiscoveryView({
       <div className="flex flex-1 overflow-hidden gap-0">
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
-          {/* Sidebar header */}
-          <div className="px-4 py-2.5 bg-white">
-            <button
-              onClick={onGenerateItinerary}
-              className="w-full px-4 py-2.5 text-white rounded-[13px] font-medium transition-colors flex items-center justify-between gap-2 hover:opacity-90"
-              style={{ backgroundColor: 'var(--terracotta)', boxShadow: '0 14px 26px -14px rgba(199, 91, 63, 0.7)', fontSize: '15.5px', fontWeight: 600 }}
-            >
-              <span>Plan My Itinerary</span>
-              <MapPin size={20} />
-            </button>
-          </div>
-
           {/* Filters */}
           <div style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
             <FilterBar
