@@ -310,6 +310,16 @@ export default function DiscoveryView({
               <Wine size={32} style={{ color: 'var(--terracotta)', marginLeft: '-4px' }} strokeWidth={1.5} />
             </div>
           <nav className="flex items-center gap-1 relative">
+            {/* Filter Icon */}
+            <button
+              onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'filter' ? null : 'filter')}
+              className="p-2 hover:opacity-80 transition-opacity"
+              title="Filters"
+              style={{ color: 'var(--nav-muted)' }}
+            >
+              <Sliders size={20} />
+            </button>
+
             {/* Plan My Itinerary Icon */}
             <button
               onClick={onGenerateItinerary}
@@ -341,6 +351,40 @@ export default function DiscoveryView({
             )}
           </nav>
         </div>
+
+        {/* Filter Dropdown */}
+        {openHeaderDropdown === 'filter' && (
+          <div className="absolute top-full left-0 right-0 bg-white border-b border-gray-200 p-4 space-y-3 z-50" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)' }}>
+            {allCities.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
+                <select value={selectedCity || ''} onChange={(e) => onCityChange?.(e.target.value)} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer">
+                  <option value="">All Cities</option>
+                  {allCities.map(city => (<option key={city} value={city}>{city}</option>))}
+                </select>
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Venue</label>
+              <select value={selectedCategory || ''} onChange={(e) => onCategoryChange?.(e.target.value)} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer">
+                <option value="">All Categories</option>
+                {categories.map(cat => (<option key={cat.id} value={cat.slug}>{cat.name}</option>))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
+              <select value={selectedRadius?.min === null ? 'null-null' : `${selectedRadius?.min}-${selectedRadius?.max}`} onChange={(e) => { if (e.target.value === 'null-null') { onRadiusChange?.({ min: null, max: null }) } else { const [min, max] = e.target.value.split('-').map(Number); onRadiusChange?.({ min, max }) }}} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer">
+                <option value="null-null">None</option>
+                <option value="0-1">0 - 1 km</option>
+                <option value="1-5">1 - 5 km</option>
+                <option value="5-10">5 - 10 km</option>
+                <option value="10-20">10 - 20 km</option>
+                <option value="20-50">20 - 50 km</option>
+                <option value="50-100">50 - 100 km</option>
+              </select>
+            </div>
+          </div>
+        )}
 
         {/* Login Dropdown */}
         {openHeaderDropdown === 'login' && authToken && (
@@ -374,20 +418,6 @@ export default function DiscoveryView({
       <div className="flex flex-1 overflow-hidden gap-0">
         {/* Left: Sidebar with venue list */}
         <div className="border-r flex flex-col flex-shrink-0" style={{ width: '392px', backgroundColor: '#fafbff', borderColor: '#e7eaf4' }}>
-          {/* Filters */}
-          <div style={{ borderBottomColor: '#e7eaf4', borderBottomWidth: '1px' }}>
-            <FilterBar
-              categories={categories}
-              selectedCategory={selectedCategory || ''}
-              selectedRadius={selectedRadius || { min: 0, max: 1 }}
-              selectedCity={selectedCity || ''}
-              cities={allCities}
-              onCategoryChange={onCategoryChange || (() => {})}
-              onRadiusChange={onRadiusChange || (() => {})}
-              onCityChange={onCityChange || (() => {})}
-            />
-          </div>
-
           {/* Scrollable venue list */}
           <div className="flex-1 overflow-y-auto p-4 space-y-2">
             {venues.length === 0 ? (
