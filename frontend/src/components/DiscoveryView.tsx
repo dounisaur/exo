@@ -310,16 +310,6 @@ export default function DiscoveryView({
               <Wine size={32} style={{ color: 'var(--terracotta)', marginLeft: '-4px' }} strokeWidth={1.5} />
             </div>
           <nav className="flex items-center gap-1 relative">
-            {/* Filter Icon */}
-            <button
-              onClick={() => setOpenHeaderDropdown(openHeaderDropdown === 'filter' ? null : 'filter')}
-              className="p-2 hover:opacity-80 transition-opacity"
-              title="Filters"
-              style={{ color: 'var(--nav-muted)' }}
-            >
-              <Sliders size={20} />
-            </button>
-
             {/* Plan My Itinerary Icon */}
             <button
               onClick={onGenerateItinerary}
