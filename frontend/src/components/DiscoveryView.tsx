@@ -113,7 +113,7 @@ export default function DiscoveryView({
     return (
       <div className="w-screen h-screen flex flex-col bg-white overflow-hidden">
         {/* Header */}
-        <header className="p-4 flex-shrink-0 relative" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))' }}>
+        <header className="p-4 flex-shrink-0 relative" style={{ backgroundColor: 'var(--ink)', height: 'calc(max(64px, env(safe-area-inset-top) + 64px))', zIndex: 9999 }}>
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-1">
               <UtensilsCrossed size={24} style={{ color: 'var(--sage)' }} strokeWidth={1.5} />
@@ -300,7 +300,7 @@ export default function DiscoveryView({
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
       <header
-        className="p-4 sticky top-0 z-30 relative"
+        className="p-4 sticky top-0 z-[9999] relative"
         style={{ backgroundColor: 'var(--ink)', height: '64px' }}
       >
         <div className="flex items-center justify-between gap-4">
