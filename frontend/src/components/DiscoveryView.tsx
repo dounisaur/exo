@@ -202,24 +202,24 @@ export default function DiscoveryView({
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
                 <select
-                  value={selectedRadius?.min === null ? 'null-null' : `${selectedRadius?.min}-${selectedRadius?.max}`}
+                  value={selectedRadius?.max === null ? 'null' : selectedRadius?.max.toString()}
                   onChange={(e) => {
-                    if (e.target.value === 'null-null') {
+                    if (e.target.value === 'null') {
                       onRadiusChange?.({ min: null, max: null })
                     } else {
-                      const [min, max] = e.target.value.split('-').map(Number)
-                      onRadiusChange?.({ min, max })
+                      const max = Number(e.target.value)
+                      onRadiusChange?.({ min: 0, max })
                     }
                   }}
                   className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
                 >
-                  <option value="null-null">None</option>
-                  <option value="0-1">0 - 1 km</option>
-                  <option value="1-5">1 - 5 km</option>
-                  <option value="5-10">5 - 10 km</option>
-                  <option value="10-20">10 - 20 km</option>
-                  <option value="20-50">20 - 50 km</option>
-                  <option value="50-100">50 - 100 km</option>
+                  <option value="null">None</option>
+                  <option value="1">1 km</option>
+                  <option value="5">5 km</option>
+                  <option value="10">10 km</option>
+                  <option value="20">20 km</option>
+                  <option value="50">50 km</option>
+                  <option value="100">100 km</option>
                 </select>
               </div>
             </div>
@@ -339,14 +339,14 @@ export default function DiscoveryView({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
-                    <select value={selectedRadius?.min === null ? 'null-null' : `${selectedRadius?.min}-${selectedRadius?.max}`} onChange={(e) => { if (e.target.value === 'null-null') { onRadiusChange?.({ min: null, max: null }) } else { const [min, max] = e.target.value.split('-').map(Number); onRadiusChange?.({ min, max }) }}} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer">
-                      <option value="null-null">None</option>
-                      <option value="0-1">0 - 1 km</option>
-                      <option value="1-5">1 - 5 km</option>
-                      <option value="5-10">5 - 10 km</option>
-                      <option value="10-20">10 - 20 km</option>
-                      <option value="20-50">20 - 50 km</option>
-                      <option value="50-100">50 - 100 km</option>
+                    <select value={selectedRadius?.max === null ? 'null' : selectedRadius?.max.toString()} onChange={(e) => { if (e.target.value === 'null') { onRadiusChange?.({ min: null, max: null }) } else { const max = Number(e.target.value); onRadiusChange?.({ min: 0, max }) }}} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer">
+                      <option value="null">None</option>
+                      <option value="1">1 km</option>
+                      <option value="5">5 km</option>
+                      <option value="10">10 km</option>
+                      <option value="20">20 km</option>
+                      <option value="50">50 km</option>
+                      <option value="100">100 km</option>
                     </select>
                   </div>
                 </div>

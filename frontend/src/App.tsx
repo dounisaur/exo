@@ -134,6 +134,7 @@ function App() {
     try {
       const params = new URLSearchParams()
       if (category) params.append('category', category)
+      if (selectedCity) params.append('city', selectedCity)
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
@@ -189,19 +190,37 @@ function App() {
     }
   }
 
+  const [allVenues, setAllVenues] = useState<Venue[]>([])
+
   const getAllCities = (): string[] => {
     const citySet = new Set<string>()
-    venues.forEach(venue => {
+    allVenues.forEach(venue => {
       if (venue.canonical_city) citySet.add(venue.canonical_city)
     })
     return Array.from(citySet).sort()
   }
 
+  // Fetch all venues once on mount to get all available cities
+  useEffect(() => {
+    const fetchAllVenues = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues`)
+        if (response.ok) {
+          const data = await response.json()
+          setAllVenues(Array.isArray(data) ? data : [])
+        }
+      } catch (error) {
+        console.error('Error fetching all venues:', error)
+      }
+    }
+    fetchAllVenues()
+  }, [])
+
   useEffect(() => {
     if (userLocation) {
       fetchVenues()
     }
-  }, [category, radius, userLocation])
+  }, [category, radius, selectedCity, userLocation])
 
   return (
     <div className="flex flex-col h-screen bg-white">
