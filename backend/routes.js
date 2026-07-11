@@ -514,7 +514,7 @@ export function setupRoutes(app) {
   // Get published venues with optional filters (public API)
   app.get('/api/venues', async (req, res) => {
     try {
-      const { category, lat, lng, radiusMin, radiusMax } = req.query;
+      const { category, lat, lng, radiusMin, radiusMax, city } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
       let paramIndex = 1;
@@ -522,6 +522,11 @@ export function setupRoutes(app) {
       if (category) {
         query += ` AND category = $${paramIndex++}`;
         params.push(category);
+      }
+
+      if (city) {
+        query += ` AND canonical_city = $${paramIndex++}`;
+        params.push(city);
       }
 
       if (lat && lng) {
@@ -541,6 +546,19 @@ export function setupRoutes(app) {
 
       const { rows } = await pool.query(query, params);
       res.json(rows);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get all cities
+  app.get('/api/cities', async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        "SELECT DISTINCT canonical_city FROM venues WHERE status = 'published' AND canonical_city IS NOT NULL ORDER BY canonical_city"
+      );
+      const cities = rows.map(row => row.canonical_city);
+      res.json(cities);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

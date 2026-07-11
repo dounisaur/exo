@@ -133,12 +133,27 @@ function App() {
     setPage('home')
   }
 
+  const [allCities, setAllCities] = useState<string[]>([])
+
+  useEffect(() => {
+    const fetchCities = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cities`)
+        if (!response.ok) {
+          console.error('Failed to fetch cities:', response.status)
+          return
+        }
+        const data = await response.json()
+        setAllCities(Array.isArray(data) ? data.sort() : [])
+      } catch (error) {
+        console.error('Error fetching cities:', error)
+      }
+    }
+    fetchCities()
+  }, [])
+
   const getUniqueCities = (): string[] => {
-    const citySet = new Set<string>()
-    venues.forEach(venue => {
-      if (venue.canonical_city) citySet.add(venue.canonical_city)
-    })
-    return Array.from(citySet).sort()
+    return allCities
   }
 
   const fetchVenues = async () => {
@@ -146,10 +161,11 @@ function App() {
     try {
       const params = new URLSearchParams()
       if (category) params.append('category', category)
+      if (selectedCity) params.append('city', selectedCity)
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
-        params.append('radiusMin', radius.min.toString())
+        params.append('radiusMin', '0')
         params.append('radiusMax', radius.max.toString())
       }
 
@@ -205,7 +221,7 @@ function App() {
     if (userLocation) {
       fetchVenues()
     }
-  }, [category, radius, userLocation])
+  }, [category, radius, userLocation, selectedCity])
 
   return (
     <div className="flex flex-col h-screen bg-white">
