@@ -322,7 +322,7 @@ export default function DiscoveryView({
               </button>
               {/* Filter Dropdown */}
               {openHeaderDropdown === 'filter' && (
-                <div className="absolute top-full left-0 bg-white border border-gray-200 rounded-lg p-4 space-y-3 z-50" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', minWidth: '280px', marginTop: '8px' }}>
+                <div className="absolute top-full bg-white border border-gray-200 rounded-lg p-4 space-y-3 z-[9999]" style={{ boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', minWidth: '280px', marginTop: '8px', left: '-50px' }}>
                   {allCities.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
