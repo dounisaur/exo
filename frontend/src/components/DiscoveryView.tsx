@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react'
-import { Settings, LogOut, MapPin, ChevronUp, ChevronDown, UtensilsCrossed, Wine, Sliders, LogIn } from 'lucide-react'
+import { Settings, LogOut, MapPin, UtensilsCrossed, Wine, Sliders, LogIn } from 'lucide-react'
 import Map from './Map'
 import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
 import VenueDetailPage from './VenueDetailPage'
-import FilterBar from './FilterBar'
 import MobileVenueSheet from './MobileVenueSheet'
 import type { Venue, Category, VenueComment } from '../types'
 
@@ -49,7 +48,6 @@ export default function DiscoveryView({
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
   const [showDetailPage, setShowDetailPage] = useState(false)
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
-  const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' ? window.innerWidth < 768 : false)
   const [openHeaderDropdown, setOpenHeaderDropdown] = useState<'filter' | 'login' | null>(null)
 
