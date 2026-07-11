@@ -12,12 +12,12 @@ interface FilterBarProps {
 }
 
 const RADIUS_OPTIONS = [
-  { label: '0 - 1 km', min: 0, max: 1 },
-  { label: '0 - 5 km', min: 0, max: 5 },
-  { label: '0 - 10 km', min: 0, max: 10 },
-  { label: '0 - 20 km', min: 0, max: 20 },
-  { label: '0 - 50 km', min: 0, max: 50 },
-  { label: '0 - 100 km', min: 0, max: 100 }
+  { label: '1 km', min: 0, max: 1 },
+  { label: '5 km', min: 0, max: 5 },
+  { label: '10 km', min: 0, max: 10 },
+  { label: '20 km', min: 0, max: 20 },
+  { label: '50 km', min: 0, max: 50 },
+  { label: '100 km', min: 0, max: 100 }
 ]
 
 export default function FilterBar({
