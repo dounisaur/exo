@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Eye as EyeIcon, Search, Building2, Trash2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
-import type { Venue, Category, User, VenueComment, Country, City } from '../types'
+import type { Venue, Category, User, VenueComment, Country } from '../types'
 
 interface AdminPanelProps {
   authToken: string
@@ -21,7 +21,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
   // Country & City state
   const [countries, setCountries] = useState<Country[]>([])
-  const [cities, setCities] = useState<City[]>([])
   const [selectedCountry, setSelectedCountry] = useState<number | ''>('')
 
   // Venue sheet state
@@ -190,24 +189,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     fetchCountriesAndCities()
   }, [])
 
-  // Fetch cities when selected country changes
-  useEffect(() => {
-    if (selectedCountry === '') return
-
-    const fetchCitiesForCountry = async () => {
-      try {
-        const citiesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/cities?country_id=${selectedCountry}`)
-        if (citiesResponse.ok) {
-          const citiesData = await citiesResponse.json()
-          setCities(citiesData)
-        }
-      } catch (error) {
-        console.error('Error fetching cities:', error)
-      }
-    }
-
-    fetchCitiesForCountry()
-  }, [selectedCountry])
 
   // Reset subcategory pagination when filter changes
   useEffect(() => {
