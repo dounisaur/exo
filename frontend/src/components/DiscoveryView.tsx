@@ -5,12 +5,12 @@ import VenueCard from './VenueCard'
 import VenueDetailPanel from './VenueDetailPanel'
 import VenueDetailPage from './VenueDetailPage'
 import MobileVenueSheet from './MobileVenueSheet'
-import type { Venue, Category, VenueComment } from '../types'
+import type { Venue, Category, VenueComment, City } from '../types'
 
 interface DiscoveryViewProps {
   venues: Venue[]
   categories: Category[]
-  allCities: string[]
+  allCities: City[]
   userLocation?: { lat: number; lng: number }
   onStartHere?: (venue: Venue) => void
   onGenerateItinerary?: () => void
@@ -18,8 +18,8 @@ interface DiscoveryViewProps {
   onLogin?: () => void
   onLogout?: () => void
   onAdmin?: () => void
-  selectedCity?: string
-  onCityChange?: (city: string) => void
+  selectedCity?: number | ''
+  onCityChange?: (city: number | '') => void
   selectedCategory?: string
   onCategoryChange?: (category: string) => void
   selectedRadius?: { min: number | null; max: number | null }
@@ -171,13 +171,13 @@ export default function DiscoveryView({
                 <div>
                   <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
                   <select
-                    value={selectedCity || ''}
-                    onChange={(e) => onCityChange?.(e.target.value)}
+                    value={selectedCity === '' ? '' : selectedCity}
+                    onChange={(e) => onCityChange?.(e.target.value === '' ? '' : parseInt(e.target.value))}
                     className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer"
                   >
                     <option value="">All Cities</option>
                     {allCities.map(city => (
-                      <option key={city} value={city}>{city}</option>
+                      <option key={city.id} value={city.id}>{city.name}</option>
                     ))}
                   </select>
                 </div>
@@ -324,9 +324,9 @@ export default function DiscoveryView({
                   {allCities.length > 0 && (
                     <div>
                       <label className="block text-sm font-medium text-gray-900 mb-2">City</label>
-                      <select value={selectedCity || ''} onChange={(e) => onCityChange?.(e.target.value)} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer">
+                      <select value={selectedCity === '' ? '' : selectedCity} onChange={(e) => onCityChange?.(e.target.value === '' ? '' : parseInt(e.target.value))} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent cursor-pointer">
                         <option value="">All Cities</option>
-                        {allCities.map(city => (<option key={city} value={city}>{city}</option>))}
+                        {allCities.map(city => (<option key={city.id} value={city.id}>{city.name}</option>))}
                       </select>
                     </div>
                   )}

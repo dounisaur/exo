@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Plus, Edit2, Eye as EyeIcon, Search, Building2, Trash2 } from 'lucide-react'
 import BottomSheet from './BottomSheet'
-import type { Venue, Category, User, VenueComment } from '../types'
+import type { Venue, Category, User, VenueComment, Country, City } from '../types'
 
 interface AdminPanelProps {
   authToken: string
@@ -18,6 +18,11 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
   const [venues, setVenues] = useState<Venue[]>([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+
+  // Country & City state
+  const [countries, setCountries] = useState<Country[]>([])
+  const [cities, setCities] = useState<City[]>([])
+  const [selectedCountry, setSelectedCountry] = useState<number | ''>('')
 
   // Venue sheet state
   const [showVenueSheet, setShowVenueSheet] = useState(false)
@@ -124,7 +129,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     price_level: '',
     opening_hours: '',
     photo_urls: [] as string[],
-    primary_photo_url: ''
+    primary_photo_url: '',
+    place_id: '',
+    country_id: '',
+    city_id: ''
   })
 
   // Comments state
@@ -158,6 +166,48 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       fetchUsers()
     }
   }, [activeTab])
+
+  // Fetch countries and cities on mount
+  useEffect(() => {
+    const fetchCountriesAndCities = async () => {
+      try {
+        // Fetch countries
+        const countriesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/countries`)
+        if (countriesResponse.ok) {
+          const countriesData = await countriesResponse.json()
+          setCountries(countriesData)
+          // Set Greece as default (id = 1)
+          if (countriesData.length > 0) {
+            const greeceId = countriesData.find((c: Country) => c.code === 'GR')?.id || countriesData[0].id
+            setSelectedCountry(greeceId)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching countries:', error)
+      }
+    }
+
+    fetchCountriesAndCities()
+  }, [])
+
+  // Fetch cities when selected country changes
+  useEffect(() => {
+    if (selectedCountry === '') return
+
+    const fetchCitiesForCountry = async () => {
+      try {
+        const citiesResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/cities?country_id=${selectedCountry}`)
+        if (citiesResponse.ok) {
+          const citiesData = await citiesResponse.json()
+          setCities(citiesData)
+        }
+      } catch (error) {
+        console.error('Error fetching cities:', error)
+      }
+    }
+
+    fetchCitiesForCountry()
+  }, [selectedCountry])
 
   // Reset subcategory pagination when filter changes
   useEffect(() => {
@@ -245,7 +295,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
             price_level: fullResult.price_level || '',
             opening_hours: fullResult.opening_hours || '',
             photo_urls: fullResult.photo_urls || [],
-            primary_photo_url: fullResult.photo_urls?.[0] || ''
+            primary_photo_url: fullResult.photo_urls?.[0] || '',
+            place_id: result.place_id || ''
           }))
           setHoursGrid(parseOpeningHoursJSON(fullResult.opening_hours))
         }
@@ -257,7 +308,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
           name: result.name,
           address: result.address,
           latitude: result.latitude.toString(),
-          longitude: result.longitude.toString()
+          longitude: result.longitude.toString(),
+          place_id: result.place_id || ''
         }))
       }
     } else {
@@ -275,7 +327,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         price_level: result.price_level || '',
         opening_hours: result.opening_hours || '',
         photo_urls: result.photo_urls || [],
-        primary_photo_url: result.photo_urls?.[0] || ''
+        primary_photo_url: result.photo_urls?.[0] || '',
+        place_id: result.place_id || ''
       }))
       setHoursGrid(parseOpeningHoursJSON(result.opening_hours))
     }
@@ -389,6 +442,8 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         ...formData,
         image_url: imageUrl,
         subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : null,
+        country_id: formData.country_id ? parseInt(formData.country_id) : null,
+        city_id: formData.city_id ? parseInt(formData.city_id) : null,
         latitude: lat,
         longitude: lng,
         rating: formData.rating ? parseFloat(formData.rating) : null,
@@ -440,7 +495,10 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       price_level: '',
       opening_hours: '',
       photo_urls: [],
-      primary_photo_url: ''
+      primary_photo_url: '',
+      place_id: '',
+      country_id: '',
+      city_id: ''
     })
     setHoursGrid({
       '0': { open: '', close: '', closed: false },
@@ -486,13 +544,19 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
       price_level: (venue as any).price_level || '',
       opening_hours: venue.opening_hours || '',
       photo_urls: venue.photo_urls || [],
-      primary_photo_url: primaryPhotoUrl
+      primary_photo_url: primaryPhotoUrl,
+      place_id: venue.place_id || '',
+      country_id: venue.country_id?.toString() || '',
+      city_id: venue.city_id?.toString() || ''
     })
     setHoursGrid(parseOpeningHoursJSON(venue.opening_hours))
     setImagePreview(venue.image_url || '')
     setEditingVenueId(venue.id)
     setShowVenueSheet(true)
     setManualAddressEnabled(true)
+    if (venue.country_id) {
+      setSelectedCountry(venue.country_id)
+    }
     fetchComments(venue.id)
   }
 
@@ -1508,6 +1572,51 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                         <option key={sub.id} value={sub.id.toString()}>{sub.name}</option>
                       ))}
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                    <select
+                      value={formData.country_id}
+                      onChange={(e) => {
+                        const countryId = parseInt(e.target.value)
+                        setFormData(prev => ({ ...prev, country_id: e.target.value, city_id: '' }))
+                        setSelectedCountry(countryId)
+                      }}
+                      className="input-field"
+                    >
+                      <option value="">Select Country</option>
+                      {countries.map(country => (
+                        <option key={country.id} value={country.id}>{country.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">City/Island</label>
+                    {formData.country_id && cities.length > 0 ? (
+                      <select
+                        value={formData.city_id}
+                        onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
+                        className="input-field"
+                      >
+                        <option value="">Select City</option>
+                        {cities.map(city => (
+                          <option key={city.id} value={city.id}>{city.name}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        placeholder="Select country first or type city name"
+                        value={formData.city_id}
+                        onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
+                        className="input-field"
+                        disabled
+                      />
+                    )}
                   </div>
                 </div>
 

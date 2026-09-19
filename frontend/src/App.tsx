@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import AdminPanel from './components/AdminPanel'
 import ItineraryView from './components/ItineraryView'
 import DiscoveryView from './components/DiscoveryView'
-import type { Venue, Category, User, Itinerary } from './types'
+import type { Venue, Category, User, Itinerary, City } from './types'
 
 function App() {
   const [page, setPage] = useState<'home' | 'login' | 'admin' | 'itinerary'>('home')
@@ -10,7 +10,8 @@ function App() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [category, setCategory] = useState<string>('')
   const [radius, setRadius] = useState<{ min: number | null; max: number | null }>({ min: 0, max: 1 }) // in km
-  const [selectedCity, setSelectedCity] = useState<string>('')
+  const [selectedCity, setSelectedCity] = useState<number | ''>('')
+  const [allCities, setAllCities] = useState<City[]>([])
 
   const [authToken, setAuthToken] = useState<string | null>(() => localStorage.getItem('authToken'))
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -134,7 +135,7 @@ function App() {
     try {
       const params = new URLSearchParams()
       if (category) params.append('category', category)
-      if (selectedCity) params.append('city', selectedCity)
+      if (selectedCity) params.append('city_id', selectedCity.toString())
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
@@ -190,30 +191,20 @@ function App() {
     }
   }
 
-  const [allVenues, setAllVenues] = useState<Venue[]>([])
-
-  const getAllCities = (): string[] => {
-    const citySet = new Set<string>()
-    allVenues.forEach(venue => {
-      if (venue.canonical_city) citySet.add(venue.canonical_city)
-    })
-    return Array.from(citySet).sort()
-  }
-
-  // Fetch all venues once on mount to get all available cities
+  // Fetch cities on mount (Greece has country_id = 1)
   useEffect(() => {
-    const fetchAllVenues = async () => {
+    const fetchCities = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues`)
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/cities?country_id=1`)
         if (response.ok) {
           const data = await response.json()
-          setAllVenues(Array.isArray(data) ? data : [])
+          setAllCities(Array.isArray(data) ? data : [])
         }
       } catch (error) {
-        console.error('Error fetching all venues:', error)
+        console.error('Error fetching cities:', error)
       }
     }
-    fetchAllVenues()
+    fetchCities()
   }, [])
 
   useEffect(() => {
@@ -288,15 +279,9 @@ function App() {
       {/* Home - Discovery View with 3-column layout */}
       {page === 'home' && (
         <DiscoveryView
-          venues={venues.filter(venue => {
-            if (selectedCity && !venue.canonical_city) return false
-            if (selectedCity) {
-              return venue.canonical_city === selectedCity
-            }
-            return true
-          })}
+          venues={venues}
           categories={categories}
-          allCities={getAllCities()}
+          allCities={allCities}
           userLocation={userLocation || undefined}
           onStartHere={(venue) => {
             setItineraryStartVenueName(venue.name)

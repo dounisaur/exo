@@ -37,83 +37,6 @@ async function getFreshPhotoUrls(placeId) {
   }
 }
 
-// Helper function to get canonical city from Google Reverse Geocoding API
-async function getCanonicalCity(latitude, longitude) {
-  try {
-    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
-      console.warn('Google API key not configured, skipping canonical city lookup');
-      return null;
-    }
-
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.results && data.results.length > 0) {
-      let city = null;
-
-      // Priority 1: Look for actual city/locality names (e.g., "Athens", "Aegina")
-      for (const component of data.results[0].address_components) {
-        if (component.types.includes('locality')) {
-          city = component.long_name;
-          break;
-        }
-      }
-
-      // Priority 2: Look for administrative area level 2 (prefecture/municipality)
-      if (!city) {
-        for (const component of data.results[0].address_components) {
-          if (component.types.includes('administrative_area_level_2')) {
-            city = component.long_name;
-            break;
-          }
-        }
-      }
-
-      // Priority 3: Look for administrative area level 3 (smaller districts)
-      if (!city) {
-        for (const component of data.results[0].address_components) {
-          if (component.types.includes('administrative_area_level_3')) {
-            city = component.long_name;
-            break;
-          }
-        }
-      }
-
-      // Priority 4: Fallback to administrative area level 1 (region/state)
-      if (!city) {
-        for (const component of data.results[0].address_components) {
-          if (component.types.includes('administrative_area_level_1')) {
-            city = component.long_name;
-            break;
-          }
-        }
-      }
-
-      // Post-processing: Map known Athens suburbs to "Athina"
-      if (city === 'Kesariani') {
-        city = 'Athina';
-      }
-
-      // Post-processing: Map known island districts to island names
-      if (city === 'Portes') {
-        city = 'Aegina';
-      }
-
-      // Normalize Greek spellings to English
-      if (city === 'Egina') {
-        city = 'Aegina';
-      }
-
-      return city;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error calling Google Geocoding API:', error);
-    return null;
-  }
-}
 
 // Multer storage configuration
 const storage = multer.diskStorage({
@@ -322,6 +245,68 @@ export function setupRoutes(app) {
         return res.status(404).json({ error: 'Category not found' });
       }
       res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ===== COUNTRY & CITY ENDPOINTS =====
+
+  // Get all countries (public)
+  app.get('/api/countries', async (req, res) => {
+    try {
+      const { rows } = await pool.query('SELECT id, name, code FROM countries ORDER BY name');
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Get cities for a country (public)
+  app.get('/api/cities', async (req, res) => {
+    try {
+      const { country_id } = req.query;
+
+      if (!country_id) {
+        return res.status(400).json({ error: 'country_id required' });
+      }
+
+      const { rows } = await pool.query(
+        'SELECT id, name, country_id FROM cities WHERE country_id = $1 ORDER BY name',
+        [country_id]
+      );
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Create city (admin)
+  app.post('/api/cities', authenticateToken, async (req, res) => {
+    try {
+      const { country_id, name } = req.body;
+
+      if (!country_id || !name) {
+        return res.status(400).json({ error: 'country_id and name required' });
+      }
+
+      // Check if city already exists
+      const { rows: existing } = await pool.query(
+        'SELECT id FROM cities WHERE country_id = $1 AND name = $2',
+        [country_id, name]
+      );
+
+      if (existing.length > 0) {
+        return res.json({ id: existing[0].id, name, country_id });
+      }
+
+      // Create new city
+      const { rows } = await pool.query(
+        'INSERT INTO cities (country_id, name) VALUES ($1, $2) RETURNING id, name, country_id',
+        [country_id, name]
+      );
+
+      res.status(201).json(rows[0]);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -542,7 +527,7 @@ export function setupRoutes(app) {
   // Get published venues with optional filters (public API)
   app.get('/api/venues', async (req, res) => {
     try {
-      const { category, city, lat, lng, radiusMin, radiusMax } = req.query;
+      const { category, city_id, lat, lng, radiusMin, radiusMax } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
       let paramIndex = 1;
@@ -552,9 +537,9 @@ export function setupRoutes(app) {
         params.push(category);
       }
 
-      if (city) {
-        query += ` AND canonical_city = $${paramIndex++}`;
-        params.push(city);
+      if (city_id) {
+        query += ` AND city_id = $${paramIndex++}`;
+        params.push(city_id);
       }
 
       if (lat && lng) {
@@ -729,7 +714,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -750,14 +735,11 @@ export function setupRoutes(app) {
         }
       }
 
-      // Get canonical city from Google Geocoding API
-      const canonicalCity = await getCanonicalCity(lat, lng);
-
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null]
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, city_id || null]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -770,7 +752,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -791,13 +773,10 @@ export function setupRoutes(app) {
         }
       }
 
-      // Get canonical city from Google Geocoding API
-      const canonicalCity = await getCanonicalCity(lat, lng);
-
       const { rowCount } = await pool.query(
-        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, photo_urls=$16, primary_photo_url=$17, place_id=$18, updated_at=NOW()
-         WHERE id = $19`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, req.params.id]
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, price_range=$12, price_level=$13, opening_hours=$14, photo_urls=$15, primary_photo_url=$16, place_id=$17, country_id=$18, city_id=$19, updated_at=NOW()
+         WHERE id = $20`,
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, city_id || null, req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });

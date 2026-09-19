@@ -7,6 +7,9 @@ export interface Venue {
   longitude: number
   address: string
   canonical_city?: string
+  city_id?: number
+  country_id?: number
+  city_name?: string
   image_url?: string
   website_url?: string
   phone_number?: string
@@ -18,8 +21,21 @@ export interface Venue {
   status?: 'draft' | 'published'
   photo_urls?: string[]
   primary_photo_url?: string
+  place_id?: string
   created_at?: string
   updated_at?: string
+}
+
+export interface Country {
+  id: number
+  name: string
+  code: string
+}
+
+export interface City {
+  id: number
+  name: string
+  country_id: number
 }
 
 export interface Category {
