@@ -9,6 +9,34 @@ import { generateItinerary } from './itinerary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Helper function to get fresh photo URLs from Google Places API using place_id
+async function getFreshPhotoUrls(placeId) {
+  try {
+    const apiKey = process.env.GOOGLE_PLACES_API_KEY;
+    if (!apiKey || !placeId) {
+      return [];
+    }
+
+    const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=photos&key=${apiKey}`;
+    const response = await fetch(detailsUrl);
+    const data = await response.json();
+
+    if (!data.result || !data.result.photos || data.status !== 'OK') {
+      return [];
+    }
+
+    const photoUrls = [];
+    for (const photo of data.result.photos.slice(0, 5)) {
+      const photoUrl = `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photoreference=${photo.photo_reference}&key=${apiKey}`;
+      photoUrls.push(photoUrl);
+    }
+    return photoUrls;
+  } catch (error) {
+    console.error('Error fetching fresh photo URLs:', error);
+    return [];
+  }
+}
+
 // Helper function to get canonical city from Google Reverse Geocoding API
 async function getCanonicalCity(latitude, longitude) {
   try {
@@ -545,7 +573,21 @@ export function setupRoutes(app) {
       }
 
       const { rows } = await pool.query(query, params);
-      res.json(rows);
+
+      // Regenerate fresh photo URLs from place_id if available
+      const venuesWithFreshPhotos = await Promise.all(rows.map(async (venue) => {
+        if (venue.place_id) {
+          const freshPhotoUrls = await getFreshPhotoUrls(venue.place_id);
+          return {
+            ...venue,
+            primary_photo_url: freshPhotoUrls[0] || venue.primary_photo_url,
+            photo_urls: freshPhotoUrls.length > 0 ? freshPhotoUrls : venue.photo_urls
+          };
+        }
+        return venue;
+      }));
+
+      res.json(venuesWithFreshPhotos);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -620,6 +662,7 @@ export function setupRoutes(app) {
 
         return res.json({
           results: [{
+            place_id: placeId,
             name: result.name || '',
             address: result.formatted_address || '',
             latitude: result.geometry?.location?.lat || null,
@@ -666,7 +709,18 @@ export function setupRoutes(app) {
       if (rows.length === 0) {
         return res.status(404).json({ error: 'Venue not found' });
       }
-      res.json(rows[0]);
+
+      const venue = rows[0];
+      // Regenerate fresh photo URLs from place_id if available
+      if (venue.place_id) {
+        const freshPhotoUrls = await getFreshPhotoUrls(venue.place_id);
+        if (freshPhotoUrls.length > 0) {
+          venue.primary_photo_url = freshPhotoUrls[0];
+          venue.photo_urls = freshPhotoUrls;
+        }
+      }
+
+      res.json(venue);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -675,7 +729,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -701,9 +755,9 @@ export function setupRoutes(app) {
 
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
-        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null]
+        `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, canonical_city, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18) RETURNING id`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -716,7 +770,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -741,9 +795,9 @@ export function setupRoutes(app) {
       const canonicalCity = await getCanonicalCity(lat, lng);
 
       const { rowCount } = await pool.query(
-        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, photo_urls=$16, primary_photo_url=$17, updated_at=NOW()
-         WHERE id = $18`,
-        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, req.params.id]
+        `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, canonical_city=$7, image_url=$8, website_url=$9, phone_number=$10, reservation_link=$11, rating=$12, price_range=$13, price_level=$14, opening_hours=$15, photo_urls=$16, primary_photo_url=$17, place_id=$18, updated_at=NOW()
+         WHERE id = $19`,
+        [name, category, subcategory_id || null, lat, lng, address || '', canonicalCity || null, image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
