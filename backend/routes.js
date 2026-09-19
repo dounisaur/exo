@@ -9,6 +9,22 @@ import { generateItinerary } from './itinerary.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+// Haversine formula for distance in kilometers
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371 // Earth's radius in km
+  const φ1 = (lat1 * Math.PI) / 180
+  const φ2 = (lat2 * Math.PI) / 180
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180
+  const Δλ = ((lng2 - lng1) * Math.PI) / 180
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+
+  return R * c
+}
+
 // Helper function to get fresh photo URLs from Google Places API using place_id
 async function getFreshPhotoUrls(placeId) {
   try {
@@ -527,7 +543,7 @@ export function setupRoutes(app) {
   // Get published venues with optional filters (public API)
   app.get('/api/venues', async (req, res) => {
     try {
-      const { category, city_id, lat, lng } = req.query;
+      const { category, city_id, lat, lng, radiusMin, radiusMax } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
       let paramIndex = 1;
@@ -544,8 +560,22 @@ export function setupRoutes(app) {
 
       const { rows } = await pool.query(query, params);
 
+      // Filter by radius if lat/lng and radiusMax provided
+      let filteredVenues = rows;
+      if (lat && lng && radiusMax && !city_id) {
+        const userLat = parseFloat(lat);
+        const userLng = parseFloat(lng);
+        const minRadius = radiusMin ? parseFloat(radiusMin) : 0;
+        const maxRadius = parseFloat(radiusMax);
+
+        filteredVenues = rows.filter(venue => {
+          const distance = haversine(userLat, userLng, venue.latitude, venue.longitude);
+          return distance >= minRadius && distance <= maxRadius;
+        });
+      }
+
       // Regenerate fresh photo URLs from place_id if available
-      const venuesWithFreshPhotos = await Promise.all(rows.map(async (venue) => {
+      const venuesWithFreshPhotos = await Promise.all(filteredVenues.map(async (venue) => {
         if (venue.place_id) {
           const freshPhotoUrls = await getFreshPhotoUrls(venue.place_id);
           return {

@@ -138,6 +138,11 @@ function App() {
       if (userLocation) {
         params.append('lat', userLocation.lat.toString())
         params.append('lng', userLocation.lng.toString())
+        // Default to 2km radius when no city filter is selected
+        if (!selectedCity) {
+          params.append('radiusMin', '0')
+          params.append('radiusMax', '2')
+        }
       }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/venues?${params}`)
