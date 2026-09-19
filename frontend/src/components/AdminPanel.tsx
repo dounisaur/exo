@@ -21,7 +21,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
   // Country & City state
   const [countries, setCountries] = useState<Country[]>([])
-  const [selectedCountry, setSelectedCountry] = useState<number | ''>('')
 
   // Venue sheet state
   const [showVenueSheet, setShowVenueSheet] = useState(false)
@@ -175,11 +174,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         if (countriesResponse.ok) {
           const countriesData = await countriesResponse.json()
           setCountries(countriesData)
-          // Set Greece as default (id = 1)
-          if (countriesData.length > 0) {
-            const greeceId = countriesData.find((c: Country) => c.code === 'GR')?.id || countriesData[0].id
-            setSelectedCountry(greeceId)
-          }
         }
       } catch (error) {
         console.error('Error fetching countries:', error)
@@ -548,9 +542,6 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
     setEditingVenueId(venue.id)
     setShowVenueSheet(true)
     setManualAddressEnabled(true)
-    if (venue.country_id) {
-      setSelectedCountry(venue.country_id)
-    }
     fetchComments(venue.id)
   }
 
@@ -1575,9 +1566,7 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
                     <select
                       value={formData.country_id}
                       onChange={(e) => {
-                        const countryId = parseInt(e.target.value)
                         setFormData(prev => ({ ...prev, country_id: e.target.value, city_id: '' }))
-                        setSelectedCountry(countryId)
                       }}
                       className="input-field"
                     >
