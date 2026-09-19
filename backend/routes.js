@@ -527,7 +527,7 @@ export function setupRoutes(app) {
   // Get published venues with optional filters (public API)
   app.get('/api/venues', async (req, res) => {
     try {
-      const { category, city_id, lat, lng, radiusMin, radiusMax } = req.query;
+      const { category, city_id, lat, lng } = req.query;
       let query = "SELECT * FROM venues WHERE status = 'published'";
       const params = [];
       let paramIndex = 1;
@@ -540,21 +540,6 @@ export function setupRoutes(app) {
       if (city_id) {
         query += ` AND city_id = $${paramIndex++}`;
         params.push(city_id);
-      }
-
-      if (lat && lng) {
-        const radiusMinKm = radiusMin ? parseFloat(radiusMin) : 0;
-        const radiusMaxKm = radiusMax ? parseFloat(radiusMax) : 100;
-
-        query += ` AND (
-          6371 * acos(
-            cos(radians($${paramIndex})) * cos(radians(latitude)) *
-            cos(radians(longitude) - radians($${paramIndex + 1})) +
-            sin(radians($${paramIndex})) * sin(radians(latitude))
-          )
-        ) BETWEEN $${paramIndex + 2} AND $${paramIndex + 3}`;
-        params.push(lat, lng, radiusMinKm, radiusMaxKm);
-        paramIndex += 4;
       }
 
       const { rows } = await pool.query(query, params);

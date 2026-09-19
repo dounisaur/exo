@@ -62,11 +62,8 @@ export async function generateItinerary(req, res) {
       }
     }
 
-    // Filter to within 3km of anchor
-    const nearby = venues.filter(v => {
-      const distance = haversine(anchorLat, anchorLng, v.latitude, v.longitude)
-      return distance <= 3000
-    })
+    // Use all venues for itinerary generation
+    const nearby = venues
 
     const stops = []
     const selectedIds = new Set()

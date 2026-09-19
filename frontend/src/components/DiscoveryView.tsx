@@ -22,8 +22,6 @@ interface DiscoveryViewProps {
   onCityChange?: (city: number | '') => void
   selectedCategory?: string
   onCategoryChange?: (category: string) => void
-  selectedRadius?: { min: number | null; max: number | null }
-  onRadiusChange?: (radius: { min: number | null; max: number | null }) => void
 }
 
 export default function DiscoveryView({
@@ -40,9 +38,7 @@ export default function DiscoveryView({
   selectedCity,
   onCityChange,
   selectedCategory,
-  onCategoryChange,
-  selectedRadius,
-  onRadiusChange
+  onCategoryChange
 }: DiscoveryViewProps) {
   const [selectedVenueId, setSelectedVenueId] = useState<number | null>(null)
   const [venueComments, setVenueComments] = useState<Record<number, VenueComment[]>>({})
@@ -197,31 +193,6 @@ export default function DiscoveryView({
                   ))}
                 </select>
               </div>
-
-              {/* Radius Dropdown */}
-              <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
-                <select
-                  value={selectedRadius?.max === null ? 'null' : selectedRadius?.max.toString()}
-                  onChange={(e) => {
-                    if (e.target.value === 'null') {
-                      onRadiusChange?.({ min: null, max: null })
-                    } else {
-                      const max = Number(e.target.value)
-                      onRadiusChange?.({ min: 0, max })
-                    }
-                  }}
-                  className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer"
-                >
-                  <option value="null">None</option>
-                  <option value="1">1 km</option>
-                  <option value="5">5 km</option>
-                  <option value="10">10 km</option>
-                  <option value="20">20 km</option>
-                  <option value="50">50 km</option>
-                  <option value="100">100 km</option>
-                </select>
-              </div>
             </div>
           )}
 
@@ -335,18 +306,6 @@ export default function DiscoveryView({
                     <select value={selectedCategory || ''} onChange={(e) => onCategoryChange?.(e.target.value)} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer">
                       <option value="">All Categories</option>
                       {categories.map(cat => (<option key={cat.id} value={cat.slug}>{cat.name}</option>))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">Radius</label>
-                    <select value={selectedRadius?.max === null ? 'null' : selectedRadius?.max.toString()} onChange={(e) => { if (e.target.value === 'null') { onRadiusChange?.({ min: null, max: null }) } else { const max = Number(e.target.value); onRadiusChange?.({ min: 0, max }) }}} className="w-full appearance-none bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent cursor-pointer">
-                      <option value="null">None</option>
-                      <option value="1">1 km</option>
-                      <option value="5">5 km</option>
-                      <option value="10">10 km</option>
-                      <option value="20">20 km</option>
-                      <option value="50">50 km</option>
-                      <option value="100">100 km</option>
                     </select>
                   </div>
                 </div>
