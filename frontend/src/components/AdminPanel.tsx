@@ -438,12 +438,25 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
         imageUrl = uploadData.url
       }
 
+      // If city_id is a number string, parse it; otherwise treat as city name
+      let cityId = null
+      let cityName = null
+      if (formData.city_id) {
+        const parsed = parseInt(formData.city_id)
+        if (isNaN(parsed)) {
+          cityName = formData.city_id  // It's a city name, backend will create it
+        } else {
+          cityId = parsed  // It's an ID
+        }
+      }
+
       const payload = {
         ...formData,
         image_url: imageUrl,
         subcategory_id: formData.subcategory_id ? parseInt(formData.subcategory_id) : null,
         country_id: formData.country_id ? parseInt(formData.country_id) : null,
-        city_id: formData.city_id ? parseInt(formData.city_id) : null,
+        city_id: cityId,
+        city_name: cityName,  // Send city name if it's a new city
         latitude: lat,
         longitude: lng,
         rating: formData.rating ? parseFloat(formData.rating) : null,
@@ -1596,27 +1609,13 @@ export default function AdminPanel({ authToken, userRole, categories, onCategori
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">City/Island</label>
-                    {formData.country_id && cities.length > 0 ? (
-                      <select
-                        value={formData.city_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
-                        className="input-field"
-                      >
-                        <option value="">Select City</option>
-                        {cities.map(city => (
-                          <option key={city.id} value={city.id}>{city.name}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder="Select country first or type city name"
-                        value={formData.city_id}
-                        onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
-                        className="input-field"
-                        disabled
-                      />
-                    )}
+                    <input
+                      type="text"
+                      placeholder="Type city name (e.g., Athina, Aegina, Euboea)"
+                      value={formData.city_id}
+                      onChange={(e) => setFormData(prev => ({ ...prev, city_id: e.target.value }))}
+                      className="input-field"
+                    />
                   </div>
                 </div>
 

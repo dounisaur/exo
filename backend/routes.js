@@ -714,7 +714,7 @@ export function setupRoutes(app) {
   // Create venue (admin)
   app.post('/api/venues', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id, city_name } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -735,11 +735,29 @@ export function setupRoutes(app) {
         }
       }
 
+      // Handle city creation if city_name is provided
+      let finalCityId = city_id || null;
+      if (city_name && !finalCityId && country_id) {
+        const { rows: existingCity } = await pool.query(
+          'SELECT id FROM cities WHERE country_id = $1 AND name = $2',
+          [country_id, city_name]
+        );
+        if (existingCity.length > 0) {
+          finalCityId = existingCity[0].id;
+        } else {
+          const { rows: newCity } = await pool.query(
+            'INSERT INTO cities (country_id, name) VALUES ($1, $2) RETURNING id',
+            [country_id, city_name]
+          );
+          finalCityId = newCity[0].id;
+        }
+      }
+
       console.log('Creating venue:', name);
       const { rows } = await pool.query(
         `INSERT INTO venues (name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, city_id || null]
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, finalCityId]
       );
       console.log('Venue created with ID:', rows[0].id);
       res.status(201).json({ id: rows[0].id });
@@ -752,7 +770,7 @@ export function setupRoutes(app) {
   // Update venue (admin)
   app.put('/api/venues/:id', authenticateToken, async (req, res) => {
     try {
-      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id } = req.body;
+      const { name, category, subcategory_id, latitude, longitude, address, image_url, website_url, phone_number, reservation_link, rating, price_range, price_level, opening_hours, photo_urls, primary_photo_url, place_id, country_id, city_id, city_name } = req.body;
 
       if (!name || !category) {
         return res.status(400).json({ error: 'Name and category are required' });
@@ -773,10 +791,28 @@ export function setupRoutes(app) {
         }
       }
 
+      // Handle city creation if city_name is provided
+      let finalCityId = city_id || null;
+      if (city_name && !finalCityId && country_id) {
+        const { rows: existingCity } = await pool.query(
+          'SELECT id FROM cities WHERE country_id = $1 AND name = $2',
+          [country_id, city_name]
+        );
+        if (existingCity.length > 0) {
+          finalCityId = existingCity[0].id;
+        } else {
+          const { rows: newCity } = await pool.query(
+            'INSERT INTO cities (country_id, name) VALUES ($1, $2) RETURNING id',
+            [country_id, city_name]
+          );
+          finalCityId = newCity[0].id;
+        }
+      }
+
       const { rowCount } = await pool.query(
         `UPDATE venues SET name=$1, category=$2, subcategory_id=$3, latitude=$4, longitude=$5, address=$6, image_url=$7, website_url=$8, phone_number=$9, reservation_link=$10, rating=$11, price_range=$12, price_level=$13, opening_hours=$14, photo_urls=$15, primary_photo_url=$16, place_id=$17, country_id=$18, city_id=$19, updated_at=NOW()
          WHERE id = $20`,
-        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, city_id || null, req.params.id]
+        [name, category, subcategory_id || null, lat, lng, address || '', image_url || null, website_url || null, phone_number || null, reservation_link || null, parsedRating, price_range || null, price_level || null, opening_hours || null, photo_urls || [], primary_photo_url || null, place_id || null, country_id || null, finalCityId, req.params.id]
       );
       if (rowCount === 0) {
         return res.status(404).json({ error: 'Venue not found' });
